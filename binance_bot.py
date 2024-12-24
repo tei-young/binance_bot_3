@@ -92,14 +92,16 @@ class TradingBot:
             ohlcv = self.exchange.fetch_ohlcv(
                 symbol=symbol,
                 timeframe=TIMEFRAME,
-                limit=300  # 충분한 기록을 위해 300개 캔들
+                limit=300
             )
             
             df = pd.DataFrame(
                 ohlcv,
                 columns=['timestamp', 'open', 'high', 'low', 'close', 'volume']
             )
+            # timestamp를 인덱스로 설정
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            df.set_index('timestamp', inplace=True)
             return df
         except Exception as e:
             self.trading_logger.error(f"Error fetching data for {symbol}: {e}")
@@ -221,25 +223,31 @@ class TradingBot:
         }
         
         current_idx = len(df) - 1
+        current_time = df.index[current_idx]
         
-        # 최근 캔들에서 크로스 확인
+        # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-            crosses['ema'] = {'time': df.index[current_idx], 'type': 'golden'}
-            self.signal_logger.info(f"EMA Golden Cross detected at {df.index[current_idx]}")
+            crosses['ema'] = {'time': current_time, 'type': 'golden'}
+            self.signal_logger.info(f"EMA Cross Check - Golden Cross detected at {current_time}")
         elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            crosses['ema'] = {'time': df.index[current_idx], 'type': 'dead'}
-            self.signal_logger.info(f"EMA Dead Cross detected at {df.index[current_idx]}")
+            crosses['ema'] = {'time': current_time, 'type': 'dead'}
+            self.signal_logger.info(f"EMA Cross Check - Dead Cross detected at {current_time}")
+        else:
+            self.signal_logger.info(f"EMA Cross Check - No cross detected")
             
+        # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            crosses['macd'] = {'time': df.index[current_idx], 'type': 'golden'}
-            self.signal_logger.info(f"MACD Golden Cross detected at {df.index[current_idx]}")
+            crosses['macd'] = {'time': current_time, 'type': 'golden'}
+            self.signal_logger.info(f"MACD Cross Check - Golden Cross detected at {current_time}")
         elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            crosses['macd'] = {'time': df.index[current_idx], 'type': 'dead'}
-            self.signal_logger.info(f"MACD Dead Cross detected at {df.index[current_idx]}")
+            crosses['macd'] = {'time': current_time, 'type': 'dead'}
+            self.signal_logger.info(f"MACD Cross Check - Dead Cross detected at {current_time}")
+        else:
+            self.signal_logger.info(f"MACD Cross Check - No cross detected")
         
         return crosses
 
