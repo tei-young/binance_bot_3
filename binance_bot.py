@@ -42,10 +42,7 @@ class TradingBot:
         # 각 심볼에 대해 레버리지 설정
         for symbol in TRADING_SYMBOLS:
             try:
-                self.exchange.fapiPrivate_post_leverage({
-                    'symbol': symbol.replace('/', ''),
-                    'leverage': LEVERAGE
-                })
+                self.exchange.set_leverage(LEVERAGE, symbol)
                 self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
             except Exception as e:
                 self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
@@ -100,6 +97,25 @@ class TradingBot:
         except Exception as e:
             self.trading_logger.error(f"Error fetching data for {symbol}: {e}")
             return None
+
+    def check_balance(self, symbol):
+        """잔액 체크"""
+        try:
+            balance = self.exchange.fetch_balance()
+            free_usdt = balance['USDT']['free']
+            
+            if free_usdt < MARGIN_AMOUNT:
+                self.trading_logger.error(
+                    f"===== Insufficient Balance =====\n"
+                    f"Symbol: {symbol}\n"
+                    f"Required: {MARGIN_AMOUNT} USDT\n"
+                    f"Available: {free_usdt} USDT"
+                )
+                return False
+            return True
+        except Exception as e:
+            self.trading_logger.error(f"Balance check error: {str(e)}")
+            return False
 
     def calculate_indicators(self, df):
         """모든 지표 계산"""
