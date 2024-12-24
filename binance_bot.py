@@ -52,12 +52,18 @@ class TradingBot:
         if not os.path.exists('logs'):
             os.makedirs('logs')
         
+        # 오늘 날짜 가져오기
+        today = datetime.now().strftime('%y%m%d')
+        
         # 로거 설정 함수
         def setup_logger(name, log_file):
             logger = logging.getLogger(name)
             logger.setLevel(logging.INFO)
+            
+            # 파일명에 날짜 추가
+            dated_log_file = f"{today}_{log_file}"
             handler = RotatingFileHandler(
-                f'logs/{log_file}',
+                f'logs/{dated_log_file}',
                 maxBytes=10*1024*1024,
                 backupCount=5
             )
@@ -66,10 +72,11 @@ class TradingBot:
             logger.addHandler(handler)
             return logger
         
+        # 각각의 로거 설정
         self.trading_logger = setup_logger('trading', 'trading.log')
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
-
+    
     def calculate_jurik_ma(self, data, period=30):
         """Jurik Moving Average 계산 (simplified version)"""
         # 실제 JMA는 더 복잡한 계산이 필요하지만, 여기서는 EMA로 단순화
@@ -169,13 +176,7 @@ class TradingBot:
                 (df['ma83_slope'] > THRESHOLD/100) & 
                 (df['ma278_slope'] > THRESHOLD/100),
                 'green',
-                np.where(
-                    (df['jma_slope'] < -THRESHOLD/100) & 
-                    (df['ma83_slope'] < -THRESHOLD/100) & 
-                    (df['ma278_slope'] < -THRESHOLD/100),
-                    'red',
-                    'neutral'
-                )
+                'red'  # threshold 조건을 만족하지 않으면 모두 red
             )
             
             return df
