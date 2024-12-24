@@ -91,9 +91,27 @@ class TradingBot:
         # 실제 JMA는 더 복잡한 계산이 필요하지만, 여기서는 EMA로 단순화
         return ta.trend.ema_indicator(data, window=period)
 
-    def calculate_slope(self, data, period=SLOPE_PERIOD):
-        """주어진 데이터의 기울기 계산"""
-        return (data - data.shift(period)) / period
+    def calculate_slope(self, data, period=14):
+        """ATR 기반 각도 계산"""
+        try:
+            # ATR 계산 
+            atr = ta.volatility.average_true_range(
+                data.high, 
+                data.low,
+                data.close,
+                period
+            )
+            
+            # 현재값과 이전값의 차이
+            diff = data - data.shift(1)
+            
+            # 각도 계산 (rad2deg * arctan(diff/atr))
+            angle = (180 / np.pi) * np.arctan(diff / atr)
+            
+            return angle
+        except Exception as e:
+            self.trading_logger.error(f"Error calculating slope: {e}")
+            return None
 
     def get_historical_data(self, symbol):
         """과거 데이터 조회"""
