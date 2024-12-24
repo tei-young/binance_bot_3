@@ -141,7 +141,7 @@ class TradingBot:
             return False
 
     def calculate_indicators(self, df):
-        """모든 지표 계산"""
+        """지표 계산"""
         try:
             # SMA 200 계산
             df['sma200'] = ta.trend.sma_indicator(df['close'], window=200)
@@ -160,26 +160,17 @@ class TradingBot:
             df['macd'] = macd.macd()
             df['macd_signal'] = macd.macd_signal()
             
-            # MA angles JD 계산
+            # JMA slope 계산 및 MA angles JD 색상 결정
             df['jma'] = self.calculate_jurik_ma(df['close'])
-            df['ma83'] = ta.trend.sma_indicator(df['close'], window=83)
-            df['ma278'] = ta.trend.sma_indicator(df['close'], window=278)
-            
-            # Slopes 계산
             df['jma_slope'] = self.calculate_slope(df['jma'])
-            df['ma83_slope'] = self.calculate_slope(df['ma83'])
-            df['ma278_slope'] = self.calculate_slope(df['ma278'])
-            
-            # MA angles JD 색상 결정
             df['mangles_jd_color'] = np.where(
-                (df['jma_slope'] > THRESHOLD/100) & 
-                (df['ma83_slope'] > THRESHOLD/100) & 
-                (df['ma278_slope'] > THRESHOLD/100),
+                df['jma_slope'] > THRESHOLD/100,
                 'green',
-                'red'  # threshold 조건을 만족하지 않으면 모두 red
+                'red'
             )
             
             return df
+            
         except Exception as e:
             self.trading_logger.error(f"Error calculating indicators: {e}")
             return None
