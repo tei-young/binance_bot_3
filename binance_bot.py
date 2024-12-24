@@ -226,36 +226,39 @@ class TradingBot:
 
     def store_cross_data(self, df, symbol):
         """크로스 데이터 저장"""
-        if symbol not in self.cross_history:
-            self.cross_history[symbol] = {
-                'ema': [],  # [(time, type), ...]
-                'macd': []  # [(time, type), ...]
-            }
-        
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
+
+        self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
         # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
             self.cross_history[symbol]['ema'].append((current_time, 'golden'))
-            self.signal_logger.info(f"EMA Cross Check - Golden Cross detected at {current_time}")
+            self.signal_logger.info(f"NEW EMA Golden Cross at {current_time}")
         elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
             self.cross_history[symbol]['ema'].append((current_time, 'dead'))
-            self.signal_logger.info(f"EMA Cross Check - Dead Cross detected at {current_time}")
+            self.signal_logger.info(f"NEW EMA Dead Cross at {current_time}")
+        else:
+            self.signal_logger.info("No new EMA cross")
             
         # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'].append((current_time, 'golden'))
-            self.signal_logger.info(f"MACD Cross Check - Golden Cross detected at {current_time}")
+            self.signal_logger.info(f"NEW MACD Golden Cross at {current_time}")
         elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'].append((current_time, 'dead'))
-            self.signal_logger.info(f"MACD Cross Check - Dead Cross detected at {current_time}")
-        
+            self.signal_logger.info(f"NEW MACD Dead Cross at {current_time}")
+        else:
+            self.signal_logger.info("No new MACD cross")
+
         self._cleanup_old_crosses(symbol, current_time)
+        self.signal_logger.info(f"Current Cross History for {symbol}:")
+        self.signal_logger.info(f"EMA crosses: {self.cross_history[symbol]['ema']}")
+        self.signal_logger.info(f"MACD crosses: {self.cross_history[symbol]['macd']}")
 
 
     def _cleanup_old_crosses(self, symbol, current_time):
@@ -290,44 +293,35 @@ class TradingBot:
     def check_cross_validity(self, symbol, position_type):
         """크로스 유효성 확인"""
         cross_type = 'golden' if position_type == 'long' else 'dead'
-        valid_cross = False
-        
-        # EMA 크로스를 기준으로 확인
+        valid_pairs = []
+
+        # 각 EMA 크로스에 대해 ±5캔들 범위 내의 MACD 크로스 찾기
         for ema_time, ema_type in self.cross_history[symbol]['ema']:
             if ema_type == cross_type:
-                matching_time = self.find_matching_cross(
-                    symbol, ema_time, cross_type, 'ema'
-                )
-                if matching_time:
-                    self.signal_logger.info(
-                        f"Valid crosses found for {position_type}:\n"
-                        f"EMA {cross_type} cross at {ema_time}\n"
-                        f"MACD {cross_type} cross at {matching_time}"
-                    )
-                    valid_cross = True
-                    break
-        
-        # EMA에서 못찾았다면 MACD 크로스를 기준으로 다시 확인
-        if not valid_cross:
-            for macd_time, macd_type in self.cross_history[symbol]['macd']:
-                if macd_type == cross_type:
-                    matching_time = self.find_matching_cross(
-                        symbol, macd_time, cross_type, 'macd'
-                    )
-                    if matching_time:
-                        self.signal_logger.info(
-                            f"Valid crosses found for {position_type}:\n"
-                            f"MACD {cross_type} cross at {macd_time}\n"
-                            f"EMA {cross_type} cross at {matching_time}"
-                        )
-                        valid_cross = True
-                        break
-        
-        return valid_cross
+                matching_macd = self.find_matching_cross(symbol, ema_time, cross_type, 'ema')
+                if matching_macd:
+                    valid_pairs.append((ema_time, matching_macd))
+
+        # 각 MACD 크로스에 대해 ±5캔들 범위 내의 EMA 크로스 찾기
+        for macd_time, macd_type in self.cross_history[symbol]['macd']:
+            if macd_type == cross_type:
+                matching_ema = self.find_matching_cross(symbol, macd_time, cross_type, 'macd')
+                if matching_ema:
+                    pair = tuple(sorted([macd_time, matching_ema]))
+                    if pair not in valid_pairs:
+                        valid_pairs.append(pair)
+
+        if valid_pairs:
+            self.signal_logger.info(f"Found valid cross pairs for {symbol} {position_type}:")
+            for time1, time2 in valid_pairs:
+                self.signal_logger.info(f"Cross pair: {time1} and {time2}")
+            return True
+
+        return False
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
-        # 1. 크로스 데이터 먼저 저장
+        # 1. 크로스 데이터 체크 및 저장
         self.store_cross_data(df, symbol)
         
         current_idx = len(df) - 1
@@ -336,7 +330,7 @@ class TradingBot:
         # 2. SMA200 기준 추세 확인
         above_sma200 = current_price > df['sma200'].iloc[-1]
         self.signal_logger.info(
-            f"\n=== Signal Analysis for {symbol} ===\n"
+            f"\n=== Position Analysis for {symbol} ===\n"
             f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
         )
         
@@ -344,8 +338,7 @@ class TradingBot:
         mangles_color = df['mangles_jd_color'].iloc[-1]
         mangles_valid = (above_sma200 and mangles_color == 'green') or (not above_sma200 and mangles_color == 'red')
         self.signal_logger.info(
-            f"2. MA angles JD Color: {mangles_color.upper()} - "
-            f"{'True' if mangles_valid else 'False'}"
+            f"2. MA angles JD Color: {mangles_color.upper()} - {mangles_valid}"
         )
         
         if not mangles_valid:
@@ -353,7 +346,7 @@ class TradingBot:
         
         position_type = 'long' if above_sma200 else 'short'
         if self.check_cross_validity(symbol, position_type):
-            self.signal_logger.info(f"5. All conditions matched! {symbol} {position_type.upper()} position entry signal")
+            self.signal_logger.info(f"=== ENTRY SIGNAL: {symbol} {position_type.upper()} ===")
             return position_type, self.cross_history[symbol]
         
         return None, None
