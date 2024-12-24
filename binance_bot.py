@@ -215,12 +215,13 @@ class TradingBot:
         
         return crosses_found
 
-    def store_cross_data(self, df):
+    def store_cross_data(self, df, symbol):
         """크로스 데이터 저장"""
-        crosses = {
-            'ema': {'time': None, 'type': None},
-            'macd': {'time': None, 'type': None}
-        }
+        if symbol not in self.cross_history:
+            self.cross_history[symbol] = {
+                'ema': [],  # [(time, type), ...]
+                'macd': []  # [(time, type), ...]
+            }
         
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
@@ -228,54 +229,92 @@ class TradingBot:
         # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-            crosses['ema'] = {'time': current_time, 'type': 'golden'}
+            self.cross_history[symbol]['ema'].append((current_time, 'golden'))
             self.signal_logger.info(f"EMA Cross Check - Golden Cross detected at {current_time}")
         elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            crosses['ema'] = {'time': current_time, 'type': 'dead'}
+            self.cross_history[symbol]['ema'].append((current_time, 'dead'))
             self.signal_logger.info(f"EMA Cross Check - Dead Cross detected at {current_time}")
-        else:
-            self.signal_logger.info(f"EMA Cross Check - No cross detected")
             
         # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            crosses['macd'] = {'time': current_time, 'type': 'golden'}
+            self.cross_history[symbol]['macd'].append((current_time, 'golden'))
             self.signal_logger.info(f"MACD Cross Check - Golden Cross detected at {current_time}")
         elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            crosses['macd'] = {'time': current_time, 'type': 'dead'}
+            self.cross_history[symbol]['macd'].append((current_time, 'dead'))
             self.signal_logger.info(f"MACD Cross Check - Dead Cross detected at {current_time}")
-        else:
-            self.signal_logger.info(f"MACD Cross Check - No cross detected")
         
-        return crosses
+        self._cleanup_old_crosses(symbol, current_time)
 
-    def check_cross_validity(self, crosses, position_type):
+
+    def _cleanup_old_crosses(self, symbol, current_time):
+        """오래된 크로스 데이터 제거"""
+        candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
+        cutoff_time = current_time - (candle_interval * 10)  # 전후 5캔들을 고려하여 10캔들 범위 유지
+        
+        self.cross_history[symbol]['ema'] = [
+            (time, type_) for time, type_ in self.cross_history[symbol]['ema']
+            if time > cutoff_time
+        ]
+        self.cross_history[symbol]['macd'] = [
+            (time, type_) for time, type_ in self.cross_history[symbol]['macd']
+            if time > cutoff_time
+        ]
+        
+    def find_matching_cross(self, symbol, cross_time, cross_type, base_indicator):
+        """특정 크로스 시점 기준으로 전후 5캔들 내의 매칭되는 크로스 찾기"""
+        candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
+        start_time = cross_time - (candle_interval * 5)
+        end_time = cross_time + (candle_interval * 5)
+        
+        # base_indicator가 'ema'면 'macd'를 찾고, 반대도 마찬가지
+        target_indicator = 'macd' if base_indicator == 'ema' else 'ema'
+        
+        for time, type_ in self.cross_history[symbol][target_indicator]:
+            if start_time <= time <= end_time and type_ == cross_type:
+                return time
+                
+        return None
+
+    def check_cross_validity(self, symbol, position_type):
         """크로스 유효성 확인"""
-        if not crosses['ema']['time'] or not crosses['macd']['time']:
-            return False
-            
-        # 방향 확인
-        if position_type == 'long' and (crosses['ema']['type'] != 'golden' or crosses['macd']['type'] != 'golden'):
-            return False
-        if position_type == 'short' and (crosses['ema']['type'] != 'dead' or crosses['macd']['type'] != 'dead'):
-            return False
-            
-        # 시간 차이 확인 (5캔들)
-        time_diff = abs(crosses['ema']['time'] - crosses['macd']['time'])
-        candle_diff = time_diff.total_seconds() / (60 if TIMEFRAME == '1m' else 300)
+        cross_type = 'golden' if position_type == 'long' else 'dead'
+        valid_cross = False
         
-        valid = candle_diff <= 5
-        if valid:
-            self.signal_logger.info(
-                f"Valid crosses found:\n"
-                f"EMA Cross: {crosses['ema']['type']} at {crosses['ema']['time']}\n"
-                f"MACD Cross: {crosses['macd']['type']} at {crosses['macd']['time']}\n"
-                f"Candle difference: {candle_diff}"
-            )
+        # EMA 크로스를 기준으로 확인
+        for ema_time, ema_type in self.cross_history[symbol]['ema']:
+            if ema_type == cross_type:
+                matching_time = self.find_matching_cross(
+                    symbol, ema_time, cross_type, 'ema'
+                )
+                if matching_time:
+                    self.signal_logger.info(
+                        f"Valid crosses found for {position_type}:\n"
+                        f"EMA {cross_type} cross at {ema_time}\n"
+                        f"MACD {cross_type} cross at {matching_time}"
+                    )
+                    valid_cross = True
+                    break
         
-        return valid
+        # EMA에서 못찾았다면 MACD 크로스를 기준으로 다시 확인
+        if not valid_cross:
+            for macd_time, macd_type in self.cross_history[symbol]['macd']:
+                if macd_type == cross_type:
+                    matching_time = self.find_matching_cross(
+                        symbol, macd_time, cross_type, 'macd'
+                    )
+                    if matching_time:
+                        self.signal_logger.info(
+                            f"Valid crosses found for {position_type}:\n"
+                            f"MACD {cross_type} cross at {macd_time}\n"
+                            f"EMA {cross_type} cross at {matching_time}"
+                        )
+                        valid_cross = True
+                        break
+        
+        return valid_cross
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
@@ -300,17 +339,15 @@ class TradingBot:
         # SMA와 MA angles JD 방향이 일치하지 않으면 종료
         if not mangles_valid:
             return None, None
-            
-        # 포지션 방향 결정
-        position_type = 'long' if above_sma200 else 'short'
         
-        # 3. 크로스 데이터 저장 및 확인
-        crosses = self.store_cross_data(df)
+        # 3. 방향 결정 및 크로스 데이터 저장
+        position_type = 'long' if above_sma200 else 'short'
+        self.store_cross_data(df, symbol)
         
         # 4. 크로스 유효성 확인
-        if self.check_cross_validity(crosses, position_type):
-            self.signal_logger.info(f"5. Condition Match! {symbol} {position_type.upper()} position entry")
-            return position_type, crosses
+        if self.check_cross_validity(symbol, position_type):
+            self.signal_logger.info(f"5. All conditions matched! {symbol} {position_type.upper()} position entry signal")
+            return position_type, self.cross_history[symbol]
         
         return None, None
 
