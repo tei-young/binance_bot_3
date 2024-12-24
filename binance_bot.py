@@ -327,17 +327,20 @@ class TradingBot:
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
+        # 1. 크로스 데이터 먼저 저장
+        self.store_cross_data(df, symbol)
+        
         current_idx = len(df) - 1
         current_price = df['close'].iloc[-1]
         
-        # 1. SMA200 기준 추세 확인
+        # 2. SMA200 기준 추세 확인
         above_sma200 = current_price > df['sma200'].iloc[-1]
         self.signal_logger.info(
             f"\n=== Signal Analysis for {symbol} ===\n"
             f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
         )
         
-        # 2. MA angles JD 색상 확인
+        # 3. MA angles JD 색상 확인
         mangles_color = df['mangles_jd_color'].iloc[-1]
         mangles_valid = (above_sma200 and mangles_color == 'green') or (not above_sma200 and mangles_color == 'red')
         self.signal_logger.info(
@@ -345,15 +348,10 @@ class TradingBot:
             f"{'True' if mangles_valid else 'False'}"
         )
         
-        # SMA와 MA angles JD 방향이 일치하지 않으면 종료
         if not mangles_valid:
             return None, None
         
-        # 3. 방향 결정 및 크로스 데이터 저장
         position_type = 'long' if above_sma200 else 'short'
-        self.store_cross_data(df, symbol)
-        
-        # 4. 크로스 유효성 확인
         if self.check_cross_validity(symbol, position_type):
             self.signal_logger.info(f"5. All conditions matched! {symbol} {position_type.upper()} position entry signal")
             return position_type, self.cross_history[symbol]
