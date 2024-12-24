@@ -527,7 +527,7 @@ class TradingBot:
                             )
                 
                 # 타임프레임에 따른 대기
-                sleep_time = 60 if TIMEFRAME == '1m' else 300
+                sleep_time = 60
                 time.sleep(sleep_time)
                 
             except Exception as e:
