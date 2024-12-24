@@ -180,6 +180,23 @@ class TradingBot:
                 'red'
             )
             
+            # JMA slope 계산 과정 로깅
+            df['jma'] = self.calculate_jurik_ma(df['close'])
+            df['jma_slope'] = self.calculate_slope(df['jma'])
+            
+            self.signal_logger.info(f"\nJMA Slope Debug:")
+            self.signal_logger.info(f"Current JMA value: {df['jma'].iloc[-1]}")
+            self.signal_logger.info(f"Previous JMA value: {df['jma'].iloc[-2]}")
+            self.signal_logger.info(f"Calculated slope: {df['jma_slope'].iloc[-1]}")
+            self.signal_logger.info(f"Threshold comparison: {df['jma_slope'].iloc[-1]} > {THRESHOLD/100}")
+            
+            # MA angles JD 색상 결정
+            df['mangles_jd_color'] = np.where(
+                df['jma_slope'] > THRESHOLD/100,
+                'green',
+                'red'
+            )
+            
             return df
             
         except Exception as e:
