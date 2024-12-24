@@ -39,7 +39,16 @@ class TradingBot:
             }
         })
         
-        # 각 심볼에 대해 레버리지 설정
+        # 크로스 히스토리 초기화
+        self.cross_history = {
+            symbol: {
+                'ema': [],
+                'macd': []
+            }
+            for symbol in TRADING_SYMBOLS
+        }
+        
+        # 레버리지 설정
         for symbol in TRADING_SYMBOLS:
             try:
                 self.exchange.set_leverage(LEVERAGE, symbol)
