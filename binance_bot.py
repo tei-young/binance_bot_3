@@ -86,29 +86,38 @@ class TradingBot:
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
     
-    def calculate_jurik_ma(self, data, period=30):
-        """Jurik Moving Average 계산 (simplified version)"""
-        # 실제 JMA는 더 복잡한 계산이 필요하지만, 여기서는 EMA로 단순화
-        return ta.trend.ema_indicator(data, window=period)
+    def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
+        """Jurik MA 구현"""
+        if phase < -100:
+            phase_ratio = 0.5
+        elif phase > 100:
+            phase_ratio = 2.5
+        else:
+            phase_ratio = phase / 100 + 1.5
+            
+        beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
+        alpha = pow(beta, power)
+        return alpha, beta, phase_ratio
 
-    def calculate_slope(self, data, period=14):
-        """ATR 기반 각도 계산"""
+    def calculate_slope(self, df, period=14):
+        """각도 계산"""
         try:
-            # ATR 계산 
+            # ATR 계산
             atr = ta.volatility.average_true_range(
-                data.high, 
-                data.low,
-                data.close,
+                df['high'],
+                df['low'], 
+                df['close'],
                 period
             )
             
-            # 현재값과 이전값의 차이
-            diff = data - data.shift(1)
+            # 가격 차이 계산
+            price_diff = df['close'] - df['close'].shift(1)
             
-            # 각도 계산 (rad2deg * arctan(diff/atr))
-            angle = (180 / np.pi) * np.arctan(diff / atr)
+            # 각도 계산
+            angle = (180 / np.pi) * np.arctan(price_diff / atr)
             
-            return angle
+            return angle.iloc[-1]  # 가장 최근 값만 반환
+            
         except Exception as e:
             self.trading_logger.error(f"Error calculating slope: {e}")
             return None
