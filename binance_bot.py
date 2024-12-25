@@ -313,20 +313,25 @@ class TradingBot:
         self.signal_logger.info(f"EMA crosses: {self.cross_history[symbol]['ema']}")
         self.signal_logger.info(f"MACD crosses: {self.cross_history[symbol]['macd']}")
 
-
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
-        candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
-        cutoff_time = current_time - (candle_interval * 10)  # 전후 5캔들을 고려하여 10캔들 범위 유지
-        
-        self.cross_history[symbol]['ema'] = [
-            (time, type_) for time, type_ in self.cross_history[symbol]['ema']
-            if time > cutoff_time
-        ]
-        self.cross_history[symbol]['macd'] = [
-            (time, type_) for time, type_ in self.cross_history[symbol]['macd']
-            if time > cutoff_time
-        ]
+        try:
+            candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
+            cutoff_time = current_time - (candle_interval * 10)
+
+            # time이 문자열인 경우 Timestamp로 변환하고 cutoff_time과 비교
+            self.cross_history[symbol]['ema'] = [
+                (pd.to_datetime(time) if isinstance(time, str) else time, type_) 
+                for time, type_ in self.cross_history[symbol]['ema']
+                if (pd.to_datetime(time) if isinstance(time, str) else time) > cutoff_time
+            ]
+            self.cross_history[symbol]['macd'] = [
+                (pd.to_datetime(time) if isinstance(time, str) else time, type_) 
+                for time, type_ in self.cross_history[symbol]['macd']
+                if (pd.to_datetime(time) if isinstance(time, str) else time) > cutoff_time
+            ]
+        except Exception as e:
+            self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
         
     def find_matching_cross(self, symbol, cross_time, cross_type, base_indicator):
         """특정 크로스 시점 기준으로 전후 5캔들 내의 매칭되는 크로스 찾기"""
@@ -467,30 +472,30 @@ class TradingBot:
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
         try:
-            # 손절가 없으면 진입 불가
+            # 1. 손절가 없으면 진입 불가
             if stop_loss is None:
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Stop loss calculation failed")
                 return False
                 
-            # 1. 잔액 확인
+            # 2. 잔액 확인
             if not self.check_balance(symbol):
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Insufficient balance")
                 return False
                 
-            # 기존 포지션 체크
+            # 3. 기존 포지션 체크
             if self.check_existing_position(symbol):
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Position already exists")
                 return False
 
-            # 2. 거래 가능 상태 확인
+            # 4. 거래 가능 상태 확인
             if not self.check_symbol_tradable(symbol):
                 return False
 
-            # 포지션 크기 계산
+            # 5. 포지션 크기 계산
             total_position_size = MARGIN_AMOUNT * LEVERAGE
             position_size = total_position_size / entry_price
 
-            # 3. 최소 주문 수량 확인
+            # 최소 주문 수량 확인
             market = self.exchange.market(symbol)
             min_amount = market['limits']['amount']['min']
             if position_size < min_amount:
@@ -502,7 +507,7 @@ class TradingBot:
                 )
                 return False
 
-            # 4. API 요청 실행 및 에러 처리
+            # API 요청 실행 및 에러 처리
             try:
                 order = self.exchange.create_order(
                     symbol=symbol,
