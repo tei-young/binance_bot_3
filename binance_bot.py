@@ -276,54 +276,74 @@ class TradingBot:
         return crosses_found
 
     def store_cross_data(self, df, symbol):
-        """크로스 데이터 저장"""
-        try:
-            current_idx = len(df) - 1
-            current_time = df.index[current_idx]
-            formatted_time = current_time.strftime('%Y-%m-%d %H:%M')
+        current_idx = len(df) - 1
+        current_time = df.index[current_idx]
+        # 5분 단위로 내림
+        formatted_time = current_time.floor('5T')
 
-            self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
-            
-            # EMA 크로스 체크
-            if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-                self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]
-                self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
-            elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
+        self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
+        
+        # EMA 크로스 체크
+        if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
+            df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
+            self.cross_history[symbol]['ema'] = [(
+                formatted_time,
+                'golden',
+                df['high'].iloc[current_idx],
+                df['low'].iloc[current_idx]
+            )]
+            self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
+        elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
                 df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-                self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]
-                self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
-            else:
-                self.signal_logger.info("No new EMA cross")
-                
-            # MACD 크로스 체크
-            if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-                self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]
-                self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
-            elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-                self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]
-                self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
-            else:
-                self.signal_logger.info("No new MACD cross")
-
-            try:
-                # 유효 기간이 지난 크로스 제거 시도
-                self._cleanup_old_crosses(symbol, current_time)
-            except Exception as e:
-                self.trading_logger.error(f"Error cleaning up crosses for {symbol}: {e}")
-                # cleanup 실패해도 계속 진행
+            self.cross_history[symbol]['ema'] = [(
+                formatted_time,
+                'dead',
+                df['high'].iloc[current_idx],
+                df['low'].iloc[current_idx]
+            )]
+            self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
+        else:
+            self.signal_logger.info("No new EMA cross")
             
-            # 현재 저장된 크로스 정보 로깅
-            if self.cross_history[symbol]['ema']:
-                self.signal_logger.info(f"Current EMA cross: {self.cross_history[symbol]['ema'][0]}")
-            if self.cross_history[symbol]['macd']:
-                self.signal_logger.info(f"Current MACD cross: {self.cross_history[symbol]['macd'][0]}")
+        # MACD 크로스 체크 (동일한 구조)
+        if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
+            df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
+            self.cross_history[symbol]['macd'] = [(
+                formatted_time,
+                'golden',
+                df['high'].iloc[current_idx],
+                df['low'].iloc[current_idx]
+            )]
+            self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
+        elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+            self.cross_history[symbol]['macd'] = [(
+                formatted_time,
+                'dead',
+                df['high'].iloc[current_idx],
+                df['low'].iloc[current_idx]
+            )]
+            self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
+        else:
+            self.signal_logger.info("No new MACD cross")
 
-        except Exception as e:
-            self.trading_logger.error(f"Error in store_cross_data for {symbol}: {e}")
-            # 크로스 저장 실패해도 다음 처리 계속 진행
+        # 크로스 정리 및 로깅
+        self._cleanup_old_crosses(symbol, current_time)
+        
+        if self.cross_history[symbol]['ema']:
+            self.signal_logger.info(
+                f"Current EMA cross: Time={self.cross_history[symbol]['ema'][0][0]}, "
+                f"Type={self.cross_history[symbol]['ema'][0][1]}, "
+                f"High={self.cross_history[symbol]['ema'][0][2]}, "
+                f"Low={self.cross_history[symbol]['ema'][0][3]}"
+            )
+        if self.cross_history[symbol]['macd']:
+            self.signal_logger.info(
+                f"Current MACD cross: Time={self.cross_history[symbol]['macd'][0][0]}, "
+                f"Type={self.cross_history[symbol]['macd'][0][1]}, "
+                f"High={self.cross_history[symbol]['macd'][0][2]}, "
+                f"Low={self.cross_history[symbol]['macd'][0][3]}"
+            )
 
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
@@ -495,27 +515,18 @@ class TradingBot:
                 self.execution_logger.error("Missing cross data")
                 return None
                 
-            # timezone 정보 제거하고 매칭
-            ema_time = pd.to_datetime(crosses['ema'][0][0]).tz_localize(None)
-            macd_time = pd.to_datetime(crosses['macd'][0][0]).tz_localize(None)
-            df_index = df.index.tz_localize(None)
+            # 먼저 발생한 크로스 찾기
+            ema_time = pd.to_datetime(crosses['ema'][0][0])
+            macd_time = pd.to_datetime(crosses['macd'][0][0])
+            
+            first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
+            
+            # 저장된 high/low 사용
+            stop_loss = first_cross[3] if position_type == 'long' else first_cross[2]
+            self.execution_logger.info(f"Stop loss set at {stop_loss} from cross at {first_cross[0]}")
+            
+            return stop_loss
                 
-            try:
-                ema_idx = df_index.get_loc(ema_time)
-                macd_idx = df_index.get_loc(macd_time)
-                first_cross_idx = min(ema_idx, macd_idx)
-                
-                # SL, 가격 로깅 추가
-                stop_loss = df['low'].iloc[first_cross_idx] if position_type == 'long' else df['high'].iloc[first_cross_idx]
-                self.execution_logger.info(f"Cross time found - EMA: {ema_time}, MACD: {macd_time}")
-                self.execution_logger.info(f"Stop loss set at {stop_loss} from {first_cross_idx} index")
-                
-                return stop_loss
-                
-            except KeyError as e:
-                self.execution_logger.error(f"Index match failed - EMA time: {ema_time}, MACD time: {macd_time}")
-                return None
-
         except Exception as e:
             self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
