@@ -367,18 +367,36 @@ class TradingBot:
         
     def find_matching_cross(self, symbol, cross_time, cross_type, base_indicator):
         """특정 크로스 시점 기준으로 전후 5캔들 내의 매칭되는 크로스 찾기"""
-        candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
-        start_time = cross_time - (candle_interval * 5)
-        end_time = cross_time + (candle_interval * 5)
-        
-        # base_indicator가 'ema'면 'macd'를 찾고, 반대도 마찬가지
-        target_indicator = 'macd' if base_indicator == 'ema' else 'ema'
-        
-        for time, type_ in self.cross_history[symbol][target_indicator]:
-            if start_time <= time <= end_time and type_ == cross_type:
-                return time
+        try:
+            # 시간 변환 및 범위 계산
+            cross_time = pd.to_datetime(cross_time)
+            candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
+            start_time = cross_time - (candle_interval * 5)
+            end_time = cross_time + (candle_interval * 5)
+            
+            self.signal_logger.info(f"\nMatching Cross Check:")
+            self.signal_logger.info(f"Base Time: {cross_time}")
+            self.signal_logger.info(f"Valid Range: {start_time} to {end_time}")
+            
+            # base_indicator가 'ema'면 'macd'를 찾고, 반대도 마찬가지
+            target_indicator = 'macd' if base_indicator == 'ema' else 'ema'
+            
+            for time, type_ in self.cross_history[symbol][target_indicator]:
+                check_time = pd.to_datetime(time)
+                self.signal_logger.info(f"Checking {target_indicator.upper()} cross at {check_time} ({type_})")
                 
-        return None
+                if start_time <= check_time <= end_time and type_ == cross_type:
+                    self.signal_logger.info(f"Found matching {target_indicator.upper()} cross!")
+                    return time
+                else:
+                    self.signal_logger.info(f"Not matched. Time in range: {start_time <= check_time <= end_time}, Type match: {type_ == cross_type}")
+                    
+            self.signal_logger.info(f"No matching {target_indicator.upper()} cross found")
+            return None
+                
+        except Exception as e:
+            self.signal_logger.error(f"Error in find_matching_cross: {e}")
+            return None
 
     def check_cross_validity(self, symbol, position_type):
         """크로스 유효성 확인"""
