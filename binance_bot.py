@@ -153,7 +153,8 @@ class TradingBot:
                 ohlcv,
                 columns=['timestamp', 'open', 'high', 'low', 'close', 'volume']
             )
-            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+            # UTC를 KST(UTC+9)로 변환
+            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms').dt.tz_localize('UTC').dt.tz_convert('Asia/Seoul')
             df.set_index('timestamp', inplace=True)
             
             self.trading_logger.info(f"Retrieved data for {symbol}: {df.shape[0]} rows")
