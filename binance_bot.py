@@ -280,30 +280,31 @@ class TradingBot:
         """크로스 데이터 저장"""
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
+        formatted_time = current_time.strftime('%Y-%m-%d %H:%M')  # 타임스탬프 포맷 변경
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
-        # EMA 크로스 체크
+        # EMA 크로스 체크 - 새로운 크로스 발생 시 기존 데이터 초기화
         if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'].append((current_time, 'golden'))
-            self.signal_logger.info(f"NEW EMA Golden Cross at {current_time}")
+            self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]  # 리스트 초기화하고 새 데이터만 저장
+            self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
         elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'].append((current_time, 'dead'))
-            self.signal_logger.info(f"NEW EMA Dead Cross at {current_time}")
+            self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]  # 리스트 초기화하고 새 데이터만 저장
+            self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
         else:
             self.signal_logger.info("No new EMA cross")
             
-        # MACD 크로스 체크
+        # MACD 크로스 체크 - 새로운 크로스 발생 시 기존 데이터 초기화
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'].append((current_time, 'golden'))
-            self.signal_logger.info(f"NEW MACD Golden Cross at {current_time}")
+            self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]  # 리스트 초기화하고 새 데이터만 저장
+            self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
         elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'].append((current_time, 'dead'))
-            self.signal_logger.info(f"NEW MACD Dead Cross at {current_time}")
+            self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]  # 리스트 초기화하고 새 데이터만 저장
+            self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
         else:
             self.signal_logger.info("No new MACD cross")
 
