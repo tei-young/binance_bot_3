@@ -427,9 +427,35 @@ class TradingBot:
         else:
             return entry_price - (stop_loss_distance * 2)
 
+    def check_existing_position(self, symbol):
+        """현재 보유 중인 포지션 확인"""
+        try:
+            position = self.exchange.fetch_position(symbol)
+            
+            # 포지션 수량이 있는지 확인
+            if position and abs(float(position['contracts'] or 0)) > 0:
+                self.trading_logger.info(
+                    f"Position already exists for {symbol}\n"
+                    f"Size: {position['contracts']}\n"
+                    f"Side: {position['side']}\n"
+                    f"Entry Price: {position['entryPrice']}"
+                )
+                return True
+                
+            return False
+            
+        except Exception as e:
+            self.trading_logger.error(f"Error checking position for {symbol}: {e}")
+            return True  # 에러 발생 시 안전하게 True 반환
+
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
         try:
+            # 기존 포지션 체크
+            if self.check_existing_position(symbol):
+                self.trading_logger.info(f"Skip trading for {symbol} due to existing position")
+                return False
+            
             # 1. 잔액 확인
             if not self.check_balance(symbol):
                 return False
