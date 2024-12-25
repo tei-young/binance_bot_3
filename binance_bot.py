@@ -666,19 +666,25 @@ class TradingBot:
                             continue
 
                         entry_price = df['close'].iloc[-1]
+                        self.execution_logger.info(f"\nOrder calculation for {symbol}:")
+                        self.execution_logger.info(f"Entry Price: {entry_price}")
+                        
                         stop_loss = self.determine_stop_loss(df, crosses, position_type)
                         if not stop_loss:
-                            continue  # stop loss 계산 실패시 다음 심볼로
+                            self.execution_logger.error(f"Stop Loss calculation failed for {symbol}")
+                            continue
 
                         take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
-                        
-                        # 한번만 로깅
+                        if not take_profit:
+                            self.execution_logger.error(f"Take Profit calculation failed for {symbol}")
+                            continue
+
                         self.execution_logger.info(
-                            f"Attempting order for {symbol}:\n"
+                            f"Order parameters for {symbol}:\n"
                             f"Position: {position_type.upper()}\n"
                             f"Entry: {entry_price}\n"
-                            f"Stop Loss: {stop_loss}\n"
-                            f"Take Profit: {take_profit}"
+                            f"Stop Loss: {stop_loss} (Distance: {abs(entry_price - stop_loss)})\n"
+                            f"Take Profit: {take_profit} (Distance: {abs(entry_price - take_profit)})"
                         )
 
                         if not self.execute_trade(symbol, position_type, entry_price, stop_loss, take_profit):
