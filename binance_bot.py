@@ -317,18 +317,18 @@ class TradingBot:
         """오래된 크로스 데이터 제거"""
         try:
             candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
-            cutoff_time = current_time - (candle_interval * 10)
+            cutoff_time = pd.to_datetime(current_time).tz_localize(None)  # timezone 정보 제거
 
-            # time이 문자열인 경우 Timestamp로 변환하고 cutoff_time과 비교
             self.cross_history[symbol]['ema'] = [
-                (pd.to_datetime(time) if isinstance(time, str) else time, type_) 
+                (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None), type_) 
                 for time, type_ in self.cross_history[symbol]['ema']
-                if (pd.to_datetime(time) if isinstance(time, str) else time) > cutoff_time
+                if (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None)) > cutoff_time
             ]
+            
             self.cross_history[symbol]['macd'] = [
-                (pd.to_datetime(time) if isinstance(time, str) else time, type_) 
+                (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None), type_) 
                 for time, type_ in self.cross_history[symbol]['macd']
-                if (pd.to_datetime(time) if isinstance(time, str) else time) > cutoff_time
+                if (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None)) > cutoff_time
             ]
         except Exception as e:
             self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
