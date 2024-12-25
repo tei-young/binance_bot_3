@@ -280,56 +280,64 @@ class TradingBot:
         """크로스 데이터 저장"""
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
-        formatted_time = current_time.strftime('%Y-%m-%d %H:%M')  # 타임스탬프 포맷 변경
+        formatted_time = current_time.strftime('%Y-%m-%d %H:%M')
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
-        # EMA 크로스 체크 - 새로운 크로스 발생 시 기존 데이터 초기화
+        # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]  # 리스트 초기화하고 새 데이터만 저장
+            self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]
             self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
         elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
-            df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]  # 리스트 초기화하고 새 데이터만 저장
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+            self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]
             self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
         else:
             self.signal_logger.info("No new EMA cross")
             
-        # MACD 크로스 체크 - 새로운 크로스 발생 시 기존 데이터 초기화
+        # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]  # 리스트 초기화하고 새 데이터만 저장
+            self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]
             self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
         elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
-            df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]  # 리스트 초기화하고 새 데이터만 저장
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+            self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]
             self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
         else:
             self.signal_logger.info("No new MACD cross")
 
+        # 유효 기간이 지난 크로스 제거 (5분봉 기준 25분)
         self._cleanup_old_crosses(symbol, current_time)
-        self.signal_logger.info(f"Current Cross History for {symbol}:")
-        self.signal_logger.info(f"EMA crosses: {self.cross_history[symbol]['ema']}")
-        self.signal_logger.info(f"MACD crosses: {self.cross_history[symbol]['macd']}")
+        
+        # 현재 저장된 크로스 정보 로깅
+        if self.cross_history[symbol]['ema']:
+            self.signal_logger.info(f"Current EMA cross: {self.cross_history[symbol]['ema'][0]}")
+        if self.cross_history[symbol]['macd']:
+            self.signal_logger.info(f"Current MACD cross: {self.cross_history[symbol]['macd'][0]}")
 
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
         try:
-            candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
-            cutoff_time = pd.to_datetime(current_time).tz_localize(None)  # timezone 정보 제거
+            # 5분봉 기준 25분(5캔들) 전의 시간 계산
+            cutoff_minutes = 25 if TIMEFRAME == '5m' else 5
+            cutoff_time = pd.to_datetime(current_time).tz_localize(None) - pd.Timedelta(minutes=cutoff_minutes)
 
-            self.cross_history[symbol]['ema'] = [
-                (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None), type_) 
-                for time, type_ in self.cross_history[symbol]['ema']
-                if (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None)) > cutoff_time
-            ]
-            
-            self.cross_history[symbol]['macd'] = [
-                (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None), type_) 
-                for time, type_ in self.cross_history[symbol]['macd']
-                if (pd.to_datetime(time).tz_localize(None) if isinstance(time, str) else time.tz_localize(None)) > cutoff_time
-            ]
+            # EMA 크로스 체크
+            if self.cross_history[symbol]['ema']:
+                cross_time = pd.to_datetime(self.cross_history[symbol]['ema'][0][0]).tz_localize(None)
+                if cross_time <= cutoff_time:
+                    self.cross_history[symbol]['ema'] = []
+                    self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
+
+            # MACD 크로스 체크
+            if self.cross_history[symbol]['macd']:
+                cross_time = pd.to_datetime(self.cross_history[symbol]['macd'][0][0]).tz_localize(None)
+                if cross_time <= cutoff_time:
+                    self.cross_history[symbol]['macd'] = []
+                    self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
+
         except Exception as e:
             self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
         
