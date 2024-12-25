@@ -665,6 +665,11 @@ class TradingBot:
             return False
 
     def run(self):
+        self.trading_logger.info(f"Bot started running\n"
+                            f"Leverage: {LEVERAGE}x\n"
+                            f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                            f"Trading Symbols: {TRADING_SYMBOLS}")
+    
         while True:
             try:
                 for symbol in TRADING_SYMBOLS:
@@ -674,42 +679,46 @@ class TradingBot:
                             continue
 
                         position_type, crosses = self.check_entry_conditions(df, symbol)
-                        if not (position_type and crosses):
-                            continue
-
-                        entry_price = df['close'].iloc[-1]
-                        self.execution_logger.info(f"\nOrder calculation for {symbol}:")
-                        self.execution_logger.info(f"Entry Price: {entry_price}")
                         
-                        stop_loss = self.determine_stop_loss(df, crosses, position_type)
-                        if not stop_loss:
-                            self.execution_logger.error(f"Stop Loss calculation failed for {symbol}")
-                            continue
+                        if position_type and crosses:
+                            # 현재 5분봉 시작 시점
+                            current_time = df.index[-1]
+                            candle_start = current_time.floor('5min')
+                            
+                            # 해당 5분봉의 종가를 진입가로 사용
+                            entry_idx = df.index.get_loc(candle_start)
+                            entry_price = df['close'].iloc[entry_idx]
+                            
+                            self.execution_logger.info(
+                                f"\nCalculating orders for {symbol}:\n"
+                                f"Candle time: {candle_start}\n"
+                                f"Entry price (close): {entry_price}"
+                            )
+                            
+                            stop_loss = self.determine_stop_loss(df, crosses, position_type)
+                            if not stop_loss:
+                                continue
 
-                        take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
-                        if not take_profit:
-                            self.execution_logger.error(f"Take Profit calculation failed for {symbol}")
-                            continue
+                            take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
+                            if not take_profit:
+                                continue
 
-                        self.execution_logger.info(
-                            f"Order parameters for {symbol}:\n"
-                            f"Position: {position_type.upper()}\n"
-                            f"Entry: {entry_price}\n"
-                            f"Stop Loss: {stop_loss} (Distance: {abs(entry_price - stop_loss)})\n"
-                            f"Take Profit: {take_profit} (Distance: {abs(entry_price - take_profit)})"
-                        )
-
-                        if not self.execute_trade(symbol, position_type, entry_price, stop_loss, take_profit):
-                            self.execution_logger.error(f"Order execution failed for {symbol}")
-
+                            success = self.execute_trade(
+                                symbol,
+                                position_type,
+                                entry_price,
+                                stop_loss,
+                                take_profit
+                            )
+                            
                     except Exception as e:
                         self.trading_logger.error(f"Error processing {symbol}: {e}")
                         continue
 
                 time.sleep(60)
-
+                
             except Exception as e:
-                self.trading_logger.error(f"Critical error: {e}")
+                self.trading_logger.error(f"Critical error in main loop: {e}")
                 time.sleep(60)
            
 if __name__ == "__main__":
