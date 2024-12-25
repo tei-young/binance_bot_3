@@ -320,23 +320,31 @@ class TradingBot:
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
         try:
+            # 문자열인 경우 datetime으로 변환
+            if isinstance(current_time, str):
+                current_time = pd.to_datetime(current_time)
+                
             # 5분봉 기준 25분(5캔들) 전의 시간 계산
             cutoff_minutes = 25 if TIMEFRAME == '5m' else 5
-            cutoff_time = pd.to_datetime(current_time).tz_localize(None) - pd.Timedelta(minutes=cutoff_minutes)
-
+            cutoff_time = current_time - pd.Timedelta(minutes=cutoff_minutes)
+            
             # EMA 크로스 체크
             if self.cross_history[symbol]['ema']:
-                cross_time = pd.to_datetime(self.cross_history[symbol]['ema'][0][0]).tz_localize(None)
-                if cross_time <= cutoff_time:
-                    self.cross_history[symbol]['ema'] = []
-                    self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
+                for time, type_ in self.cross_history[symbol]['ema']:
+                    cross_time = pd.to_datetime(time) if isinstance(time, str) else time
+                    if cross_time <= cutoff_time:
+                        self.cross_history[symbol]['ema'] = []
+                        self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
+                        break
 
             # MACD 크로스 체크
             if self.cross_history[symbol]['macd']:
-                cross_time = pd.to_datetime(self.cross_history[symbol]['macd'][0][0]).tz_localize(None)
-                if cross_time <= cutoff_time:
-                    self.cross_history[symbol]['macd'] = []
-                    self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
+                for time, type_ in self.cross_history[symbol]['macd']:
+                    cross_time = pd.to_datetime(time) if isinstance(time, str) else time
+                    if cross_time <= cutoff_time:
+                        self.cross_history[symbol]['macd'] = []
+                        self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
+                        break
 
         except Exception as e:
             self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
