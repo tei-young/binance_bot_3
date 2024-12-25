@@ -170,7 +170,7 @@ class TradingBot:
             free_usdt = balance['USDT']['free']
             
             if free_usdt < MARGIN_AMOUNT:
-                self.trading_logger.error(
+                self.execution_logger.error(  # trading_logger -> execution_logger
                     f"===== Insufficient Balance =====\n"
                     f"Symbol: {symbol}\n"
                     f"Required: {MARGIN_AMOUNT} USDT\n"
@@ -179,15 +179,14 @@ class TradingBot:
                 return False
             return True
         except Exception as e:
-            self.trading_logger.error(f"Balance check error: {str(e)}")
+            self.execution_logger.error(f"Balance check error: {str(e)}")  # 변경
             return False
         
     def check_symbol_tradable(self, symbol):
-        """심볼 거래 가능 여부 체크"""
         try:
             market = self.exchange.market(symbol)
             if not market['active']:
-                self.trading_logger.error(
+                self.execution_logger.error(  # trading_logger -> execution_logger
                     f"===== Symbol Not Tradable =====\n"
                     f"Symbol: {symbol}\n"
                     f"Status: Trading suspended or delisted"
@@ -195,7 +194,7 @@ class TradingBot:
                 return False
             return True
         except Exception as e:
-            self.trading_logger.error(f"Symbol status check error: {str(e)}")
+            self.execution_logger.error(f"Symbol status check error: {str(e)}")  # 변경
             return False
 
     def calculate_indicators(self, df, symbol):  
@@ -515,7 +514,7 @@ class TradingBot:
             market = self.exchange.market(symbol)
             min_amount = market['limits']['amount']['min']
             if position_size < min_amount:
-                self.trading_logger.error(
+                self.execution_logger.error(
                     f"===== Order Amount Too Small =====\n"
                     f"Symbol: {symbol}\n"
                     f"Minimum required: {min_amount}\n"
@@ -533,7 +532,7 @@ class TradingBot:
                     price=entry_price
                 )
             except Exception as e:
-                self.trading_logger.error(
+                self.execution_logger.error(
                     f"===== API Error =====\n"
                     f"Symbol: {symbol}\n"
                     f"Error: {str(e)}"
@@ -558,7 +557,7 @@ class TradingBot:
                     price=take_profit
                 )
             except Exception as e:
-                self.trading_logger.error(
+                self.execution_logger.error(
                     f"===== Stop Loss/Take Profit Order Error =====\n"
                     f"Symbol: {symbol}\n"
                     f"Error: {str(e)}"
