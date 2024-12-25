@@ -490,32 +490,34 @@ class TradingBot:
         return None, None
 
     def determine_stop_loss(self, df, crosses, position_type):
-        """손절가 계산"""
         try:
             if not crosses['ema'] or not crosses['macd']:
-                self.execution_logger.error("Missing cross data for stop loss calculation")
+                self.execution_logger.error("Missing cross data")
                 return None
                 
-            # 시간을 datetime으로 변환하고 df 인덱스와 매칭
-            ema_time = pd.to_datetime(crosses['ema'][0][0])
-            macd_time = pd.to_datetime(crosses['macd'][0][0])
+            # timezone 정보 제거하고 매칭
+            ema_time = pd.to_datetime(crosses['ema'][0][0]).tz_localize(None)
+            macd_time = pd.to_datetime(crosses['macd'][0][0]).tz_localize(None)
+            df_index = df.index.tz_localize(None)
                 
             try:
-                ema_idx = df.index.get_loc(ema_time)
-                macd_idx = df.index.get_loc(macd_time)
+                ema_idx = df_index.get_loc(ema_time)
+                macd_idx = df_index.get_loc(macd_time)
+                first_cross_idx = min(ema_idx, macd_idx)
+                
+                # SL, 가격 로깅 추가
+                stop_loss = df['low'].iloc[first_cross_idx] if position_type == 'long' else df['high'].iloc[first_cross_idx]
+                self.execution_logger.info(f"Cross time found - EMA: {ema_time}, MACD: {macd_time}")
+                self.execution_logger.info(f"Stop loss set at {stop_loss} from {first_cross_idx} index")
+                
+                return stop_loss
+                
             except KeyError as e:
-                self.execution_logger.error(f"Failed to find index for cross time: {e}")
+                self.execution_logger.error(f"Index match failed - EMA time: {ema_time}, MACD time: {macd_time}")
                 return None
 
-            first_cross_idx = min(ema_idx, macd_idx)
-            
-            stop_loss = df['low'].iloc[first_cross_idx] if position_type == 'long' else df['high'].iloc[first_cross_idx]
-            self.execution_logger.info(f"Stop loss calculated at index {first_cross_idx}: {stop_loss}")
-            
-            return stop_loss
-                
         except Exception as e:
-            self.execution_logger.error(f"Error calculating stop loss: {e}")
+            self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
 
     def calculate_take_profit(self, entry_price, stop_loss, position_type):
