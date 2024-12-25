@@ -278,7 +278,7 @@ class TradingBot:
     def store_cross_data(self, df, symbol):
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
-        formatted_time = current_time.floor('5min')  # '5T' -> '5min' 로 변경
+        formatted_time = current_time.floor('5min')
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
@@ -304,7 +304,7 @@ class TradingBot:
         else:
             self.signal_logger.info("No new EMA cross")
             
-        # MACD 크로스 체크 (동일한 구조)
+        # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
@@ -326,7 +326,6 @@ class TradingBot:
         else:
             self.signal_logger.info("No new MACD cross")
 
-        # 크로스 정리 및 로깅
         self._cleanup_old_crosses(symbol, current_time)
         
         if self.cross_history[symbol]['ema']:
@@ -418,7 +417,7 @@ class TradingBot:
             return None
 
     def check_cross_validity(self, symbol, position_type):
-            """크로스 유효성 확인"""
+        """크로스 유효성 확인"""
         cross_type = 'golden' if position_type == 'long' else 'dead'
         
         self.signal_logger.info(f"\nCross Validity Check for {symbol}:")
