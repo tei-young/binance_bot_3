@@ -492,30 +492,26 @@ class TradingBot:
     def determine_stop_loss(self, df, crosses, position_type):
         """손절가 계산"""
         try:
-            # cross_history에서 시간 추출
             if not crosses['ema'] or not crosses['macd']:
-                self.execution_logger.error(f"Missing cross data for stop loss calculation")
+                self.execution_logger.error("Missing cross data for stop loss calculation")
                 return None
                 
-            # 각각의 크로스 시간 추출 (crosses는 cross_history와 동일한 구조)
+            # 시간을 datetime으로 변환하고 df 인덱스와 매칭
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
                 
-            # 시간 기준으로 인덱스 찾기
-            ema_idx = df.index.get_loc(ema_time)
-            macd_idx = df.index.get_loc(macd_time)
-            
-            # 먼저 발생한 크로스의 캔들 선택
+            try:
+                ema_idx = df.index.get_loc(ema_time)
+                macd_idx = df.index.get_loc(macd_time)
+            except KeyError as e:
+                self.execution_logger.error(f"Failed to find index for cross time: {e}")
+                return None
+
             first_cross_idx = min(ema_idx, macd_idx)
             
-            # 손절가 설정
-            if position_type == 'long':
-                stop_loss = df['low'].iloc[first_cross_idx]
-                self.execution_logger.info(f"Stop loss set at low of first cross candle: {stop_loss}")
-            else:
-                stop_loss = df['high'].iloc[first_cross_idx]
-                self.execution_logger.info(f"Stop loss set at high of first cross candle: {stop_loss}")
-                
+            stop_loss = df['low'].iloc[first_cross_idx] if position_type == 'long' else df['high'].iloc[first_cross_idx]
+            self.execution_logger.info(f"Stop loss calculated at index {first_cross_idx}: {stop_loss}")
+            
             return stop_loss
                 
         except Exception as e:
@@ -657,72 +653,45 @@ class TradingBot:
             return False
 
     def run(self):
-        """메인 로직"""
-        self.trading_logger.info(f"Bot started running\n"
-                                f"Leverage: {LEVERAGE}x\n"
-                                f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
-                                f"Trading Symbols: {TRADING_SYMBOLS}")
-        
         while True:
             try:
                 for symbol in TRADING_SYMBOLS:
                     try:
-                        # 데이터 수집 및 지표 계산
                         df = self.get_historical_data(symbol)
                         if df is None:
                             continue
-                            
-                        # 진입 조건 확인
+
                         position_type, crosses = self.check_entry_conditions(df, symbol)
+                        if not (position_type and crosses):
+                            continue
+
+                        entry_price = df['close'].iloc[-1]
+                        stop_loss = self.determine_stop_loss(df, crosses, position_type)
+                        if not stop_loss:
+                            continue  # stop loss 계산 실패시 다음 심볼로
+
+                        take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
                         
-                        if position_type and crosses:
-                            try:
-                                # 주문 가격 계산
-                                entry_price = df['close'].iloc[-1]
-                                self.execution_logger.info(
-                                    f"\nCalculating order details for {symbol}:\n"
-                                    f"Position Type: {position_type.upper()}\n"
-                                    f"Entry Price: {entry_price}"
-                                )
-                                
-                                # 손절가 계산
-                                stop_loss = self.determine_stop_loss(df, crosses, position_type)
-                                if not stop_loss:
-                                    self.execution_logger.error(f"Failed to calculate stop loss for {symbol}")
-                                    continue
-                                
-                                # 익절가 계산
-                                take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
-                                self.execution_logger.info(
-                                    f"Order prices calculated for {symbol}:\n"
-                                    f"Stop Loss: {stop_loss}\n"
-                                    f"Take Profit: {take_profit}"
-                                )
-                                
-                                # 주문 실행
-                                success = self.execute_trade(
-                                    symbol,
-                                    position_type,
-                                    entry_price,
-                                    stop_loss,
-                                    take_profit
-                                )
-                                
-                                if not success:
-                                    self.execution_logger.error(f"Order execution failed for {symbol}")
-                                    
-                            except Exception as e:
-                                self.execution_logger.error(f"Order process failed for {symbol}: {e}")
-                    
+                        # 한번만 로깅
+                        self.execution_logger.info(
+                            f"Attempting order for {symbol}:\n"
+                            f"Position: {position_type.upper()}\n"
+                            f"Entry: {entry_price}\n"
+                            f"Stop Loss: {stop_loss}\n"
+                            f"Take Profit: {take_profit}"
+                        )
+
+                        if not self.execute_trade(symbol, position_type, entry_price, stop_loss, take_profit):
+                            self.execution_logger.error(f"Order execution failed for {symbol}")
+
                     except Exception as e:
                         self.trading_logger.error(f"Error processing {symbol}: {e}")
-                        continue  # 다음 심볼로 진행
-                
-                # 1분마다 체크
+                        continue
+
                 time.sleep(60)
-                
+
             except Exception as e:
-                self.trading_logger.error(f"Critical error in main loop: {e}")
+                self.trading_logger.error(f"Critical error: {e}")
                 time.sleep(60)
            
 if __name__ == "__main__":
