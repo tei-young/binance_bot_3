@@ -513,16 +513,17 @@ class TradingBot:
                 self.execution_logger.error("Missing cross data")
                 return None
                 
-            # 먼저 발생한 크로스 찾기
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
             
             first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
-            
-            # 저장된 high/low 사용
             stop_loss = first_cross[3] if position_type == 'long' else first_cross[2]
-            self.execution_logger.info(f"Stop loss set at {stop_loss} from cross at {first_cross[0]}")
             
+            self.execution_logger.info(
+                f"Stop Loss calculation for {position_type}:\n"
+                f"First cross time: {first_cross[0]}\n"
+                f"Stop loss price: {stop_loss}"
+            )
             return stop_loss
                 
         except Exception as e:
