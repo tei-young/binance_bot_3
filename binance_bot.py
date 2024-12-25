@@ -659,31 +659,47 @@ class TradingBot:
     def run(self):
         """메인 로직"""
         self.trading_logger.info(f"Bot started running\n"
-                            f"Leverage: {LEVERAGE}x\n"
-                            f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
-                            f"Trading Symbols: {TRADING_SYMBOLS}")
+                                f"Leverage: {LEVERAGE}x\n"
+                                f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                                f"Trading Symbols: {TRADING_SYMBOLS}")
         
         while True:
             try:
                 for symbol in TRADING_SYMBOLS:
-                    try:  # 각 심볼별 예외 처리
+                    try:
+                        # 데이터 수집 및 지표 계산
                         df = self.get_historical_data(symbol)
                         if df is None:
                             continue
                             
+                        # 진입 조건 확인
                         position_type, crosses = self.check_entry_conditions(df, symbol)
                         
                         if position_type and crosses:
-                            entry_price = df['close'].iloc[-1]
-                            stop_loss = self.determine_stop_loss(df, crosses, position_type)
-                            
-                            if stop_loss:
-                                take_profit = self.calculate_take_profit(
-                                    entry_price,
-                                    stop_loss,
-                                    position_type
+                            try:
+                                # 주문 가격 계산
+                                entry_price = df['close'].iloc[-1]
+                                self.execution_logger.info(
+                                    f"\nCalculating order details for {symbol}:\n"
+                                    f"Position Type: {position_type.upper()}\n"
+                                    f"Entry Price: {entry_price}"
                                 )
                                 
+                                # 손절가 계산
+                                stop_loss = self.determine_stop_loss(df, crosses, position_type)
+                                if not stop_loss:
+                                    self.execution_logger.error(f"Failed to calculate stop loss for {symbol}")
+                                    continue
+                                
+                                # 익절가 계산
+                                take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
+                                self.execution_logger.info(
+                                    f"Order prices calculated for {symbol}:\n"
+                                    f"Stop Loss: {stop_loss}\n"
+                                    f"Take Profit: {take_profit}"
+                                )
+                                
+                                # 주문 실행
                                 success = self.execute_trade(
                                     symbol,
                                     position_type,
@@ -692,6 +708,12 @@ class TradingBot:
                                     take_profit
                                 )
                                 
+                                if not success:
+                                    self.execution_logger.error(f"Order execution failed for {symbol}")
+                                    
+                            except Exception as e:
+                                self.execution_logger.error(f"Order process failed for {symbol}: {e}")
+                    
                     except Exception as e:
                         self.trading_logger.error(f"Error processing {symbol}: {e}")
                         continue  # 다음 심볼로 진행
@@ -701,8 +723,8 @@ class TradingBot:
                 
             except Exception as e:
                 self.trading_logger.error(f"Critical error in main loop: {e}")
-                time.sleep(60)  # 실제로 심각한 오류일 때만 sleep
-
+                time.sleep(60)
+           
 if __name__ == "__main__":
     API_KEY = "vf7WGUJSNjVUjsqH8H6BKj0eKpmIecotvP5S1NQlLy041py9LuuFsiK2rksaSomq"
     API_SECRET = "bBOK1BVnOYaVIvKUKoSQsTAt450Ps64WkjQjINDUXkpzvxmQDJUrZT9vSbvkwAKZ"
