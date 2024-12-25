@@ -277,44 +277,53 @@ class TradingBot:
 
     def store_cross_data(self, df, symbol):
         """크로스 데이터 저장"""
-        current_idx = len(df) - 1
-        current_time = df.index[current_idx]
-        formatted_time = current_time.strftime('%Y-%m-%d %H:%M')
+        try:
+            current_idx = len(df) - 1
+            current_time = df.index[current_idx]
+            formatted_time = current_time.strftime('%Y-%m-%d %H:%M')
 
-        self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
-        
-        # EMA 크로스 체크
-        if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
-            df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]
-            self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
-        elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]
-            self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
-        else:
-            self.signal_logger.info("No new EMA cross")
+            self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-        # MACD 크로스 체크
-        if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
-            df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]
-            self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
-        elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
+            # EMA 크로스 체크
+            if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
+                self.cross_history[symbol]['ema'] = [(formatted_time, 'golden')]
+                self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
+            elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+                self.cross_history[symbol]['ema'] = [(formatted_time, 'dead')]
+                self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
+            else:
+                self.signal_logger.info("No new EMA cross")
+                
+            # MACD 크로스 체크
+            if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
+                self.cross_history[symbol]['macd'] = [(formatted_time, 'golden')]
+                self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
+            elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
                 df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]
-            self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
-        else:
-            self.signal_logger.info("No new MACD cross")
+                self.cross_history[symbol]['macd'] = [(formatted_time, 'dead')]
+                self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
+            else:
+                self.signal_logger.info("No new MACD cross")
 
-        # 유효 기간이 지난 크로스 제거 (5분봉 기준 25분)
-        self._cleanup_old_crosses(symbol, current_time)
-        
-        # 현재 저장된 크로스 정보 로깅
-        if self.cross_history[symbol]['ema']:
-            self.signal_logger.info(f"Current EMA cross: {self.cross_history[symbol]['ema'][0]}")
-        if self.cross_history[symbol]['macd']:
-            self.signal_logger.info(f"Current MACD cross: {self.cross_history[symbol]['macd'][0]}")
+            try:
+                # 유효 기간이 지난 크로스 제거 시도
+                self._cleanup_old_crosses(symbol, current_time)
+            except Exception as e:
+                self.trading_logger.error(f"Error cleaning up crosses for {symbol}: {e}")
+                # cleanup 실패해도 계속 진행
+            
+            # 현재 저장된 크로스 정보 로깅
+            if self.cross_history[symbol]['ema']:
+                self.signal_logger.info(f"Current EMA cross: {self.cross_history[symbol]['ema'][0]}")
+            if self.cross_history[symbol]['macd']:
+                self.signal_logger.info(f"Current MACD cross: {self.cross_history[symbol]['macd'][0]}")
+
+        except Exception as e:
+            self.trading_logger.error(f"Error in store_cross_data for {symbol}: {e}")
+            # 크로스 저장 실패해도 다음 처리 계속 진행
 
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
@@ -332,7 +341,7 @@ class TradingBot:
 
             # 크로스 데이터 정리 함수
             def check_and_cleanup_crosses(cross_list, cross_type):
-                if not cross_list:  # 빈 리스트면 처리 불필요
+                if not cross_list:
                     return cross_list
                     
                 try:
@@ -354,7 +363,7 @@ class TradingBot:
             )
 
         except Exception as e:
-            self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
+            raise Exception(f"Error in cleanup_old_crosses: {e}")  # 상위로 에러 전파하여 store_cross_data에서 처리
         
     def find_matching_cross(self, symbol, cross_time, cross_type, base_indicator):
         """특정 크로스 시점 기준으로 전후 5캔들 내의 매칭되는 크로스 찾기"""
@@ -615,53 +624,49 @@ class TradingBot:
     def run(self):
         """메인 로직"""
         self.trading_logger.info(f"Bot started running\n"
-                               f"Leverage: {LEVERAGE}x\n"
-                               f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
-                               f"Trading Symbols: {TRADING_SYMBOLS}")
+                            f"Leverage: {LEVERAGE}x\n"
+                            f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                            f"Trading Symbols: {TRADING_SYMBOLS}")
         
         while True:
             try:
-                # 각 심볼에 대해 트레이딩 로직 실행
                 for symbol in TRADING_SYMBOLS:
-                    # 데이터 수집 및 지표 계산
-                    df = self.get_historical_data(symbol)
-                    if df is None:
-                        continue
-                        
-                    # 진입 조건 확인
-                    position_type, crosses = self.check_entry_conditions(df, symbol)
-                    
-                    if position_type and crosses:
-                        entry_price = df['close'].iloc[-1]
-                        stop_loss = self.determine_stop_loss(df, crosses, position_type)
-                        
-                        if stop_loss:
-                            take_profit = self.calculate_take_profit(
-                                entry_price,
-                                stop_loss,
-                                position_type
-                            )
+                    try:  # 각 심볼별 예외 처리
+                        df = self.get_historical_data(symbol)
+                        if df is None:
+                            continue
                             
-                            # 주문 실행
-                            success = self.execute_trade(
-                                symbol,
-                                position_type,
-                                entry_price,
-                                stop_loss,
-                                take_profit
-                            )
+                        position_type, crosses = self.check_entry_conditions(df, symbol)
+                        
+                        if position_type and crosses:
+                            entry_price = df['close'].iloc[-1]
+                            stop_loss = self.determine_stop_loss(df, crosses, position_type)
                             
-                            if success:
-                                self.trading_logger.info(
-                                    f"Successfully entered {position_type} position for {symbol}"
+                            if stop_loss:
+                                take_profit = self.calculate_take_profit(
+                                    entry_price,
+                                    stop_loss,
+                                    position_type
                                 )
+                                
+                                success = self.execute_trade(
+                                    symbol,
+                                    position_type,
+                                    entry_price,
+                                    stop_loss,
+                                    take_profit
+                                )
+                                
+                    except Exception as e:
+                        self.trading_logger.error(f"Error processing {symbol}: {e}")
+                        continue  # 다음 심볼로 진행
                 
                 # 1분마다 체크
                 time.sleep(60)
                 
             except Exception as e:
-                self.trading_logger.error(f"Error in main loop: {e}")
-                time.sleep(60)
+                self.trading_logger.error(f"Critical error in main loop: {e}")
+                time.sleep(60)  # 실제로 심각한 오류일 때만 sleep
 
 if __name__ == "__main__":
     API_KEY = "vf7WGUJSNjVUjsqH8H6BKj0eKpmIecotvP5S1NQlLy041py9LuuFsiK2rksaSomq"
