@@ -23,7 +23,7 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                 'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
                 'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 
                 'XRP/USDT', 'SOL/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 
-                'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT']
+                'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT']
 
 class TradingBot:
     def __init__(self, api_key, api_secret):
@@ -319,31 +319,41 @@ class TradingBot:
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
         try:
-            # 문자열인 경우 datetime으로 변환
+            # 현재 시간을 timezone-naive datetime으로 변환
             if isinstance(current_time, str):
                 current_time = pd.to_datetime(current_time)
-                
+            
+            # timezone 정보가 있다면 제거
+            if current_time.tzinfo is not None:
+                current_time = current_time.tz_localize(None)
+            
             # 5분봉 기준 25분(5캔들) 전의 시간 계산
             cutoff_minutes = 25 if TIMEFRAME == '5m' else 5
             cutoff_time = current_time - pd.Timedelta(minutes=cutoff_minutes)
             
-            # EMA 크로스 체크
+            # EMA 크로스 정리
             if self.cross_history[symbol]['ema']:
-                for time, type_ in self.cross_history[symbol]['ema']:
-                    cross_time = pd.to_datetime(time) if isinstance(time, str) else time
-                    if cross_time <= cutoff_time:
-                        self.cross_history[symbol]['ema'] = []
-                        self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
-                        break
+                cross_time = self.cross_history[symbol]['ema'][0][0]
+                if isinstance(cross_time, str):
+                    cross_time = pd.to_datetime(cross_time)
+                if cross_time.tzinfo is not None:
+                    cross_time = cross_time.tz_localize(None)
+                
+                if cross_time <= cutoff_time:
+                    self.cross_history[symbol]['ema'] = []
+                    self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
 
-            # MACD 크로스 체크
+            # MACD 크로스 정리
             if self.cross_history[symbol]['macd']:
-                for time, type_ in self.cross_history[symbol]['macd']:
-                    cross_time = pd.to_datetime(time) if isinstance(time, str) else time
-                    if cross_time <= cutoff_time:
-                        self.cross_history[symbol]['macd'] = []
-                        self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
-                        break
+                cross_time = self.cross_history[symbol]['macd'][0][0]
+                if isinstance(cross_time, str):
+                    cross_time = pd.to_datetime(cross_time)
+                if cross_time.tzinfo is not None:
+                    cross_time = cross_time.tz_localize(None)
+                
+                if cross_time <= cutoff_time:
+                    self.cross_history[symbol]['macd'] = []
+                    self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
 
         except Exception as e:
             self.trading_logger.error(f"Error in cleanup_old_crosses: {e}")
