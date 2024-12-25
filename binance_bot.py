@@ -418,49 +418,49 @@ class TradingBot:
             return None
 
     def check_cross_validity(self, symbol, position_type):
-        """크로스 유효성 확인"""
+            """크로스 유효성 확인"""
         cross_type = 'golden' if position_type == 'long' else 'dead'
-        valid_pairs = []
-
-        # 디버그 로깅 추가
+        
         self.signal_logger.info(f"\nCross Validity Check for {symbol}:")
         self.signal_logger.info(f"Position Type: {position_type}")
         self.signal_logger.info(f"Expected Cross Type: {cross_type}")
         self.signal_logger.info(f"Stored EMA crosses: {self.cross_history[symbol]['ema']}")
         self.signal_logger.info(f"Stored MACD crosses: {self.cross_history[symbol]['macd']}")
 
-        # 각 EMA 크로스에 대해 ±5캔들 범위 내의 MACD 크로스 찾기
-        for ema_time, ema_type in self.cross_history[symbol]['ema']:
-            if ema_type == cross_type:
-                matching_macd = self.find_matching_cross(symbol, ema_time, cross_type, 'ema')
-                if matching_macd:
-                    valid_pairs.append((ema_time, matching_macd))
-                    self.signal_logger.info(f"Found matching pair - EMA: {ema_time}, MACD: {matching_macd}")
+        try:
+            # 저장된 크로스 확인
+            if not self.cross_history[symbol]['ema'] or not self.cross_history[symbol]['macd']:
+                return False
 
-        # 각 MACD 크로스에 대해 ±5캔들 범위 내의 EMA 크로스 찾기
-        for macd_time, macd_type in self.cross_history[symbol]['macd']:
-            if macd_type == cross_type:
-                matching_ema = self.find_matching_cross(symbol, macd_time, cross_type, 'macd')
-                if matching_ema:
-                    pair = tuple(sorted([macd_time, matching_ema]))
-                    if pair not in valid_pairs:
-                        valid_pairs.append(pair)
-                        self.signal_logger.info(f"Found matching pair - MACD: {macd_time}, EMA: {matching_ema}")
-
-        if valid_pairs:
-            entry_message = (
-                f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
-                f"Symbol: {symbol}\n"
-                f"Position: {position_type.upper()}\n"
-                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"Cross Pairs: {valid_pairs}\n"
-                f"{'='*50}"
-            )
-            self.signal_logger.info(entry_message)
-            self.execution_logger.info(entry_message)
-            return True
-        else:
-            self.signal_logger.info(f"No valid cross pairs found for {symbol}")
+            # 크로스 타입 체크
+            ema_cross = self.cross_history[symbol]['ema'][0]
+            macd_cross = self.cross_history[symbol]['macd'][0]
+            
+            if ema_cross[1] != cross_type or macd_cross[1] != cross_type:
+                return False
+                
+            # 시간 차이 체크 (25분 이내)
+            ema_time = pd.to_datetime(ema_cross[0])
+            macd_time = pd.to_datetime(macd_cross[0])
+            time_diff = abs((ema_time - macd_time).total_seconds() / 60)
+            
+            if time_diff <= 25:  # 5분봉 기준 5캔들
+                entry_message = (
+                    f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position: {position_type.upper()}\n"
+                    f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"Cross Pairs: [{ema_cross[0].strftime('%Y-%m-%d %H:%M'), macd_cross[0].strftime('%Y-%m-%d %H:%M')}]\n"
+                    f"{'='*50}"
+                )
+                self.signal_logger.info(entry_message)
+                self.execution_logger.info(entry_message)
+                return True
+                
+            return False
+            
+        except Exception as e:
+            self.signal_logger.error(f"Error in cross validity check: {e}")
             return False
 
     def check_entry_conditions(self, df, symbol):
