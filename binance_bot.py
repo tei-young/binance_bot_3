@@ -87,39 +87,57 @@ class TradingBot:
         self.execution_logger = setup_logger('execution', 'executions.log')
     
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
-        """Jurik MA 구현"""
-        if phase < -100:
-            phase_ratio = 0.5
-        elif phase > 100:
-            phase_ratio = 2.5
-        else:
-            phase_ratio = phase / 100 + 1.5
+        """Jurik Moving Average 구현"""
+        try:
+            # Phase ratio 계산
+            phase_ratio = 0.5 if phase < -100 else 2.5 if phase > 100 else phase / 100 + 1.5
             
-        beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
-        alpha = pow(beta, power)
-        return alpha, beta, phase_ratio
+            # Beta, Alpha 계산
+            beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
+            alpha = pow(beta, power)
+            
+            # JMA 계산을 위한 초기 시리즈
+            e0 = pd.Series(index=data.index, dtype=float)
+            e1 = pd.Series(index=data.index, dtype=float)
+            e2 = pd.Series(index=data.index, dtype=float)
+            jma = pd.Series(index=data.index, dtype=float)
+            
+            # 첫 값 초기화
+            e0.iloc[0] = data.iloc[0]
+            e1.iloc[0] = 0
+            e2.iloc[0] = 0
+            jma.iloc[0] = data.iloc[0]
+            
+            # JMA 계산
+            for i in range(1, len(data)):
+                e0.iloc[i] = (1 - alpha) * data.iloc[i] + alpha * e0.iloc[i-1]
+                e1.iloc[i] = (data.iloc[i] - e0.iloc[i]) * (1 - beta) + beta * e1.iloc[i-1]
+                e2.iloc[i] = (e0.iloc[i] + phase_ratio * e1.iloc[i] - jma.iloc[i-1]) * pow(1 - alpha, 2) + pow(alpha, 2) * e2.iloc[i-1]
+                jma.iloc[i] = e2.iloc[i] + jma.iloc[i-1]
+            
+            return jma
+        except Exception as e:
+            self.trading_logger.error(f"Error calculating JMA: {e}")
+            return None
 
-    def calculate_slope(self, df, period=14):
+    def calculate_angle(self, data, length=14):
         """각도 계산"""
         try:
             # ATR 계산
             atr = ta.volatility.average_true_range(
-                df['high'],
-                df['low'], 
-                df['close'],
-                period
+                self.df['high'],
+                self.df['low'],
+                self.df['close'],
+                length
             )
             
-            # 가격 차이 계산
-            price_diff = df['close'] - df['close'].shift(1)
+            # 각도 계산 (트레이딩뷰와 동일한 방식)
+            diff = data - data.shift(1)
+            angle = (180 / np.pi) * np.arctan(diff / atr)
             
-            # 각도 계산
-            angle = (180 / np.pi) * np.arctan(price_diff / atr)
-            
-            return angle.iloc[-1]  # 가장 최근 값만 반환
-            
+            return angle
         except Exception as e:
-            self.trading_logger.error(f"Error calculating slope: {e}")
+            self.trading_logger.error(f"Error calculating angle: {e}")
             return None
 
     def get_historical_data(self, symbol):
@@ -135,9 +153,10 @@ class TradingBot:
                 ohlcv,
                 columns=['timestamp', 'open', 'high', 'low', 'close', 'volume']
             )
-            # timestamp를 인덱스로 설정
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             df.set_index('timestamp', inplace=True)
+            
+            self.trading_logger.info(f"Retrieved data for {symbol}: {df.shape[0]} rows")
             return df
         except Exception as e:
             self.trading_logger.error(f"Error fetching data for {symbol}: {e}")
@@ -178,54 +197,42 @@ class TradingBot:
             self.trading_logger.error(f"Symbol status check error: {str(e)}")
             return False
 
-    def calculate_indicators(self, df):
-        """지표 계산"""
+    def calculate_indicators(self, df, symbol):  
         try:
-            # SMA 200 계산
-            df['sma200'] = ta.trend.sma_indicator(df['close'], window=200)
+            # 데이터 확인 로깅
+            self.trading_logger.info(f"Calculating indicators for {symbol}")
+            self.trading_logger.info(f"DataFrame columns: {df.columns.tolist()}")
             
-            # EMA 계산
+            # 기본 지표 계산
+            df['sma200'] = ta.trend.sma_indicator(df['close'], window=200)
             df['ema12'] = ta.trend.ema_indicator(df['close'], window=12)
             df['ema26'] = ta.trend.ema_indicator(df['close'], window=26)
             
-            # MACD 계산
-            macd = ta.trend.MACD(
-                df['close'],
-                window_fast=12,
-                window_slow=26,
-                window_sign=9
-            )
+            macd = ta.trend.MACD(df['close'], window_fast=12, window_slow=26, window_sign=9)
             df['macd'] = macd.macd()
             df['macd_signal'] = macd.macd_signal()
             
-            # JMA slope 계산 및 MA angles JD 색상 결정
+            # JMA 계산
             df['jma'] = self.calculate_jurik_ma(df['close'])
-            df['jma_slope'] = self.calculate_slope(df['jma'])
-            df['mangles_jd_color'] = np.where(
-                df['jma_slope'] > THRESHOLD/100,
-                'green',
-                'red'
-            )
+            if df['jma'] is None:
+                return None
             
-            # JMA slope 계산 과정 로깅
-            df['jma'] = self.calculate_jurik_ma(df['close'])
-            df['jma_slope'] = self.calculate_slope(df['jma'])
-            
-            self.signal_logger.info(f"\nJMA Slope Debug:")
+            # Angle 계산
+            jma_slope = self.calculate_angle(df['jma'])
+            if jma_slope is None:
+                return None
+                
+            # 디버그 로깅
+            self.signal_logger.info(f"\nJMA Slope Debug for {symbol}:")
             self.signal_logger.info(f"Current JMA value: {df['jma'].iloc[-1]}")
             self.signal_logger.info(f"Previous JMA value: {df['jma'].iloc[-2]}")
-            self.signal_logger.info(f"Calculated slope: {df['jma_slope'].iloc[-1]}")
-            self.signal_logger.info(f"Threshold comparison: {df['jma_slope'].iloc[-1]} > {THRESHOLD/100}")
+            self.signal_logger.info(f"Calculated slope: {jma_slope.iloc[-1]}")
+            self.signal_logger.info(f"Threshold comparison: {jma_slope.iloc[-1]} > {THRESHOLD}")
             
             # MA angles JD 색상 결정
-            df['mangles_jd_color'] = np.where(
-                df['jma_slope'] > THRESHOLD/100,
-                'green',
-                'red'
-            )
+            df['mangles_jd_color'] = np.where(jma_slope > THRESHOLD, 'green', 'red')
             
             return df
-            
         except Exception as e:
             self.trading_logger.error(f"Error calculating indicators: {e}")
             return None
@@ -365,14 +372,18 @@ class TradingBot:
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
-        # 1. 크로스 데이터 체크 및 저장
+        # 1-1. 지표 계산 먼저
+        df = self.calculate_indicators(df, symbol)
+        if df is None:
+            return None, None
+        
+        # 1-2. 크로스 데이터 저장
         self.store_cross_data(df, symbol)
         
-        current_idx = len(df) - 1
-        current_price = df['close'].iloc[-1]
-        
-        # 2. SMA200 기준 추세 확인
+        # 2. 현재 가격 확인 및 SMA 200 추세 확인
+        current_price = df['close'].iloc[-1]  # 여기서 먼저 정의
         above_sma200 = current_price > df['sma200'].iloc[-1]
+        
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
             f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
@@ -512,50 +523,50 @@ class TradingBot:
 
     def run(self):
         """메인 로직"""
-        self.trading_logger.info(
-            f"Bot started running\n"
-            f"Leverage: {LEVERAGE}x\n"
-            f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
-            f"Trading Symbols: {TRADING_SYMBOLS}"
-        )
+        self.trading_logger.info(f"Bot started running\n"
+                               f"Leverage: {LEVERAGE}x\n"
+                               f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                               f"Trading Symbols: {TRADING_SYMBOLS}")
         
         while True:
             try:
+                # 각 심볼에 대해 트레이딩 로직 실행
                 for symbol in TRADING_SYMBOLS:
                     # 데이터 수집 및 지표 계산
                     df = self.get_historical_data(symbol)
                     if df is None:
                         continue
                         
-                    df = self.calculate_indicators(df)
-                    if df is None:
-                        continue
-                    
                     # 진입 조건 확인
                     position_type, crosses = self.check_entry_conditions(df, symbol)
                     
                     if position_type and crosses:
                         entry_price = df['close'].iloc[-1]
                         stop_loss = self.determine_stop_loss(df, crosses, position_type)
-                        take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
                         
-                        # 주문 실행
-                        success = self.execute_trade(
-                            symbol,
-                            position_type,
-                            entry_price,
-                            stop_loss,
-                            take_profit
-                        )
-                        
-                        if success:
-                            self.trading_logger.info(
-                                f"Successfully entered {position_type} position for {symbol}"
+                        if stop_loss:
+                            take_profit = self.calculate_take_profit(
+                                entry_price,
+                                stop_loss,
+                                position_type
                             )
+                            
+                            # 주문 실행
+                            success = self.execute_trade(
+                                symbol,
+                                position_type,
+                                entry_price,
+                                stop_loss,
+                                take_profit
+                            )
+                            
+                            if success:
+                                self.trading_logger.info(
+                                    f"Successfully entered {position_type} position for {symbol}"
+                                )
                 
-                # 타임프레임에 따른 대기
-                sleep_time = 60
-                time.sleep(sleep_time)
+                # 1분마다 체크
+                time.sleep(60)
                 
             except Exception as e:
                 self.trading_logger.error(f"Error in main loop: {e}")
