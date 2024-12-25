@@ -402,16 +402,16 @@ class TradingBot:
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
-        # 1-1. 지표 계산 먼저
+        # 1. 지표 계산 먼저
         df = self.calculate_indicators(df, symbol)
         if df is None:
             return None, None
         
-        # 1-2. 크로스 데이터 저장
+        # 2. 크로스 데이터 저장
         self.store_cross_data(df, symbol)
         
-        # 2. 현재 가격 확인 및 SMA 200 추세 확인
-        current_price = df['close'].iloc[-1]  # 여기서 먼저 정의
+        # 현재 가격 확인 및 추세 확인
+        current_price = df['close'].iloc[-1]
         above_sma200 = current_price > df['sma200'].iloc[-1]
         
         self.signal_logger.info(
@@ -419,7 +419,7 @@ class TradingBot:
             f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
         )
         
-        # 3. MA angles JD 색상 확인
+        # MA angles JD 색상 확인
         mangles_color = df['mangles_jd_color'].iloc[-1]
         mangles_valid = (above_sma200 and mangles_color == 'green') or (not above_sma200 and mangles_color == 'red')
         self.signal_logger.info(
@@ -431,7 +431,16 @@ class TradingBot:
         
         position_type = 'long' if above_sma200 else 'short'
         if self.check_cross_validity(symbol, position_type):
-            self.signal_logger.info(f"=== ENTRY SIGNAL: {symbol} {position_type.upper()} ===")
+            entry_message = (
+                f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
+                f"Symbol: {symbol}\n"
+                f"Position: {position_type.upper()}\n"
+                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Price: {current_price}\n"
+                f"{'='*50}"
+            )
+            self.signal_logger.info(entry_message)
+            self.execution_logger.info(entry_message)
             return position_type, self.cross_history[symbol]
         
         return None, None
@@ -439,13 +448,14 @@ class TradingBot:
     def determine_stop_loss(self, df, crosses, position_type):
         """손절가 계산"""
         try:
-            # 크로스 데이터에서 시간 추출
-            ema_time = crosses['ema'][0][0] if crosses['ema'] else None
-            macd_time = crosses['macd'][0][0] if crosses['macd'] else None
-            
-            if not ema_time or not macd_time:
+            # cross_history에서 시간 추출
+            if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error(f"Missing cross data for stop loss calculation")
                 return None
+                
+            # 각각의 크로스 시간 추출 (crosses는 cross_history와 동일한 구조)
+            ema_time = pd.to_datetime(crosses['ema'][0][0])
+            macd_time = pd.to_datetime(crosses['macd'][0][0])
                 
             # 시간 기준으로 인덱스 찾기
             ema_idx = df.index.get_loc(ema_time)
@@ -454,10 +464,15 @@ class TradingBot:
             # 먼저 발생한 크로스의 캔들 선택
             first_cross_idx = min(ema_idx, macd_idx)
             
+            # 손절가 설정
             if position_type == 'long':
-                return df['low'].iloc[first_cross_idx]
+                stop_loss = df['low'].iloc[first_cross_idx]
+                self.execution_logger.info(f"Stop loss set at low of first cross candle: {stop_loss}")
             else:
-                return df['high'].iloc[first_cross_idx]
+                stop_loss = df['high'].iloc[first_cross_idx]
+                self.execution_logger.info(f"Stop loss set at high of first cross candle: {stop_loss}")
+                
+            return stop_loss
                 
         except Exception as e:
             self.execution_logger.error(f"Error calculating stop loss: {e}")
