@@ -278,8 +278,7 @@ class TradingBot:
     def store_cross_data(self, df, symbol):
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
-        # 5분 단위로 내림
-        formatted_time = current_time.floor('5T')
+        formatted_time = current_time.floor('5min')  # '5T' -> '5min' 로 변경
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
