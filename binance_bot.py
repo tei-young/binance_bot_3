@@ -532,11 +532,22 @@ class TradingBot:
 
     def calculate_take_profit(self, entry_price, stop_loss, position_type):
         """목표가 계산"""
-        stop_loss_distance = abs(entry_price - stop_loss)
-        if position_type == 'long':
-            return entry_price + (stop_loss_distance * 2)
-        else:
-            return entry_price - (stop_loss_distance * 2)
+        try:
+            stop_loss_distance = abs(entry_price - stop_loss)
+            take_profit = entry_price + (stop_loss_distance * 2) if position_type == 'long' else entry_price - (stop_loss_distance * 2)
+            
+            self.execution_logger.info(
+                f"Take Profit calculation:\n"
+                f"Entry: {entry_price}\n"
+                f"Stop Loss: {stop_loss}\n"
+                f"SL Distance: {stop_loss_distance}\n"
+                f"Take Profit: {take_profit}"
+            )
+            return take_profit
+        
+        except Exception as e:
+            self.execution_logger.error(f"Take profit calculation error: {e}")
+            return None
 
     def check_existing_position(self, symbol):
         """현재 보유 중인 포지션 확인"""
