@@ -411,21 +411,20 @@ class TradingBot:
     def determine_stop_loss(self, df, crosses, position_type):
         """손절가 계산"""
         try:
-            # crosses가 None이거나 필요한 인덱스가 없는 경우 체크
-            if not crosses or 'ema_cross_idx' not in crosses or 'macd_cross_idx' not in crosses:
-                self.trading_logger.error(f"Invalid crosses data: {crosses}")
+            # 크로스 데이터에서 시간 추출
+            ema_time = crosses['ema'][0][0] if crosses['ema'] else None
+            macd_time = crosses['macd'][0][0] if crosses['macd'] else None
+            
+            if not ema_time or not macd_time:
+                self.execution_logger.error(f"Missing cross data for stop loss calculation")
                 return None
                 
-            # None 값 체크
-            if crosses['ema_cross_idx'] is None or crosses['macd_cross_idx'] is None:
-                self.trading_logger.error("Cross index is None")
-                return None
-                
-            # 먼저 발생한 크로스 찾기
-            first_cross_idx = min(
-                crosses['ema_cross_idx'],
-                crosses['macd_cross_idx']
-            )
+            # 시간 기준으로 인덱스 찾기
+            ema_idx = df.index.get_loc(ema_time)
+            macd_idx = df.index.get_loc(macd_time)
+            
+            # 먼저 발생한 크로스의 캔들 선택
+            first_cross_idx = min(ema_idx, macd_idx)
             
             if position_type == 'long':
                 return df['low'].iloc[first_cross_idx]
@@ -433,7 +432,7 @@ class TradingBot:
                 return df['high'].iloc[first_cross_idx]
                 
         except Exception as e:
-            self.trading_logger.error(f"Error determining stop loss: {e}")
+            self.execution_logger.error(f"Error calculating stop loss: {e}")
             return None
 
     def calculate_take_profit(self, entry_price, stop_loss, position_type):
@@ -468,13 +467,19 @@ class TradingBot:
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
         try:
-            # 기존 포지션 체크
-            if self.check_existing_position(symbol):
-                self.trading_logger.info(f"Skip trading for {symbol} due to existing position")
+            # 손절가 없으면 진입 불가
+            if stop_loss is None:
+                self.execution_logger.error(f"Failed to enter position for {symbol}: Stop loss calculation failed")
                 return False
-            
+                
             # 1. 잔액 확인
             if not self.check_balance(symbol):
+                self.execution_logger.error(f"Failed to enter position for {symbol}: Insufficient balance")
+                return False
+                
+            # 기존 포지션 체크
+            if self.check_existing_position(symbol):
+                self.execution_logger.error(f"Failed to enter position for {symbol}: Position already exists")
                 return False
 
             # 2. 거래 가능 상태 확인
