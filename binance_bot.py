@@ -408,16 +408,31 @@ class TradingBot:
 
     def determine_stop_loss(self, df, crosses, position_type):
         """손절가 계산"""
-        # 먼저 발생한 크로스 찾기
-        first_cross_idx = min(
-            crosses['ema_cross_idx'],
-            crosses['macd_cross_idx']
-        )
-        
-        if position_type == 'long':
-            return df['low'].iloc[first_cross_idx]
-        else:
-            return df['high'].iloc[first_cross_idx]
+        try:
+            # crosses가 None이거나 필요한 인덱스가 없는 경우 체크
+            if not crosses or 'ema_cross_idx' not in crosses or 'macd_cross_idx' not in crosses:
+                self.trading_logger.error(f"Invalid crosses data: {crosses}")
+                return None
+                
+            # None 값 체크
+            if crosses['ema_cross_idx'] is None or crosses['macd_cross_idx'] is None:
+                self.trading_logger.error("Cross index is None")
+                return None
+                
+            # 먼저 발생한 크로스 찾기
+            first_cross_idx = min(
+                crosses['ema_cross_idx'],
+                crosses['macd_cross_idx']
+            )
+            
+            if position_type == 'long':
+                return df['low'].iloc[first_cross_idx]
+            else:
+                return df['high'].iloc[first_cross_idx]
+                
+        except Exception as e:
+            self.trading_logger.error(f"Error determining stop loss: {e}")
+            return None
 
     def calculate_take_profit(self, entry_price, stop_loss, position_type):
         """목표가 계산"""
