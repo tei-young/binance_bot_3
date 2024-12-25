@@ -1,6 +1,8 @@
 # binance_bot_3
 EMA, MACD, ma angles 로 승률 높은 로직 구현 시도
 
+> https://youtu.be/jYU_or14VTk?si=pbge8aL0YZIw3i6q
+
 ## 적용 가능한 환경
 
 
