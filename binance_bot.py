@@ -120,18 +120,18 @@ class TradingBot:
             self.trading_logger.error(f"Error calculating JMA: {e}")
             return None
 
-    def calculate_angle(self, data, length=14):
+    def calculate_angle(self, data, df, length=14):  # df 파라미터 추가
         """각도 계산"""
         try:
             # ATR 계산
             atr = ta.volatility.average_true_range(
-                self.df['high'],
-                self.df['low'],
-                self.df['close'],
+                df['high'],  # self.df -> df
+                df['low'],   # self.df -> df
+                df['close'], # self.df -> df
                 length
             )
             
-            # 각도 계산 (트레이딩뷰와 동일한 방식)
+            # 각도 계산
             diff = data - data.shift(1)
             angle = (180 / np.pi) * np.arctan(diff / atr)
             
@@ -218,7 +218,7 @@ class TradingBot:
                 return None
             
             # Angle 계산
-            jma_slope = self.calculate_angle(df['jma'])
+            jma_slope = self.calculate_angle(df['jma'], df)  # df 전달
             if jma_slope is None:
                 return None
                 
