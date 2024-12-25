@@ -319,38 +319,36 @@ class TradingBot:
     def _cleanup_old_crosses(self, symbol, current_time):
         """오래된 크로스 데이터 제거"""
         try:
-            # 현재 시간을 timezone-naive datetime으로 변환
+            # current_time을 datetime으로 변환
             if isinstance(current_time, str):
                 current_time = pd.to_datetime(current_time)
+            current_time = pd.to_datetime(current_time)  # 모든 경우에 대해 변환 시도
             
-            # timezone 정보가 있다면 제거
             if current_time.tzinfo is not None:
                 current_time = current_time.tz_localize(None)
             
             # 5분봉 기준 25분(5캔들) 전의 시간 계산
             cutoff_minutes = 25 if TIMEFRAME == '5m' else 5
             cutoff_time = current_time - pd.Timedelta(minutes=cutoff_minutes)
+
+            def convert_time(time_value):
+                """시간값을 통일된 형식으로 변환"""
+                if isinstance(time_value, str):
+                    time_value = pd.to_datetime(time_value)
+                if time_value.tzinfo is not None:
+                    time_value = time_value.tz_localize(None)
+                return time_value
             
             # EMA 크로스 정리
             if self.cross_history[symbol]['ema']:
-                cross_time = self.cross_history[symbol]['ema'][0][0]
-                if isinstance(cross_time, str):
-                    cross_time = pd.to_datetime(cross_time)
-                if cross_time.tzinfo is not None:
-                    cross_time = cross_time.tz_localize(None)
-                
+                cross_time = convert_time(self.cross_history[symbol]['ema'][0][0])
                 if cross_time <= cutoff_time:
                     self.cross_history[symbol]['ema'] = []
                     self.signal_logger.info(f"Removed expired EMA cross from {cross_time}")
 
             # MACD 크로스 정리
             if self.cross_history[symbol]['macd']:
-                cross_time = self.cross_history[symbol]['macd'][0][0]
-                if isinstance(cross_time, str):
-                    cross_time = pd.to_datetime(cross_time)
-                if cross_time.tzinfo is not None:
-                    cross_time = cross_time.tz_localize(None)
-                
+                cross_time = convert_time(self.cross_history[symbol]['macd'][0][0])
                 if cross_time <= cutoff_time:
                     self.cross_history[symbol]['macd'] = []
                     self.signal_logger.info(f"Removed expired MACD cross from {cross_time}")
