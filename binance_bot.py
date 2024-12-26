@@ -22,13 +22,13 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 
                 'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
                 'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 
-                'XRP/USDT', 'SOL/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 
+                'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT']
 
 class TradingBot:
     def __init__(self, api_key, api_secret):
         self.setup_logging()
-        
+    
         self.exchange = ccxt.binance({
             'apiKey': api_key,
             'secret': api_secret,
@@ -47,6 +47,9 @@ class TradingBot:
             }
             for symbol in TRADING_SYMBOLS
         }
+
+        # 마지막 체크 시간 저장용 딕셔너리 추가
+        self.last_signal_check = {symbol: None for symbol in TRADING_SYMBOLS}
         
         # 레버리지 설정
         for symbol in TRADING_SYMBOLS:
@@ -276,14 +279,15 @@ class TradingBot:
         return crosses_found
 
     def store_cross_data(self, df, symbol):
+        """크로스 데이터 저장"""
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
         formatted_time = current_time.floor('5min')
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
-        # EMA 크로스 체크
-        if (df['ema12'].iloc[current_idx-1] <= df['ema26'].iloc[current_idx-1] and 
+        # EMA 크로스 체크 - 직전 캔들과 현재 캔들만 비교
+        if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
             self.cross_history[symbol]['ema'] = [(
                 formatted_time,
@@ -292,8 +296,8 @@ class TradingBot:
                 df['low'].iloc[current_idx]
             )]
             self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
-        elif (df['ema12'].iloc[current_idx-1] >= df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+        elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
+            df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
             self.cross_history[symbol]['ema'] = [(
                 formatted_time,
                 'dead',
@@ -304,8 +308,8 @@ class TradingBot:
         else:
             self.signal_logger.info("No new EMA cross")
             
-        # MACD 크로스 체크
-        if (df['macd'].iloc[current_idx-1] <= df['macd_signal'].iloc[current_idx-1] and 
+        # MACD 크로스 체크 - 직전 캔들과 현재 캔들만 비교
+        if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
                 formatted_time,
@@ -314,8 +318,8 @@ class TradingBot:
                 df['low'].iloc[current_idx]
             )]
             self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
-        elif (df['macd'].iloc[current_idx-1] >= df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+        elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
+            df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
                 formatted_time,
                 'dead',
@@ -326,8 +330,10 @@ class TradingBot:
         else:
             self.signal_logger.info("No new MACD cross")
 
+        # 기존 크로스 정리
         self._cleanup_old_crosses(symbol, current_time)
         
+        # 현재 저장된 크로스 정보 로깅
         if self.cross_history[symbol]['ema']:
             self.signal_logger.info(
                 f"Current EMA cross: Time={self.cross_history[symbol]['ema'][0][0]}, "
@@ -700,12 +706,18 @@ class TradingBot:
                         if df is None:
                             continue
 
+                        current_time = df.index[-1].floor('5min')
+                        
+                        # 같은 시간대에 이미 체크했다면 스킵
+                        if (self.last_signal_check[symbol] is not None and 
+                            self.last_signal_check[symbol] == current_time):
+                            continue
+
                         position_type, crosses = self.check_entry_conditions(df, symbol)
                         
                         if position_type and crosses:
                             # 현재 5분봉 시작 시점
-                            current_time = df.index[-1]
-                            candle_start = current_time.floor('5min')
+                            candle_start = current_time
                             
                             # 해당 5분봉의 종가를 진입가로 사용
                             entry_idx = df.index.get_loc(candle_start)
@@ -732,6 +744,9 @@ class TradingBot:
                                 stop_loss,
                                 take_profit
                             )
+
+                        # 체크 시간 업데이트
+                        self.last_signal_check[symbol] = current_time
                             
                     except Exception as e:
                         self.trading_logger.error(f"Error processing {symbol}: {e}")
