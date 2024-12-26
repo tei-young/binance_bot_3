@@ -552,23 +552,34 @@ class TradingBot:
     def check_existing_position(self, symbol):
         """현재 보유 중인 포지션 확인"""
         try:
-            position = self.exchange.fetch_position(symbol)
+            # 심볼별 현재 포지션 확인
+            positions = self.exchange.fetch_positions([symbol])
             
-            # 포지션 수량이 있는지 확인
-            if position and abs(float(position['contracts'] or 0)) > 0:
-                self.trading_logger.info(
-                    f"Position already exists for {symbol}\n"
-                    f"Size: {position['contracts']}\n"
-                    f"Side: {position['side']}\n"
-                    f"Entry Price: {position['entryPrice']}"
+            if not positions:
+                return False
+                
+            position_size = float(positions[0]['contracts'])
+            if position_size != 0:  # 포지션이 있는 경우
+                position_side = 'long' if position_size > 0 else 'short'
+                self.execution_logger.info(
+                    f"Found existing position for {symbol}:\n"
+                    f"Side: {position_side}\n"
+                    f"Size: {abs(position_size)}\n"
+                    f"Entry Price: {positions[0]['entryPrice']}"
                 )
+                return True
+                
+            # 미체결 주문이 있는지 확인
+            open_orders = self.exchange.fetch_open_orders(symbol)
+            if open_orders:
+                self.execution_logger.info(f"Found open orders for {symbol}, cannot enter new position")
                 return True
                 
             return False
             
         except Exception as e:
-            self.trading_logger.error(f"Error checking position for {symbol}: {e}")
-            return True  # 에러 발생 시 안전하게 True 반환
+            self.execution_logger.error(f"Error checking position for {symbol}: {e}")
+            return True  # 에러 시 안전하게 True 반환
 
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
