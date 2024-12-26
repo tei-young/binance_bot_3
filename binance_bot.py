@@ -303,6 +303,18 @@ class TradingBot:
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
         formatted_time = current_time.floor('5min')
+        
+        # 현재 5분 캔들의 시작과 끝 시간 계산
+        candle_start = formatted_time
+        candle_end = formatted_time + pd.Timedelta(minutes=5)
+        
+        # 현재 5분 캔들 구간의 데이터 추출
+        candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+        candle_data = df[candle_mask]
+        
+        # 5분 캔들의 최고가와 최저가 계산
+        period_high = candle_data['high'].max()
+        period_low = candle_data['low'].min()
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
@@ -312,41 +324,57 @@ class TradingBot:
             self.cross_history[symbol]['ema'] = [(
                 formatted_time,
                 'golden',
-                df['high'].iloc[current_idx],
-                df['low'].iloc[current_idx]
+                period_high,
+                period_low
             )]
-            self.signal_logger.info(f"NEW EMA Golden Cross at {formatted_time}")
+            self.signal_logger.info(
+                f"NEW EMA Golden Cross at {formatted_time}\n"
+                f"Candle High: {period_high}\n"
+                f"Candle Low: {period_low}"
+            )
         elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
             self.cross_history[symbol]['ema'] = [(
                 formatted_time,
                 'dead',
-                df['high'].iloc[current_idx],
-                df['low'].iloc[current_idx]
+                period_high,
+                period_low
             )]
-            self.signal_logger.info(f"NEW EMA Dead Cross at {formatted_time}")
+            self.signal_logger.info(
+                f"NEW EMA Dead Cross at {formatted_time}\n"
+                f"Candle High: {period_high}\n"
+                f"Candle Low: {period_low}"
+            )
         else:
             self.signal_logger.info("No new EMA cross")
-            
+                
         # MACD 크로스 체크 - 직전 캔들과 현재 캔들만 비교
         if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
                 formatted_time,
                 'golden',
-                df['high'].iloc[current_idx],
-                df['low'].iloc[current_idx]
+                period_high,
+                period_low
             )]
-            self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
+            self.signal_logger.info(
+                f"NEW MACD Golden Cross at {formatted_time}\n"
+                f"Candle High: {period_high}\n"
+                f"Candle Low: {period_low}"
+            )
         elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
                 formatted_time,
                 'dead',
-                df['high'].iloc[current_idx],
-                df['low'].iloc[current_idx]
+                period_high,
+                period_low
             )]
-            self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
+            self.signal_logger.info(
+                f"NEW MACD Dead Cross at {formatted_time}\n"
+                f"Candle High: {period_high}\n"
+                f"Candle Low: {period_low}"
+            )
         else:
             self.signal_logger.info("No new MACD cross")
 
