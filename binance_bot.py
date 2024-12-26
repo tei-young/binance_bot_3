@@ -347,7 +347,7 @@ class TradingBot:
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
         # EMA 크로스 체크 - 기울기 검증 추가
-        MIN_SLOPE = 0.01  # 최소 기울기 (0.01%), 실제 테스트 후 조정 필요
+        MIN_SLOPE = 0.1  # 최소 기울기 (0.1%), 24.12.26 테스트 후 조정 ver.1
         
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
