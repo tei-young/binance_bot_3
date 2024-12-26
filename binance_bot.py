@@ -28,7 +28,7 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
 class TradingBot:
     def __init__(self, api_key, api_secret):
         self.setup_logging()
-    
+        
         self.exchange = ccxt.binance({
             'apiKey': api_key,
             'secret': api_secret,
@@ -47,9 +47,18 @@ class TradingBot:
             }
             for symbol in TRADING_SYMBOLS
         }
-
-        # 마지막 체크 시간 저장용 딕셔너리 추가
+        
+        # 시그널 체크 기록 초기화
         self.last_signal_check = {symbol: None for symbol in TRADING_SYMBOLS}
+        
+        # 손절된 거래 기록 저장용 딕셔너리 추가
+        self.sl_history = {
+            symbol: {
+                'long': None,  # 마지막 롱 손절 시간
+                'short': None  # 마지막 숏 손절 시간
+            }
+            for symbol in TRADING_SYMBOLS
+        }
         
         # 레버리지 설정
         for symbol in TRADING_SYMBOLS:
@@ -513,7 +522,7 @@ class TradingBot:
         
         return None, None
 
-    def determine_stop_loss(self, df, crosses, position_type):
+    def determine_stop_loss(self, df, crosses, position_type, entry_price):
         try:
             if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error("Missing cross data")
@@ -525,13 +534,28 @@ class TradingBot:
             first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
             stop_loss = first_cross[3] if position_type == 'long' else first_cross[2]
             
+            # SL 거리 검증
+            sl_distance = abs(stop_loss - entry_price)
+            min_sl_distance = entry_price * 0.003  # 최소 0.3% 차이
+            
+            if sl_distance < min_sl_distance:
+                self.execution_logger.warning(
+                    f"Stop loss too close to entry price:\n"
+                    f"Entry: {entry_price}\n"
+                    f"Stop Loss: {stop_loss}\n"
+                    f"Distance: {sl_distance} (minimum required: {min_sl_distance})"
+                )
+                return None  # None을 반환하여 거래 건너뛰기
+            
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
                 f"First cross time: {first_cross[0]}\n"
-                f"Stop loss price: {stop_loss}"
+                f"Stop loss price: {stop_loss}\n"
+                f"Distance from entry: {sl_distance} ({(sl_distance/entry_price)*100:.3f}%)"
             )
-            return stop_loss
                 
+            return stop_loss
+                    
         except Exception as e:
             self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
