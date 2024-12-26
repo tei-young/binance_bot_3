@@ -501,6 +501,18 @@ class TradingBot:
         # 현재 가격 확인 및 추세 확인
         current_price = df['close'].iloc[-1]
         above_sma200 = current_price > df['sma200'].iloc[-1]
+        position_type = 'long' if above_sma200 else 'short'
+        
+        # 최근 손절 이력 확인
+        last_sl_time = self.sl_history[symbol][position_type]
+        if last_sl_time:
+            time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+            if time_since_sl < 30:  # 30분 이내
+                self.trading_logger.info(
+                    f"Skipping {position_type} trade for {symbol}: "
+                    f"Recent stop loss ({time_since_sl:.1f} mins ago)"
+                )
+                return None, None
         
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
@@ -517,7 +529,6 @@ class TradingBot:
         if not mangles_valid:
             return None, None
         
-        position_type = 'long' if above_sma200 else 'short'
         if self.check_cross_validity(symbol, position_type):
             entry_message = (
                 f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
@@ -625,7 +636,7 @@ class TradingBot:
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
         try:
-            # 손절가 없으면 진입 불가
+            # 손절가 없거나 너무 가까우면 진입 불가
             if stop_loss is None:
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Stop loss calculation failed")
                 return False
@@ -699,6 +710,14 @@ class TradingBot:
                     }
                 )
 
+                # 주문 정보 저장
+                self.positions[symbol] = {
+                    'entry_order': order['id'],
+                    'sl_order': sl_order['id'],
+                    'tp_order': tp_order['id'],
+                    'position_type': position_type
+                }
+
                 # 성공적인 주문 실행 로깅
                 self.execution_logger.info(
                     f"===== Trade Successfully Executed =====\n"
@@ -716,11 +735,19 @@ class TradingBot:
                 return True
 
             except Exception as e:
+                if 'Order would immediately trigger' in str(e):
+                    self.execution_logger.error(f"Order would trigger immediately for {symbol}: {e}")
+                    return False
+                    
                 self.execution_logger.error(f"Order execution error for {symbol}: {e}")
                 # 실패 시 생성된 주문들 취소 시도
                 try:
                     if 'order' in locals():
                         self.exchange.cancel_order(order['id'], symbol)
+                    if 'sl_order' in locals():
+                        self.exchange.cancel_order(sl_order['id'], symbol)
+                    if 'tp_order' in locals():
+                        self.exchange.cancel_order(tp_order['id'], symbol)
                 except Exception as cancel_error:
                     self.execution_logger.error(f"Error canceling orders after failure: {cancel_error}")
                 return False
@@ -768,11 +795,14 @@ class TradingBot:
                             f"Leverage: {LEVERAGE}x\n"
                             f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
                             f"Trading Symbols: {TRADING_SYMBOLS}")
-    
+        
         while True:
             try:
                 for symbol in TRADING_SYMBOLS:
                     try:
+                        # 주문 상태 확인
+                        self.check_order_status(symbol)
+                        
                         df = self.get_historical_data(symbol)
                         if df is None:
                             continue
@@ -800,7 +830,7 @@ class TradingBot:
                                 f"Entry price (close): {entry_price}"
                             )
                             
-                            stop_loss = self.determine_stop_loss(df, crosses, position_type)
+                            stop_loss = self.determine_stop_loss(df, crosses, position_type, entry_price)
                             if not stop_loss:
                                 continue
 
