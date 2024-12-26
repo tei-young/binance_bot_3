@@ -614,7 +614,7 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2) if position_type == 'long' else entry_price - (stop_loss_distance * 2)
+            take_profit = entry_price + (stop_loss_distance * 2.5) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
