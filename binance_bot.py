@@ -330,14 +330,10 @@ class TradingBot:
         """크로스 데이터 저장"""
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
-        formatted_time = current_time.floor('5min')
         
-        # 현재 5분 캔들의 시작과 끝 시간 계산
-        candle_start = formatted_time
-        candle_end = formatted_time + pd.Timedelta(minutes=5)
-        
-        # 현재 5분 캔들 구간의 데이터 추출
-        candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+        # 크로스 시점 기준 이전 5분 데이터 추출
+        candle_start = current_time - pd.Timedelta(minutes=5)
+        candle_mask = (df.index >= candle_start) & (df.index <= current_time)
         candle_data = df[candle_mask]
         
         # 5분 캔들의 최고가와 최저가 계산
@@ -347,8 +343,9 @@ class TradingBot:
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
         # EMA 크로스 체크 - 기울기 검증 추가
-        MIN_SLOPE = 0.1  # 최소 기울기 (0.1%), 24.12.26 테스트 후 조정 ver.1
+        MIN_SLOPE = 0.1  # 최소 기울기 (0.1%)
         
+        # EMA 크로스 체크 - 직전 캔들과 현재 캔들만 비교
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
             
@@ -357,13 +354,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    formatted_time,
+                    current_time,  # formatted_time 대신 current_time 사용
                     'golden',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Golden Cross at {formatted_time}\n"
+                    f"NEW EMA Golden Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -382,13 +379,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    formatted_time,
+                    current_time,  # formatted_time 대신 current_time 사용
                     'dead',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Dead Cross at {formatted_time}\n"
+                    f"NEW EMA Dead Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -405,21 +402,21 @@ class TradingBot:
         if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
-                formatted_time,
+                current_time,  # formatted_time 대신 current_time 사용
                 'golden',
                 period_high,
                 period_low
             )]
-            self.signal_logger.info(f"NEW MACD Golden Cross at {formatted_time}")
+            self.signal_logger.info(f"NEW MACD Golden Cross at {current_time}")
         elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
             self.cross_history[symbol]['macd'] = [(
-                formatted_time,
+                current_time,  # formatted_time 대신 current_time 사용
                 'dead',
                 period_high,
                 period_low
             )]
-            self.signal_logger.info(f"NEW MACD Dead Cross at {formatted_time}")
+            self.signal_logger.info(f"NEW MACD Dead Cross at {current_time}")
         else:
             self.signal_logger.info("No new MACD cross")
 
@@ -659,7 +656,7 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2.5) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
+            take_profit = entry_price + (stop_loss_distance * 2) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
