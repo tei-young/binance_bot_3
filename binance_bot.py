@@ -51,6 +51,17 @@ class TradingBot:
         # 시그널 체크 기록 초기화
         self.last_signal_check = {symbol: None for symbol in TRADING_SYMBOLS}
         
+        # 포지션 정보 저장
+        self.positions = {
+            symbol: {
+                'entry_order': None,
+                'sl_order': None,
+                'tp_order': None,
+                'position_type': None
+            }
+            for symbol in TRADING_SYMBOLS
+        }
+        
         # 손절된 거래 기록 저장용 딕셔너리 추가
         self.sl_history = {
             symbol: {
@@ -545,7 +556,7 @@ class TradingBot:
                     f"Stop Loss: {stop_loss}\n"
                     f"Distance: {sl_distance} (minimum required: {min_sl_distance})"
                 )
-                return None  # None을 반환하여 거래 건너뛰기
+                return None
             
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
@@ -717,6 +728,40 @@ class TradingBot:
         except Exception as e:
             self.execution_logger.error(f"Unexpected error in execute_trade: {str(e)}")
             return False
+
+    def update_sl_history(self, symbol, position_type):
+        """손절 발생 시 기록 업데이트"""
+        try:
+            self.sl_history[symbol][position_type] = datetime.now()
+            self.execution_logger.info(
+                f"Updated SL history for {symbol}:\n"
+                f"Position: {position_type}\n"
+                f"Time: {self.sl_history[symbol][position_type]}"
+            )
+        except Exception as e:
+            self.execution_logger.error(f"Error updating SL history: {e}")
+
+    def check_order_status(self, symbol):
+        """주문 상태 확인"""
+        try:
+            position_info = self.positions[symbol]
+            if not position_info['entry_order']:
+                return
+                
+            # SL 주문 상태 확인
+            if position_info['sl_order']:
+                sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
+                if sl_order['status'] == 'filled':
+                    self.update_sl_history(symbol, position_info['position_type'])
+                    self.positions[symbol] = {
+                        'entry_order': None,
+                        'sl_order': None,
+                        'tp_order': None,
+                        'position_type': None
+                    }
+                    
+        except Exception as e:
+            self.execution_logger.error(f"Error checking order status: {e}")
 
     def run(self):
         self.trading_logger.info(f"Bot started running\n"
