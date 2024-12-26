@@ -590,26 +590,27 @@ class TradingBot:
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         """주문 실행"""
         try:
-            # 1. 손절가 없으면 진입 불가
+            # 손절가 없으면 진입 불가
             if stop_loss is None:
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Stop loss calculation failed")
                 return False
                 
-            # 2. 잔액 확인
+            # 잔액 확인
             if not self.check_balance(symbol):
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Insufficient balance")
                 return False
                 
-            # 3. 기존 포지션 체크
+            # 기존 포지션 체크
             if self.check_existing_position(symbol):
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Position already exists")
                 return False
 
-            # 4. 거래 가능 상태 확인
+            # 거래 가능 상태 확인
             if not self.check_symbol_tradable(symbol):
+                self.execution_logger.error(f"Failed to enter position for {symbol}: Symbol not tradable")
                 return False
 
-            # 5. 포지션 크기 계산
+            # 레버리지를 고려한 실제 포지션 크기 계산
             total_position_size = MARGIN_AMOUNT * LEVERAGE
             position_size = total_position_size / entry_price
 
@@ -625,8 +626,8 @@ class TradingBot:
                 )
                 return False
 
-            # API 요청 실행 및 에러 처리
             try:
+                # 진입 주문 실행
                 order = self.exchange.create_order(
                     symbol=symbol,
                     type='limit',
@@ -634,62 +635,63 @@ class TradingBot:
                     amount=position_size,
                     price=entry_price
                 )
-            except Exception as e:
-                self.execution_logger.error(
-                    f"===== API Error =====\n"
-                    f"Symbol: {symbol}\n"
-                    f"Error: {str(e)}"
-                )
-                return False
 
-            # 이후 손절/익절 주문 실행
-            try:
-                stop_loss_order = self.exchange.create_order(
+                # Stop Loss 주문
+                sl_order = self.exchange.create_order(
                     symbol=symbol,
-                    type='stop_loss',
+                    type='stop',
                     side='sell' if position_type == 'long' else 'buy',
                     amount=position_size,
-                    price=stop_loss
+                    price=stop_loss,
+                    params={
+                        'stopPrice': stop_loss,
+                        'type': 'future',
+                        'reduceOnly': 'true'
+                    }
                 )
 
-                take_profit_order = self.exchange.create_order(
+                # Take Profit 주문
+                tp_order = self.exchange.create_order(
                     symbol=symbol,
                     type='take_profit',
                     side='sell' if position_type == 'long' else 'buy',
                     amount=position_size,
-                    price=take_profit
+                    price=take_profit,
+                    params={
+                        'stopPrice': take_profit,
+                        'type': 'future',
+                        'reduceOnly': 'true'
+                    }
                 )
-            except Exception as e:
-                self.execution_logger.error(
-                    f"===== Stop Loss/Take Profit Order Error =====\n"
+
+                # 성공적인 주문 실행 로깅
+                self.execution_logger.info(
+                    f"===== Trade Successfully Executed =====\n"
                     f"Symbol: {symbol}\n"
-                    f"Error: {str(e)}"
+                    f"Type: {position_type}\n"
+                    f"Entry: {entry_price}\n"
+                    f"Stop Loss: {stop_loss}\n"
+                    f"Take Profit: {take_profit}\n"
+                    f"Position Size: {position_size}\n"
+                    f"Margin Used: {MARGIN_AMOUNT} USDT\n"
+                    f"Total Position Value: {total_position_size} USDT\n"
+                    f"Order IDs: Entry={order['id']}, SL={sl_order['id']}, TP={tp_order['id']}"
                 )
-                # 기존 주문 취소 시도
+
+                return True
+
+            except Exception as e:
+                self.execution_logger.error(f"Order execution error for {symbol}: {e}")
+                # 실패 시 생성된 주문들 취소 시도
                 try:
-                    self.exchange.cancel_order(order['id'], symbol)
-                except:
-                    pass
+                    if 'order' in locals():
+                        self.exchange.cancel_order(order['id'], symbol)
+                except Exception as cancel_error:
+                    self.execution_logger.error(f"Error canceling orders after failure: {cancel_error}")
                 return False
 
-            # 성공적인 주문 실행 로깅
-            self.execution_logger.info(
-                f"===== Trade Successfully Executed =====\n"
-                f"Symbol: {symbol}\n"
-                f"Type: {position_type}\n"
-                f"Entry: {entry_price}\n"
-                f"Stop Loss: {stop_loss}\n"
-                f"Take Profit: {take_profit}\n"
-                f"Position Size: {position_size}\n"
-                f"Margin Used: {MARGIN_AMOUNT} USDT\n"
-                f"Total Position Value: {total_position_size} USDT\n"
-                f"Order ID: {order['id']}"
-            )
-
-            return True
-
         except Exception as e:
-            self.trading_logger.error(f"Unexpected error in execute_trade: {str(e)}")
+            self.execution_logger.error(f"Unexpected error in execute_trade: {str(e)}")
             return False
 
     def run(self):
