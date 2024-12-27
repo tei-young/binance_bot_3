@@ -369,7 +369,7 @@ class TradingBot:
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
         # EMA 크로스 체크 - 기울기 검증 추가
-        MIN_SLOPE = 0.05  # 최소 기울기 (0.1%)
+        MIN_SLOPE = 0.08  # 최소 기울기 (0.08%) MACD / EMA 둘다 MIN
         
         # EMA 크로스 체크 - 직전 캔들과 현재 캔들만 비교
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -726,16 +726,15 @@ class TradingBot:
             return None
 
     def check_existing_position(self, symbol):
-        """현재 보유 중인 포지션 확인"""
+        """현재 보유 중인 포지션과 주문 상태 확인"""
         try:
             # 심볼별 현재 포지션 확인
             positions = self.exchange.fetch_positions([symbol])
+            position_info = self.positions.get(symbol)
             
-            if not positions:
-                return False
-                
-            position_size = float(positions[0]['contracts'])
-            if position_size != 0:  # 포지션이 있는 경우
+            # 포지션이 있는 경우
+            if positions and float(positions[0]['contracts']) != 0:
+                position_size = float(positions[0]['contracts'])
                 position_side = 'long' if position_size > 0 else 'short'
                 self.execution_logger.info(
                     f"Found existing position for {symbol}:\n"
@@ -744,15 +743,46 @@ class TradingBot:
                     f"Entry Price: {positions[0]['entryPrice']}"
                 )
                 return True
-                
-            # 미체결 주문이 있는지 확인
-            open_orders = self.exchange.fetch_open_orders(symbol)
-            if open_orders:
-                self.execution_logger.info(f"Found open orders for {symbol}, cannot enter new position")
-                return True
-                
+
+            # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
+            if position_info and position_info['entry_order']:
+                entry_order = None
+                try:
+                    # 진입 주문 상태 확인
+                    entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+                    
+                    # 진입 주문이 체결(filled)되었는데 현재 포지션이 없다면 청산된 상태
+                    if entry_order['status'] == 'filled':
+                        self.execution_logger.info(f"Position was closed for {symbol}, cleaning up remaining orders")
+                        
+                        # 남은 SL/TP 주문 취소
+                        if position_info['sl_order']:
+                            try:
+                                self.exchange.cancel_order(position_info['sl_order'], symbol)
+                                self.execution_logger.info(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
+                            except Exception as e:
+                                self.execution_logger.error(f"Error cancelling SL order: {e}")
+                                
+                        if position_info['tp_order']:
+                            try:
+                                self.exchange.cancel_order(position_info['tp_order'], symbol)
+                                self.execution_logger.info(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
+                            except Exception as e:
+                                self.execution_logger.error(f"Error cancelling TP order: {e}")
+                        
+                        # 포지션 정보 초기화
+                        self.positions[symbol] = {
+                            'entry_order': None,
+                            'sl_order': None,
+                            'tp_order': None,
+                            'position_type': None
+                        }
+                        
+                except Exception as e:
+                    self.execution_logger.error(f"Error checking entry order status: {e}")
+
             return False
-            
+                
         except Exception as e:
             self.execution_logger.error(f"Error checking position for {symbol}: {e}")
             return True  # 에러 시 안전하게 True 반환
