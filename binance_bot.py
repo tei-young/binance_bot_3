@@ -368,8 +368,17 @@ class TradingBot:
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
+        # EMA 값 로깅 추가
+        self.signal_logger.info(
+            f"\nEMA Cross Analysis:\n"
+            f"Previous EMA12: {df['ema12'].iloc[current_idx-1]}\n"
+            f"Previous EMA26: {df['ema26'].iloc[current_idx-1]}\n"
+            f"Current EMA12: {df['ema12'].iloc[current_idx]}\n"
+            f"Current EMA26: {df['ema26'].iloc[current_idx]}"
+        )
+        
         # EMA 크로스 체크 - 기울기 검증 추가
-        MIN_SLOPE = 0.08  # 최소 기울기 (0.08%) MACD / EMA 둘다 MIN
+        MIN_SLOPE = 0.05  # 최소 기울기 (0.05%)
         
         # EMA 크로스 체크 - 직전 캔들과 현재 캔들만 비교
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -380,7 +389,7 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    current_time,  # formatted_time 대신 current_time 사용
+                    current_time,
                     'golden',
                     period_high,
                     period_low
@@ -405,7 +414,7 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    current_time,  # formatted_time 대신 current_time 사용
+                    current_time,
                     'dead',
                     period_high,
                     period_low
@@ -427,50 +436,22 @@ class TradingBot:
         # MACD 크로스 체크 - 직전 캔들과 현재 캔들만 비교
         if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            
-            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
-            
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['macd'] = [(
-                    current_time,
-                    'golden',
-                    period_high,
-                    period_low
-                )]
-                self.signal_logger.info(
-                    f"NEW MACD Golden Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
-            else:
-                self.signal_logger.info(
-                    f"MACD Golden Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
+            self.cross_history[symbol]['macd'] = [(
+                current_time,
+                'golden',
+                period_high,
+                period_low
+            )]
+            self.signal_logger.info(f"NEW MACD Golden Cross at {current_time}")
         elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            
-            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
-            
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['macd'] = [(
-                    current_time,
-                    'dead',
-                    period_high,
-                    period_low
-                )]
-                self.signal_logger.info(
-                    f"NEW MACD Dead Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
-            else:
-                self.signal_logger.info(
-                    f"MACD Dead Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
+            df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+            self.cross_history[symbol]['macd'] = [(
+                current_time,
+                'dead',
+                period_high,
+                period_low
+            )]
+            self.signal_logger.info(f"NEW MACD Dead Cross at {current_time}")
         else:
             self.signal_logger.info("No new MACD cross")
 
