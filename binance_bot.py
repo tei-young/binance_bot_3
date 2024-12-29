@@ -357,7 +357,10 @@ class TradingBot:
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
         
-        # 크로스 시점 기준 이전 5분 데이터 추출
+        # 크로스 히스토리용 시간 (5분봉 시작점)
+        formatted_time = current_time.floor('5min')
+        
+        # TP/SL 계산용 시간 (실제 시점)
         candle_start = current_time - pd.Timedelta(minutes=5)
         candle_mask = (df.index >= candle_start) & (df.index <= current_time)
         candle_data = df[candle_mask]
@@ -377,25 +380,23 @@ class TradingBot:
             f"Current EMA26: {df['ema26'].iloc[current_idx]}"
         )
         
-        # EMA 크로스 체크 - 기울기 검증 추가
-        MIN_SLOPE = 0.05  # 최소 기울기 (0.05%)
+        MIN_SLOPE = 0.07  # 최소 기울기
         
-        # EMA 크로스 체크 - 직전 캔들과 현재 캔들만 비교
+        # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
             df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
             
-            # 크로스 기울기 계산
             cross_slope = self.calculate_ema_cross_angle(df, current_idx)
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    current_time,
+                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
                     'golden',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Golden Cross at {current_time}\n"
+                    f"NEW EMA Golden Cross at {formatted_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -407,20 +408,19 @@ class TradingBot:
                 )
                 
         elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+            df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
             
-            # 크로스 기울기 계산
             cross_slope = self.calculate_ema_cross_angle(df, current_idx)
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    current_time,
+                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
                     'dead',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Dead Cross at {current_time}\n"
+                    f"NEW EMA Dead Cross at {formatted_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -433,30 +433,57 @@ class TradingBot:
         else:
             self.signal_logger.info("No new EMA cross")
                 
-        # MACD 크로스 체크 - 직전 캔들과 현재 캔들만 비교
+        # MACD 크로스 체크도 동일하게 formatted_time 사용
         if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(
-                current_time,
-                'golden',
-                period_high,
-                period_low
-            )]
-            self.signal_logger.info(f"NEW MACD Golden Cross at {current_time}")
+            
+            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
+            
+            if cross_slope >= MIN_SLOPE:
+                self.cross_history[symbol]['macd'] = [(
+                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    'golden',
+                    period_high,
+                    period_low
+                )]
+                self.signal_logger.info(
+                    f"NEW MACD Golden Cross at {formatted_time}\n"
+                    f"Cross Slope: {cross_slope}%\n"
+                    f"Candle High: {period_high}\n"
+                    f"Candle Low: {period_low}"
+                )
+            else:
+                self.signal_logger.info(
+                    f"MACD Golden Cross ignored - too flat\n"
+                    f"Cross Slope: {cross_slope}%"
+                )
         elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            self.cross_history[symbol]['macd'] = [(
-                current_time,
-                'dead',
-                period_high,
-                period_low
-            )]
-            self.signal_logger.info(f"NEW MACD Dead Cross at {current_time}")
+            
+            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
+            
+            if cross_slope >= MIN_SLOPE:
+                self.cross_history[symbol]['macd'] = [(
+                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    'dead',
+                    period_high,
+                    period_low
+                )]
+                self.signal_logger.info(
+                    f"NEW MACD Dead Cross at {formatted_time}\n"
+                    f"Cross Slope: {cross_slope}%\n"
+                    f"Candle High: {period_high}\n"
+                    f"Candle Low: {period_low}"
+                )
+            else:
+                self.signal_logger.info(
+                    f"MACD Dead Cross ignored - too flat\n"
+                    f"Cross Slope: {cross_slope}%"
+                )
         else:
             self.signal_logger.info("No new MACD cross")
 
-        # 기존 크로스 정리
-        self._cleanup_old_crosses(symbol, current_time)
+        self._cleanup_old_crosses(symbol, formatted_time)  # cleanup에도 formatted_time 사용
         
         # 현재 저장된 크로스 정보 로깅
         if self.cross_history[symbol]['ema']:
@@ -474,14 +501,14 @@ class TradingBot:
                 f"Low={self.cross_history[symbol]['macd'][0][3]}"
             )
 
-    def _cleanup_old_crosses(self, symbol, current_time):
+    def _cleanup_old_crosses(self, symbol, formatted_time):
         """오래된 크로스 데이터 제거"""
         try:
-            # 현재 시간을 pandas Timestamp로 확실하게 변환
+            # 이미 formatted_time으로 들어오므로 변환 필요 없음
             try:
-                current_time = pd.Timestamp(current_time)
+                current_time = pd.to_datetime(formatted_time)
             except Exception as e:
-                self.trading_logger.error(f"Error converting current time: {e}")
+                self.trading_logger.error(f"Error converting formatted time: {e}")
                 return
             
             # 기준 시간 설정 (5분봉 = 25분, 1분봉 = 5분)
@@ -494,9 +521,12 @@ class TradingBot:
                     return cross_list
                     
                 try:
-                    cross_time = pd.Timestamp(cross_list[0][0])
+                    # 저장된 크로스 시간도 이미 formatted time
+                    cross_time = pd.to_datetime(cross_list[0][0])
                     if cross_time <= cutoff_time:
-                        self.signal_logger.info(f"Removed expired {cross_type} cross from {cross_time}")
+                        self.signal_logger.info(
+                            f"Removed expired {cross_type} cross from {cross_time.strftime('%Y-%m-%d %H:%M')}"
+                        )
                         return []
                     return cross_list
                 except Exception as e:
@@ -512,33 +542,38 @@ class TradingBot:
             )
 
         except Exception as e:
-            raise Exception(f"Error in cleanup_old_crosses: {e}")  # 상위로 에러 전파하여 store_cross_data에서 처리
+            raise Exception(f"Error in cleanup_old_crosses: {e}")
         
     def find_matching_cross(self, symbol, cross_time, cross_type, base_indicator):
         """특정 크로스 시점 기준으로 전후 5캔들 내의 매칭되는 크로스 찾기"""
         try:
-            # 시간 변환 및 범위 계산
+            # 입력받은 cross_time은 이미 formatted_time
             cross_time = pd.to_datetime(cross_time)
             candle_interval = pd.Timedelta(minutes=1 if TIMEFRAME == '1m' else 5)
+            # 전후 5캔들 범위 계산
             start_time = cross_time - (candle_interval * 5)
             end_time = cross_time + (candle_interval * 5)
             
             self.signal_logger.info(f"\nMatching Cross Check:")
-            self.signal_logger.info(f"Base Time: {cross_time}")
-            self.signal_logger.info(f"Valid Range: {start_time} to {end_time}")
+            self.signal_logger.info(f"Base Time: {cross_time.strftime('%Y-%m-%d %H:%M')}")
+            self.signal_logger.info(f"Valid Range: {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}")
             
             # base_indicator가 'ema'면 'macd'를 찾고, 반대도 마찬가지
             target_indicator = 'macd' if base_indicator == 'ema' else 'ema'
             
             for time, type_ in self.cross_history[symbol][target_indicator]:
+                # 저장된 크로스 시간도 formatted_time
                 check_time = pd.to_datetime(time)
-                self.signal_logger.info(f"Checking {target_indicator.upper()} cross at {check_time} ({type_})")
+                self.signal_logger.info(f"Checking {target_indicator.upper()} cross at {check_time.strftime('%Y-%m-%d %H:%M')} ({type_})")
                 
                 if start_time <= check_time <= end_time and type_ == cross_type:
                     self.signal_logger.info(f"Found matching {target_indicator.upper()} cross!")
                     return time
                 else:
-                    self.signal_logger.info(f"Not matched. Time in range: {start_time <= check_time <= end_time}, Type match: {type_ == cross_type}")
+                    self.signal_logger.info(
+                        f"Not matched. Time in range: {start_time <= check_time <= end_time}, "
+                        f"Type match: {type_ == cross_type}"
+                    )
                     
             self.signal_logger.info(f"No matching {target_indicator.upper()} cross found")
             return None
@@ -570,6 +605,7 @@ class TradingBot:
                 return False
                 
             # 시간 차이 체크 (25분 이내)
+            # 저장된 시간이 이미 formatted_time이므로 그대로 사용
             ema_time = pd.to_datetime(ema_cross[0])
             macd_time = pd.to_datetime(macd_cross[0])
             time_diff = abs((ema_time - macd_time).total_seconds() / 60)
