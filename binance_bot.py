@@ -24,7 +24,7 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                 'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 
                 'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
-                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT']
+                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT']
 
 class TradingBot:
     def __init__(self, api_key, api_secret):
@@ -356,22 +356,20 @@ class TradingBot:
         """크로스 데이터 저장"""
         current_idx = len(df) - 1
         current_time = df.index[current_idx]
-        
-        # 크로스 히스토리용 시간 (5분봉 시작점)
         formatted_time = current_time.floor('5min')
         
-        # TP/SL 계산용 시간 (실제 시점)
+        # 크로스 시점 기준 이전 5분 데이터 추출
         candle_start = current_time - pd.Timedelta(minutes=5)
         candle_mask = (df.index >= candle_start) & (df.index <= current_time)
         candle_data = df[candle_mask]
         
-        # 5분 캔들의 최고가와 최저가 계산
+        # 5분간의 최고가와 최저가 계산
         period_high = candle_data['high'].max()
         period_low = candle_data['low'].min()
 
         self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
         
-        # EMA 값 로깅 추가
+        # EMA 값 로깅
         self.signal_logger.info(
             f"\nEMA Cross Analysis:\n"
             f"Previous EMA12: {df['ema12'].iloc[current_idx-1]}\n"
@@ -380,7 +378,7 @@ class TradingBot:
             f"Current EMA26: {df['ema26'].iloc[current_idx]}"
         )
         
-        MIN_SLOPE = 0.07  # 최소 기울기
+        MIN_SLOPE = 0.05  # 최소 기울기
         
         # EMA 크로스 체크
         if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -390,13 +388,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    current_time,
                     'golden',
-                    period_high,
-                    period_low
+                    period_high,  # 크로스 발생 시점 기준 이전 5분의 high
+                    period_low   # 크로스 발생 시점 기준 이전 5분의 low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Golden Cross at {formatted_time}\n"
+                    f"NEW EMA Golden Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -414,13 +412,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['ema'] = [(
-                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    current_time,
                     'dead',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW EMA Dead Cross at {formatted_time}\n"
+                    f"NEW EMA Dead Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -433,7 +431,7 @@ class TradingBot:
         else:
             self.signal_logger.info("No new EMA cross")
                 
-        # MACD 크로스 체크도 동일하게 formatted_time 사용
+        # MACD 크로스 체크
         if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
             df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
             
@@ -441,13 +439,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['macd'] = [(
-                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    current_time,
                     'golden',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW MACD Golden Cross at {formatted_time}\n"
+                    f"NEW MACD Golden Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -464,13 +462,13 @@ class TradingBot:
             
             if cross_slope >= MIN_SLOPE:
                 self.cross_history[symbol]['macd'] = [(
-                    formatted_time,  # 크로스 히스토리에는 5분봉 시작 시간 사용
+                    current_time,
                     'dead',
                     period_high,
                     period_low
                 )]
                 self.signal_logger.info(
-                    f"NEW MACD Dead Cross at {formatted_time}\n"
+                    f"NEW MACD Dead Cross at {current_time}\n"
                     f"Cross Slope: {cross_slope}%\n"
                     f"Candle High: {period_high}\n"
                     f"Candle Low: {period_low}"
@@ -483,22 +481,24 @@ class TradingBot:
         else:
             self.signal_logger.info("No new MACD cross")
 
-        self._cleanup_old_crosses(symbol, formatted_time)  # cleanup에도 formatted_time 사용
+        self._cleanup_old_crosses(symbol, formatted_time)
         
-        # 현재 저장된 크로스 정보 로깅
+        # 저장된 크로스 정보 로깅
         if self.cross_history[symbol]['ema']:
+            cross_info = self.cross_history[symbol]['ema'][0]
             self.signal_logger.info(
-                f"Current EMA cross: Time={self.cross_history[symbol]['ema'][0][0]}, "
-                f"Type={self.cross_history[symbol]['ema'][0][1]}, "
-                f"High={self.cross_history[symbol]['ema'][0][2]}, "
-                f"Low={self.cross_history[symbol]['ema'][0][3]}"
+                f"Current EMA cross: Time={cross_info[0]}, "
+                f"Type={cross_info[1]}, "
+                f"High={cross_info[2]}, "
+                f"Low={cross_info[3]}"
             )
         if self.cross_history[symbol]['macd']:
+            cross_info = self.cross_history[symbol]['macd'][0]
             self.signal_logger.info(
-                f"Current MACD cross: Time={self.cross_history[symbol]['macd'][0][0]}, "
-                f"Type={self.cross_history[symbol]['macd'][0][1]}, "
-                f"High={self.cross_history[symbol]['macd'][0][2]}, "
-                f"Low={self.cross_history[symbol]['macd'][0][3]}"
+                f"Current MACD cross: Time={cross_info[0]}, "
+                f"Type={cross_info[1]}, "
+                f"High={cross_info[2]}, "
+                f"Low={cross_info[3]}"
             )
 
     def _cleanup_old_crosses(self, symbol, formatted_time):
@@ -686,16 +686,33 @@ class TradingBot:
         return None, None
 
     def determine_stop_loss(self, df, crosses, position_type, entry_price):
+        """
+    먼저 발생한 크로스의 시점을 기준으로 이전 5분간의 high/low로 stop loss 설정
+    """
         try:
             if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error("Missing cross data")
                 return None
                 
+            # 두 크로스의 시간 비교
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
             
+            # 먼저 발생한 크로스 찾기
             first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
-            stop_loss = first_cross[3] if position_type == 'long' else first_cross[2]
+            first_cross_time = ema_time if ema_time <= macd_time else macd_time
+            
+            # 해당 시점에서 이전 5분간의 데이터 추출
+            candle_start = first_cross_time - pd.Timedelta(minutes=5)
+            candle_mask = (df.index >= candle_start) & (df.index <= first_cross_time)
+            candle_data = df[candle_mask]
+            
+            # 해당 구간의 high/low 계산
+            period_high = candle_data['high'].max()
+            period_low = candle_data['low'].min()
+            
+            # position type에 따른 stop loss 설정
+            stop_loss = period_low if position_type == 'long' else period_high
             
             # SL 거리 검증
             sl_distance = abs(stop_loss - entry_price)
@@ -712,7 +729,8 @@ class TradingBot:
             
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
-                f"First cross time: {first_cross[0]}\n"
+                f"First cross time: {first_cross_time}\n"
+                f"Candle range: {candle_start} to {first_cross_time}\n"
                 f"Stop loss price: {stop_loss}\n"
                 f"Distance from entry: {sl_distance} ({(sl_distance/entry_price)*100:.3f}%)"
             )
@@ -727,7 +745,7 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
+            take_profit = entry_price + (stop_loss_distance * 2.5) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
