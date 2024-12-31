@@ -353,153 +353,162 @@ class TradingBot:
             return 0
 
     def store_cross_data(self, df, symbol):
-        """크로스 데이터 저장"""
-        current_idx = len(df) - 1
-        current_time = df.index[current_idx]
-        formatted_time = current_time.floor('5min')
-        
-        # 크로스 시점 기준 이전 5분 데이터 추출
-        candle_start = current_time - pd.Timedelta(minutes=5)
-        candle_mask = (df.index >= candle_start) & (df.index <= current_time)
-        candle_data = df[candle_mask]
-        
-        # 5분간의 최고가와 최저가 계산
-        period_high = candle_data['high'].max()
-        period_low = candle_data['low'].min()
+            """크로스 데이터 저장"""
+        try:
+            current_idx = len(df) - 1
+            current_time = df.index[current_idx]
+            formatted_time = current_time.floor('5min')
+            
+            # 현재 SMA200과 MA angles 상태 확인
+            above_sma200 = df['close'].iloc[current_idx] > df['sma200'].iloc[current_idx]
+            ma_color = df['mangles_jd_color'].iloc[current_idx]
+            
+            # 크로스 시점 기준 이전 5분 데이터 추출
+            candle_start = current_time - pd.Timedelta(minutes=5)
+            candle_mask = (df.index >= candle_start) & (df.index <= current_time)
+            candle_data = df[candle_mask]
+            
+            # 5분간의 최고가와 최저가 계산
+            period_high = candle_data['high'].max()
+            period_low = candle_data['low'].min()
 
-        self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
-        
-        # EMA 값 로깅
-        self.signal_logger.info(
-            f"\nEMA Cross Analysis:\n"
-            f"Previous EMA12: {df['ema12'].iloc[current_idx-1]}\n"
-            f"Previous EMA26: {df['ema26'].iloc[current_idx-1]}\n"
-            f"Current EMA12: {df['ema12'].iloc[current_idx]}\n"
-            f"Current EMA26: {df['ema26'].iloc[current_idx]}"
-        )
-        
-        MIN_SLOPE = 0.05  # 최소 기울기
-        
-        # EMA 크로스 체크
-        if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
-            df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
+            self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            cross_slope = self.calculate_ema_cross_angle(df, current_idx)
+            MIN_SLOPE = 0.05  # 최소 기울기
             
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['ema'] = [(
-                    current_time,
-                    'golden',
-                    period_high,  # 크로스 발생 시점 기준 이전 5분의 high
-                    period_low   # 크로스 발생 시점 기준 이전 5분의 low
-                )]
-                self.signal_logger.info(
-                    f"NEW EMA Golden Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
-            else:
-                self.signal_logger.info(
-                    f"EMA Golden Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
+            # EMA 크로스 체크
+            if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
                 
-        elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-            df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
-            
-            cross_slope = self.calculate_ema_cross_angle(df, current_idx)
-            
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['ema'] = [(
-                    current_time,
-                    'dead',
-                    period_high,
-                    period_low
-                )]
-                self.signal_logger.info(
-                    f"NEW EMA Dead Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
-            else:
-                self.signal_logger.info(
-                    f"EMA Dead Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
-        else:
-            self.signal_logger.info("No new EMA cross")
+                cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
-        # MACD 크로스 체크
-        if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
-            df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
-            
-            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
-            
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['macd'] = [(
-                    current_time,
-                    'golden',
-                    period_high,
-                    period_low
-                )]
-                self.signal_logger.info(
-                    f"NEW MACD Golden Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
+                # SMA200 위, MA angles 녹색일 때만 골든크로스 저장
+                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                    self.cross_history[symbol]['ema'] = [(
+                        current_time,
+                        'golden',
+                        period_high,
+                        period_low
+                    )]
+                    self.signal_logger.info(
+                        f"NEW EMA Golden Cross at {current_time}\n"
+                        f"Cross Slope: {cross_slope}%\n"
+                        f"Candle High: {period_high}\n"
+                        f"Candle Low: {period_low}"
+                    )
+                else:
+                    self.signal_logger.info(
+                        f"EMA Golden Cross ignored - conditions not met\n"
+                        f"Above SMA200: {above_sma200}\n"
+                        f"MA Color: {ma_color}\n"
+                        f"Cross Slope: {cross_slope}%"
+                    )
+                    
+            elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+                
+                cross_slope = self.calculate_ema_cross_angle(df, current_idx)
+                
+                # SMA200 아래, MA angles 빨간색일 때만 데드크로스 저장
+                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                    self.cross_history[symbol]['ema'] = [(
+                        current_time,
+                        'dead',
+                        period_high,
+                        period_low
+                    )]
+                    self.signal_logger.info(
+                        f"NEW EMA Dead Cross at {current_time}\n"
+                        f"Cross Slope: {cross_slope}%\n"
+                        f"Candle High: {period_high}\n"
+                        f"Candle Low: {period_low}"
+                    )
+                else:
+                    self.signal_logger.info(
+                        f"EMA Dead Cross ignored - conditions not met\n"
+                        f"Below SMA200: {not above_sma200}\n"
+                        f"MA Color: {ma_color}\n"
+                        f"Cross Slope: {cross_slope}%"
+                    )
             else:
-                self.signal_logger.info(
-                    f"MACD Golden Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
-        elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-            df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
-            
-            cross_slope = self.calculate_macd_cross_angle(df, current_idx)
-            
-            if cross_slope >= MIN_SLOPE:
-                self.cross_history[symbol]['macd'] = [(
-                    current_time,
-                    'dead',
-                    period_high,
-                    period_low
-                )]
-                self.signal_logger.info(
-                    f"NEW MACD Dead Cross at {current_time}\n"
-                    f"Cross Slope: {cross_slope}%\n"
-                    f"Candle High: {period_high}\n"
-                    f"Candle Low: {period_low}"
-                )
+                self.signal_logger.info("No new EMA cross")
+                    
+            # MACD 크로스 체크도 동일한 로직 적용
+            if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
+                
+                cross_slope = self.calculate_macd_cross_angle(df, current_idx)
+                
+                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                    self.cross_history[symbol]['macd'] = [(
+                        current_time,
+                        'golden',
+                        period_high,
+                        period_low
+                    )]
+                    self.signal_logger.info(
+                        f"NEW MACD Golden Cross at {current_time}\n"
+                        f"Cross Slope: {cross_slope}%\n"
+                        f"Candle High: {period_high}\n"
+                        f"Candle Low: {period_low}"
+                    )
+                else:
+                    self.signal_logger.info(
+                        f"MACD Golden Cross ignored - conditions not met\n"
+                        f"Above SMA200: {above_sma200}\n"
+                        f"MA Color: {ma_color}\n"
+                        f"Cross Slope: {cross_slope}%"
+                    )
+            elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+                
+                cross_slope = self.calculate_macd_cross_angle(df, current_idx)
+                
+                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                    self.cross_history[symbol]['macd'] = [(
+                        current_time,
+                        'dead',
+                        period_high,
+                        period_low
+                    )]
+                    self.signal_logger.info(
+                        f"NEW MACD Dead Cross at {current_time}\n"
+                        f"Cross Slope: {cross_slope}%\n"
+                        f"Candle High: {period_high}\n"
+                        f"Candle Low: {period_low}"
+                    )
+                else:
+                    self.signal_logger.info(
+                        f"MACD Dead Cross ignored - conditions not met\n"
+                        f"Below SMA200: {not above_sma200}\n"
+                        f"MA Color: {ma_color}\n"
+                        f"Cross Slope: {cross_slope}%"
+                    )
             else:
-                self.signal_logger.info(
-                    f"MACD Dead Cross ignored - too flat\n"
-                    f"Cross Slope: {cross_slope}%"
-                )
-        else:
-            self.signal_logger.info("No new MACD cross")
+                self.signal_logger.info("No new MACD cross")
 
-        self._cleanup_old_crosses(symbol, formatted_time)
-        
-        # 저장된 크로스 정보 로깅
-        if self.cross_history[symbol]['ema']:
-            cross_info = self.cross_history[symbol]['ema'][0]
-            self.signal_logger.info(
-                f"Current EMA cross: Time={cross_info[0]}, "
-                f"Type={cross_info[1]}, "
-                f"High={cross_info[2]}, "
-                f"Low={cross_info[3]}"
-            )
-        if self.cross_history[symbol]['macd']:
-            cross_info = self.cross_history[symbol]['macd'][0]
-            self.signal_logger.info(
-                f"Current MACD cross: Time={cross_info[0]}, "
-                f"Type={cross_info[1]}, "
-                f"High={cross_info[2]}, "
-                f"Low={cross_info[3]}"
-            )
+            self._cleanup_old_crosses(symbol, formatted_time)
+            
+            # 저장된 크로스 정보 로깅
+            if self.cross_history[symbol]['ema']:
+                cross_info = self.cross_history[symbol]['ema'][0]
+                self.signal_logger.info(
+                    f"Current EMA cross: Time={cross_info[0]}, "
+                    f"Type={cross_info[1]}, "
+                    f"High={cross_info[2]}, "
+                    f"Low={cross_info[3]}"
+                )
+            if self.cross_history[symbol]['macd']:
+                cross_info = self.cross_history[symbol]['macd'][0]
+                self.signal_logger.info(
+                    f"Current MACD cross: Time={cross_info[0]}, "
+                    f"Type={cross_info[1]}, "
+                    f"High={cross_info[2]}, "
+                    f"Low={cross_info[3]}"
+                )
+
+        except Exception as e:
+            self.signal_logger.error(f"Error in store_cross_data: {e}")
 
     def _cleanup_old_crosses(self, symbol, formatted_time):
         """오래된 크로스 데이터 제거"""
