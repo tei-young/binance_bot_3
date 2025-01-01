@@ -440,8 +440,7 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                # if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
-                if above_sma200 and ma_color == 'green':  # slope 체크 제거
+                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'golden',
@@ -466,8 +465,7 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                # if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
-                if not above_sma200 and ma_color == 'red':  # slope 체크 제거
+                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'dead',
