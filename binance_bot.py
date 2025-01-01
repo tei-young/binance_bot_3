@@ -817,11 +817,13 @@ class TradingBot:
                         
                         # 포지션 정보 초기화
                         self.positions[symbol] = {
-                            'entry_order': None,
-                            'sl_order': None,
-                            'tp_order': None,
-                            'position_type': None
-                        }
+                        'entry_order': None,
+                        'sl_order': None,
+                        'tp_order': None,
+                        'position_type': None,
+                        'trailing_stop_applied': False,
+                        'entry_price': None
+                    }
                         
                 except Exception as e:
                     self.execution_logger.error(f"Error checking entry order status: {e}")
@@ -956,71 +958,71 @@ class TradingBot:
             return False
 
     def update_trailing_stop(self, symbol, entry_price, current_price, signal, contract_amount):
-       try:
-       if signal == 'buy':
-           profit_percent = ((current_price - entry_price) / entry_price) * 100
-           if profit_percent >= 1.5:
-               new_stop_loss = entry_price * 1.012
-               
-               open_orders = self.exchange.fetch_open_orders(symbol)
-               for order in open_orders:
-                   if order['type'] == 'stop':
-                       self.exchange.cancel_order(order['id'], symbol)
-               
-               sl_order = self.exchange.create_order(
-                   symbol,
-                   'stop',
-                   'sell',
-                   contract_amount,
-                   new_stop_loss,
-                   {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
-               )
-               
-               self.execution_logger.info(
-                   f"Trailing Stop Updated\n"
-                   f"Symbol: {symbol}\n"
-                   f"Time: {datetime.now()}\n"
-                   f"Entry: {entry_price}\n"
-                   f"Current Price: {current_price}\n"
-                   f"New Stop Loss: {new_stop_loss}\n"
-                   f"Profit %: {profit_percent:.2f}%\n"
-                   f"Order ID: {sl_order['id']}"
-               )
-               
-       elif signal == 'sell':
-           profit_percent = ((entry_price - current_price) / entry_price) * 100
-           if profit_percent >= 1.5:
-               new_stop_loss = entry_price * 0.988
-               
-               open_orders = self.exchange.fetch_open_orders(symbol)
-               for order in open_orders:
-                   if order['type'] == 'stop':
-                       self.exchange.cancel_order(order['id'], symbol)
-               
-               sl_order = self.exchange.create_order(
-                   symbol,
-                   'stop',
-                   'buy',
-                   contract_amount,
-                   new_stop_loss,
-                   {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
-               )
-               
-               self.execution_logger.info(
-                   f"Trailing Stop Updated\n"
-                   f"Symbol: {symbol}\n"
-                   f"Time: {datetime.now()}\n"
-                   f"Entry: {entry_price}\n" 
-                   f"Current Price: {current_price}\n"
-                   f"New Stop Loss: {new_stop_loss}\n"
-                   f"Profit %: {profit_percent:.2f}%\n"
-                   f"Order ID: {sl_order['id']}"
-               )
-       
-       return True
-   except Exception as e:
-       self.execution_logger.error(f"Error updating trailing stop: {e}")
-       return False
+        try:
+            if signal == 'buy':
+                profit_percent = ((current_price - entry_price) / entry_price) * 100
+                if profit_percent >= 1.8:
+                    new_stop_loss = entry_price * 1.015
+                    
+                    open_orders = self.exchange.fetch_open_orders(symbol)
+                    for order in open_orders:
+                        if order['type'] == 'stop':
+                            self.exchange.cancel_order(order['id'], symbol)
+                    
+                    sl_order = self.exchange.create_order(
+                        symbol,
+                        'stop',
+                        'sell',
+                        contract_amount,
+                        new_stop_loss,
+                        {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
+                    )
+                    
+                    self.execution_logger.info(
+                        f"Trailing Stop Updated\n"
+                        f"Symbol: {symbol}\n"
+                        f"Time: {datetime.now()}\n"
+                        f"Entry: {entry_price}\n"
+                        f"Current Price: {current_price}\n"
+                        f"New Stop Loss: {new_stop_loss}\n"
+                        f"Profit %: {profit_percent:.2f}%\n"
+                        f"Order ID: {sl_order['id']}"
+                    )
+                    
+            elif signal == 'sell':
+                profit_percent = ((entry_price - current_price) / entry_price) * 100
+                if profit_percent >= 1.8:
+                    new_stop_loss = entry_price * 0.985
+                    
+                    open_orders = self.exchange.fetch_open_orders(symbol)
+                    for order in open_orders:
+                        if order['type'] == 'stop':
+                            self.exchange.cancel_order(order['id'], symbol)
+                    
+                    sl_order = self.exchange.create_order(
+                        symbol,
+                        'stop',
+                        'buy',
+                        contract_amount,
+                        new_stop_loss,
+                        {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
+                    )
+                    
+                    self.execution_logger.info(
+                        f"Trailing Stop Updated\n"
+                        f"Symbol: {symbol}\n"
+                        f"Time: {datetime.now()}\n"
+                        f"Entry: {entry_price}\n" 
+                        f"Current Price: {current_price}\n"
+                        f"New Stop Loss: {new_stop_loss}\n"
+                        f"Profit %: {profit_percent:.2f}%\n"
+                        f"Order ID: {sl_order['id']}"
+                    )
+            
+            return True
+        except Exception as e:
+            self.execution_logger.error(f"Error updating trailing stop: {e}")
+            return False
 
     def update_sl_history(self, symbol, position_type):
         """손절 발생 시 기록 업데이트"""
@@ -1044,25 +1046,32 @@ class TradingBot:
                 sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
                 if sl_order['status'] == 'filled':
                     self.execution_logger.info(
-                        f"Position Closed - Stop Loss\n"
+                        f"Position Closed - {'Trailing ' if position_info['trailing_stop_applied'] else ''}Stop Loss\n"
                         f"Symbol: {symbol}\n"
                         f"Time: {datetime.now()}\n"
                         f"Position Type: {position_info['position_type']}"
                     )
                     self.update_sl_history(symbol, position_info['position_type'])
-                    self.positions[symbol] = {'entry_order': None, 'sl_order': None, 'tp_order': None, 'position_type': None}
+                    self.positions[symbol] = {
+                        'entry_order': None,
+                        'sl_order': None,
+                        'tp_order': None,
+                        'position_type': None,
+                        'trailing_stop_applied': False,
+                        'entry_price': None
+                    }
                     return
-                    
-            if position_info['tp_order']:
-                tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
-                if tp_order['status'] == 'filled':
-                    self.execution_logger.info(
-                        f"Position Closed - Take Profit\n"
-                        f"Symbol: {symbol}\n"
-                        f"Time: {datetime.now()}\n"
-                        f"Position Type: {position_info['position_type']}"
-                    )
-                    self.positions[symbol] = {'entry_order': None, 'sl_order': None, 'tp_order': None, 'position_type': None}
+
+            positions = self.exchange.fetch_positions([symbol])
+            if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
+                current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                self.update_trailing_stop(
+                    symbol,
+                    position_info['entry_price'],
+                    current_price,
+                    position_info['position_type'],
+                    float(positions[0]['contracts'])
+                )
                     
         except Exception as e:
             self.execution_logger.error(f"Error checking order status: {e}")
