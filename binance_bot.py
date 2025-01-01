@@ -20,7 +20,7 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                  'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
-                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'CREAM/USDT',
+                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
                 'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 'EOS/USDT',
                 'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 'PENGU/USDT', 'AIXBT/USDT', 'ATA/USDT',
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
@@ -375,7 +375,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.05  # 최소 기울기
+            MIN_SLOPE = 0.04  # 최소 기울기
             
             # EMA 크로스 체크
             if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -440,7 +440,8 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                # if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                if above_sma200 and ma_color == 'green':  # slope 체크 제거
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'golden',
@@ -465,7 +466,8 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                # if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                if not above_sma200 and ma_color == 'red':  # slope 체크 제거
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'dead',
