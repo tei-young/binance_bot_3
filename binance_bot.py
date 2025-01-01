@@ -970,23 +970,34 @@ class TradingBot:
             self.execution_logger.error(f"Error updating SL history: {e}")
 
     def check_order_status(self, symbol):
-        """주문 상태 확인"""
         try:
             position_info = self.positions[symbol]
             if not position_info['entry_order']:
                 return
                 
-            # SL 주문 상태 확인
             if position_info['sl_order']:
                 sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
                 if sl_order['status'] == 'filled':
+                    self.execution_logger.info(
+                        f"Position Closed - Stop Loss\n"
+                        f"Symbol: {symbol}\n"
+                        f"Time: {datetime.now()}\n"
+                        f"Position Type: {position_info['position_type']}"
+                    )
                     self.update_sl_history(symbol, position_info['position_type'])
-                    self.positions[symbol] = {
-                        'entry_order': None,
-                        'sl_order': None,
-                        'tp_order': None,
-                        'position_type': None
-                    }
+                    self.positions[symbol] = {'entry_order': None, 'sl_order': None, 'tp_order': None, 'position_type': None}
+                    return
+                    
+            if position_info['tp_order']:
+                tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
+                if tp_order['status'] == 'filled':
+                    self.execution_logger.info(
+                        f"Position Closed - Take Profit\n"
+                        f"Symbol: {symbol}\n"
+                        f"Time: {datetime.now()}\n"
+                        f"Position Type: {position_info['position_type']}"
+                    )
+                    self.positions[symbol] = {'entry_order': None, 'sl_order': None, 'tp_order': None, 'position_type': None}
                     
         except Exception as e:
             self.execution_logger.error(f"Error checking order status: {e}")
