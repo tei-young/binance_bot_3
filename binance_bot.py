@@ -916,7 +916,9 @@ class TradingBot:
                     'entry_order': order['id'],
                     'sl_order': sl_order['id'],
                     'tp_order': tp_order['id'],
-                    'position_type': position_type
+                    'position_type': position_type,
+                    'trailing_stop_applied': False, #트레일링 스탑 추가
+                    'entry_price': entry_price  # 진입가격 저장 추가
                 }
 
                 # 성공적인 주문 실행 로깅
