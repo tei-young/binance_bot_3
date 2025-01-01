@@ -19,10 +19,10 @@ THRESHOLD = 4         # MA angles JD threshold
 TRADING_SYMBOLS = [ #'BTC/USDT',
                  'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
-                'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 
-                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
-                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 
-                'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 
+                'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
+                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'CREAM/USDT',
+                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 'EOS/USDT',
+                'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 'PENGU/USDT', 'AIXBT/USDT', 'ATA/USDT',
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
                 'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT']
 
@@ -353,7 +353,7 @@ class TradingBot:
             return 0
 
     def store_cross_data(self, df, symbol):
-            """크로스 데이터 저장"""
+        """크로스 데이터 저장"""
         try:
             current_idx = len(df) - 1
             current_time = df.index[current_idx]
@@ -363,12 +363,13 @@ class TradingBot:
             above_sma200 = df['close'].iloc[current_idx] > df['sma200'].iloc[current_idx]
             ma_color = df['mangles_jd_color'].iloc[current_idx]
             
-            # 크로스 시점 기준 이전 5분 데이터 추출
-            candle_start = current_time - pd.Timedelta(minutes=5)
-            candle_mask = (df.index >= candle_start) & (df.index <= current_time)
+            # ex.py 방식으로 5분 캔들 데이터 추출
+            candle_start = formatted_time
+            candle_end = formatted_time + pd.Timedelta(minutes=5)
+            candle_mask = (df.index >= candle_start) & (df.index < candle_end)
             candle_data = df[candle_mask]
             
-            # 5분간의 최고가와 최저가 계산
+            # 5분 캔들의 최고가와 최저가 계산
             period_high = candle_data['high'].max()
             period_low = candle_data['low'].min()
 
@@ -696,13 +697,13 @@ class TradingBot:
 
     def determine_stop_loss(self, df, crosses, position_type, entry_price):
         """
-    먼저 발생한 크로스의 시점을 기준으로 이전 5분간의 high/low로 stop loss 설정
-    """
+        먼저 발생한 크로스의 시점을 기준으로 이전 5분간의 high/low로 stop loss 설정
+        """
         try:
             if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error("Missing cross data")
                 return None
-                
+                    
             # 두 크로스의 시간 비교
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
@@ -710,23 +711,23 @@ class TradingBot:
             # 먼저 발생한 크로스 찾기
             first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
             first_cross_time = ema_time if ema_time <= macd_time else macd_time
-            
-            # 해당 시점에서 이전 5분간의 데이터 추출
-            candle_start = first_cross_time - pd.Timedelta(minutes=5)
-            candle_mask = (df.index >= candle_start) & (df.index <= first_cross_time)
-            candle_data = df[candle_mask]
+                
+            # 먼저 발생한 크로스 시점 기준 이전 5분 데이터 추출
+            sl_start = first_cross_time - pd.Timedelta(minutes=5)
+            sl_mask = (df.index >= sl_start) & (df.index <= first_cross_time)
+            sl_data = df[sl_mask]
             
             # 해당 구간의 high/low 계산
-            period_high = candle_data['high'].max()
-            period_low = candle_data['low'].min()
-            
+            period_high = sl_data['high'].max()
+            period_low = sl_data['low'].min()
+                
             # position type에 따른 stop loss 설정
             stop_loss = period_low if position_type == 'long' else period_high
-            
+                
             # SL 거리 검증
             sl_distance = abs(stop_loss - entry_price)
             min_sl_distance = entry_price * 0.003  # 최소 0.3% 차이
-            
+                
             if sl_distance < min_sl_distance:
                 self.execution_logger.warning(
                     f"Stop loss too close to entry price:\n"
@@ -735,17 +736,17 @@ class TradingBot:
                     f"Distance: {sl_distance} (minimum required: {min_sl_distance})"
                 )
                 return None
-            
+                
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
                 f"First cross time: {first_cross_time}\n"
-                f"Candle range: {candle_start} to {first_cross_time}\n"
+                f"Data range: {sl_start} to {first_cross_time}\n"
                 f"Stop loss price: {stop_loss}\n"
                 f"Distance from entry: {sl_distance} ({(sl_distance/entry_price)*100:.3f}%)"
             )
-                
-            return stop_loss
                     
+            return stop_loss
+                        
         except Exception as e:
             self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
