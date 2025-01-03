@@ -516,61 +516,56 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            
+            above_sma200 = df['close'].iloc[-1] > df['sma200'].iloc[-1]
+            ma_color = df['mangles_jd_color'].iloc[-1]
+            MIN_SLOPE = 0.042
+
             self.execution_logger.info(
                 f"Checking Historical Crosses\n"
                 f"Time Range: {window_start} to {current_time}\n"
                 f"Primary Cross: {primary_indicator} {cross_type}\n"
                 f"Looking for: {target_indicator} {cross_type}"
             )
-            
-            # 5분봉 단위로 검사
-            for i in range(len(window_data)-5, -1, -5):
-                check_time = window_data.index[i]
+
+            for i in range(0, len(window_data)-5, 5):
+                check_idx = i + 5
                 if target_indicator == 'macd':
-                    if ((window_data['macd'].iloc[i] > window_data['macd_signal'].iloc[i] and 
-                        window_data['macd'].iloc[i-1] < window_data['macd_signal'].iloc[i-1] and
+                    if ((window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
+                        window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
                         cross_type == 'golden') or
-                        (window_data['macd'].iloc[i] < window_data['macd_signal'].iloc[i] and 
-                        window_data['macd'].iloc[i-1] > window_data['macd_signal'].iloc[i-1] and
+                        (window_data['macd'].iloc[check_idx-1] > window_data['macd_signal'].iloc[check_idx-1] and 
+                        window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
                         cross_type == 'dead')):
                         
-                        cross_slope = self.calculate_macd_cross_angle(window_data, i)
-                        conditions_met = (cross_slope >= MIN_SLOPE and
-                                        ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')))
-                        
-                        if conditions_met:
+                        cross_slope = self.calculate_macd_cross_angle(window_data, check_idx)
+                        if cross_slope >= MIN_SLOPE:
                             self.execution_logger.info(
                                 f"Found Historical MACD Cross\n"
-                                f"Time: {check_time}\n"
+                                f"Time: {window_data.index[check_idx]}\n"
                                 f"Cross Type: {cross_type}\n"
                                 f"Slope: {cross_slope}"
                             )
-                            return check_time
+                            return window_data.index[check_idx]
                 else:
-                    if ((window_data['ema12'].iloc[i] > window_data['ema26'].iloc[i] and 
-                        window_data['ema12'].iloc[i-1] < window_data['ema26'].iloc[i-1] and
+                    if ((window_data['ema12'].iloc[check_idx-1] < window_data['ema26'].iloc[check_idx-1] and 
+                        window_data['ema12'].iloc[check_idx] > window_data['ema26'].iloc[check_idx] and
                         cross_type == 'golden') or
-                        (window_data['ema12'].iloc[i] < window_data['ema26'].iloc[i] and 
-                        window_data['ema12'].iloc[i-1] > window_data['ema26'].iloc[i-1] and
+                        (window_data['ema12'].iloc[check_idx-1] > window_data['ema26'].iloc[check_idx-1] and 
+                        window_data['ema12'].iloc[check_idx] < window_data['ema26'].iloc[check_idx] and
                         cross_type == 'dead')):
                         
-                        cross_slope = self.calculate_ema_cross_angle(window_data, i)
-                        conditions_met = (cross_slope >= MIN_SLOPE and
-                                        ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')))
-                        
-                        if conditions_met:
+                        cross_slope = self.calculate_ema_cross_angle(window_data, check_idx)
+                        if cross_slope >= MIN_SLOPE:
                             self.execution_logger.info(
                                 f"Found Historical EMA Cross\n"
-                                f"Time: {check_time}\n"
+                                f"Time: {window_data.index[check_idx]}\n"
                                 f"Cross Type: {cross_type}\n"
                                 f"Slope: {cross_slope}"
                             )
-                            return check_time
-                            
+                            return window_data.index[check_idx]
+
             return None
+
         except Exception as e:
             self.execution_logger.error(f"Error checking historical crosses: {e}")
             return None
