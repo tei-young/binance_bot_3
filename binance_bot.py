@@ -375,7 +375,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.05  # 최소 기울기
+            MIN_SLOPE = 0.042  # 최소 기울기
             
             # EMA 크로스 체크
             if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -510,6 +510,70 @@ class TradingBot:
 
         except Exception as e:
             self.signal_logger.error(f"Error in store_cross_data: {e}")
+
+    def check_historical_crosses(self, df, current_time, cross_type, primary_indicator):
+        try:
+            window_start = current_time - pd.Timedelta(minutes=25)
+            window_data = df[(df.index >= window_start) & (df.index <= current_time)]
+            target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
+            
+            self.execution_logger.info(
+                f"Checking Historical Crosses\n"
+                f"Time Range: {window_start} to {current_time}\n"
+                f"Primary Cross: {primary_indicator} {cross_type}\n"
+                f"Looking for: {target_indicator} {cross_type}"
+            )
+            
+            # 5분봉 단위로 검사
+            for i in range(len(window_data)-5, -1, -5):
+                check_time = window_data.index[i]
+                if target_indicator == 'macd':
+                    if ((window_data['macd'].iloc[i] > window_data['macd_signal'].iloc[i] and 
+                        window_data['macd'].iloc[i-1] < window_data['macd_signal'].iloc[i-1] and
+                        cross_type == 'golden') or
+                        (window_data['macd'].iloc[i] < window_data['macd_signal'].iloc[i] and 
+                        window_data['macd'].iloc[i-1] > window_data['macd_signal'].iloc[i-1] and
+                        cross_type == 'dead')):
+                        
+                        cross_slope = self.calculate_macd_cross_angle(window_data, i)
+                        conditions_met = (cross_slope >= MIN_SLOPE and
+                                        ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
+                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')))
+                        
+                        if conditions_met:
+                            self.execution_logger.info(
+                                f"Found Historical MACD Cross\n"
+                                f"Time: {check_time}\n"
+                                f"Cross Type: {cross_type}\n"
+                                f"Slope: {cross_slope}"
+                            )
+                            return check_time
+                else:
+                    if ((window_data['ema12'].iloc[i] > window_data['ema26'].iloc[i] and 
+                        window_data['ema12'].iloc[i-1] < window_data['ema26'].iloc[i-1] and
+                        cross_type == 'golden') or
+                        (window_data['ema12'].iloc[i] < window_data['ema26'].iloc[i] and 
+                        window_data['ema12'].iloc[i-1] > window_data['ema26'].iloc[i-1] and
+                        cross_type == 'dead')):
+                        
+                        cross_slope = self.calculate_ema_cross_angle(window_data, i)
+                        conditions_met = (cross_slope >= MIN_SLOPE and
+                                        ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
+                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')))
+                        
+                        if conditions_met:
+                            self.execution_logger.info(
+                                f"Found Historical EMA Cross\n"
+                                f"Time: {check_time}\n"
+                                f"Cross Type: {cross_type}\n"
+                                f"Slope: {cross_slope}"
+                            )
+                            return check_time
+                            
+            return None
+        except Exception as e:
+            self.execution_logger.error(f"Error checking historical crosses: {e}")
+            return None
 
     def _cleanup_old_crosses(self, symbol, formatted_time):
         """오래된 크로스 데이터 제거"""
@@ -755,7 +819,7 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2.5) if position_type == 'long' else entry_price - (stop_loss_distance * 2.5)
+            take_profit = entry_price + (stop_loss_distance * 2.25) if position_type == 'long' else entry_price - (stop_loss_distance * 2.25)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
