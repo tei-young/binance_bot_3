@@ -394,15 +394,14 @@ class TradingBot:
                     )
                     
                     # 이전 25분간의 MACD 크로스 확인
-                    macd_cross_time = self.check_historical_crosses(df, current_time, 'golden', 'ema')
+                    macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
                     if macd_cross_time:
                         self.cross_history[symbol]['macd'] = [(
                             macd_cross_time,
                             'golden',
-                            period_high,
-                            period_low
+                            macd_high,
+                            macd_low
                         )]
-                        self.signal_logger.info(f"Found Historical MACD Golden Cross at {macd_cross_time}")
                         
                 else:
                     self.signal_logger.info(
@@ -432,15 +431,14 @@ class TradingBot:
                     )
                     
                     # 이전 25분간의 MACD 크로스 확인
-                    macd_cross_time = self.check_historical_crosses(df, current_time, 'dead', 'ema')
+                    macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
                     if macd_cross_time:
                         self.cross_history[symbol]['macd'] = [(
                             macd_cross_time,
                             'dead',
-                            period_high,
-                            period_low
+                            macd_high,
+                            macd_low
                         )]
-                        self.signal_logger.info(f"Found Historical MACD Dead Cross at {macd_cross_time}")
                         
                 else:
                     self.signal_logger.info(
@@ -473,15 +471,14 @@ class TradingBot:
                     )
                     
                     # 이전 25분간의 EMA 크로스 확인
-                    ema_cross_time = self.check_historical_crosses(df, current_time, 'golden', 'macd')
+                    ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
                     if ema_cross_time:
                         self.cross_history[symbol]['ema'] = [(
                             ema_cross_time,
                             'golden',
-                            period_high,
-                            period_low
+                            ema_high,
+                            ema_low
                         )]
-                        self.signal_logger.info(f"Found Historical EMA Golden Cross at {ema_cross_time}")
                         
                 else:
                     self.signal_logger.info(
@@ -511,15 +508,14 @@ class TradingBot:
                     )
                     
                     # 이전 25분간의 EMA 크로스 확인
-                    ema_cross_time = self.check_historical_crosses(df, current_time, 'dead', 'macd')
+                    ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
                     if ema_cross_time:
                         self.cross_history[symbol]['ema'] = [(
                             ema_cross_time,
                             'dead',
-                            period_high,
-                            period_low
+                            ema_high,
+                            ema_low
                         )]
-                        self.signal_logger.info(f"Found Historical EMA Dead Cross at {ema_cross_time}")
                         
                 else:
                     self.signal_logger.info(
@@ -553,7 +549,7 @@ class TradingBot:
 
         except Exception as e:
             self.signal_logger.error(f"Error in store_cross_data: {e}")
-
+       
     def check_historical_crosses(self, df, current_time, cross_type, primary_indicator):
         try:
             window_start = current_time - pd.Timedelta(minutes=25)
