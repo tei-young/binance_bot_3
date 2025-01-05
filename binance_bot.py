@@ -372,10 +372,14 @@ class TradingBot:
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
             MIN_SLOPE = 0.042
+            THRESHOLD = 0.00005  # 급격한 변화 감지를 위한 threshold 값 설정
             
             # EMA 크로스 체크
-            if (df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]):
+            if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
+                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
+                (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
+                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
+                    df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
@@ -411,8 +415,11 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%"
                     )
                         
-            elif (df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]):
+            elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
+                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
+                    (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
+                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
+                    df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
@@ -451,8 +458,11 @@ class TradingBot:
                 self.signal_logger.info("No new EMA cross")
                         
             # MACD 크로스 체크
-            if (df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]):
+            if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
+                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
+                (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
+                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
+                    df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
@@ -488,8 +498,11 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%"
                     )
                         
-            elif (df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]):
+            elif ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
+                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
+                    (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
+                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
+                    df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
