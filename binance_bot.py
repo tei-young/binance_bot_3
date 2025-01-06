@@ -372,7 +372,7 @@ class TradingBot:
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
             MIN_SLOPE = 0.042
-            THRESHOLD = 0.00005  # 급격한 변화 감지를 위한 threshold 값 설정
+            THRESHOLD = 0.00005  # 급격한 변화 감지를 위한 threshold
             
             # EMA 크로스 체크
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
@@ -384,6 +384,14 @@ class TradingBot:
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
                 if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                    # 손절 이력 체크
+                    last_sl_time = self.sl_history[symbol]['long']
+                    if last_sl_time:
+                        time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                        if time_since_sl < 30:  # 30분 이내
+                            self.signal_logger.info(f"EMA Golden Cross ignored - Recent stop loss ({time_since_sl:.1f} mins ago)")
+                            return
+
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'golden',
@@ -400,12 +408,14 @@ class TradingBot:
                     # 이전 25분간의 MACD 크로스 확인
                     macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
                     if macd_cross_time:
-                        self.cross_history[symbol]['macd'] = [(
-                            macd_cross_time,
-                            'golden',
-                            macd_high,
-                            macd_low
-                        )]
+                        # Historical 크로스도 손절 이력 체크
+                        if not last_sl_time or time_since_sl >= 30:
+                            self.cross_history[symbol]['macd'] = [(
+                                macd_cross_time,
+                                'golden',
+                                macd_high,
+                                macd_low
+                            )]
                         
                 else:
                     self.signal_logger.info(
@@ -424,6 +434,14 @@ class TradingBot:
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
                 if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                    # 손절 이력 체크
+                    last_sl_time = self.sl_history[symbol]['short']
+                    if last_sl_time:
+                        time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                        if time_since_sl < 30:  # 30분 이내
+                            self.signal_logger.info(f"EMA Dead Cross ignored - Recent stop loss ({time_since_sl:.1f} mins ago)")
+                            return
+
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'dead',
@@ -440,12 +458,14 @@ class TradingBot:
                     # 이전 25분간의 MACD 크로스 확인
                     macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
                     if macd_cross_time:
-                        self.cross_history[symbol]['macd'] = [(
-                            macd_cross_time,
-                            'dead',
-                            macd_high,
-                            macd_low
-                        )]
+                        # Historical 크로스도 손절 이력 체크
+                        if not last_sl_time or time_since_sl >= 30:
+                            self.cross_history[symbol]['macd'] = [(
+                                macd_cross_time,
+                                'dead',
+                                macd_high,
+                                macd_low
+                            )]
                         
                 else:
                     self.signal_logger.info(
@@ -467,6 +487,14 @@ class TradingBot:
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
                 if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                    # 손절 이력 체크
+                    last_sl_time = self.sl_history[symbol]['long']
+                    if last_sl_time:
+                        time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                        if time_since_sl < 30:  # 30분 이내
+                            self.signal_logger.info(f"MACD Golden Cross ignored - Recent stop loss ({time_since_sl:.1f} mins ago)")
+                            return
+
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'golden',
@@ -483,12 +511,14 @@ class TradingBot:
                     # 이전 25분간의 EMA 크로스 확인
                     ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
                     if ema_cross_time:
-                        self.cross_history[symbol]['ema'] = [(
-                            ema_cross_time,
-                            'golden',
-                            ema_high,
-                            ema_low
-                        )]
+                        # Historical 크로스도 손절 이력 체크
+                        if not last_sl_time or time_since_sl >= 30:
+                            self.cross_history[symbol]['ema'] = [(
+                                ema_cross_time,
+                                'golden',
+                                ema_high,
+                                ema_low
+                            )]
                         
                 else:
                     self.signal_logger.info(
@@ -507,6 +537,14 @@ class TradingBot:
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
                 if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                    # 손절 이력 체크
+                    last_sl_time = self.sl_history[symbol]['short']
+                    if last_sl_time:
+                        time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                        if time_since_sl < 30:  # 30분 이내
+                            self.signal_logger.info(f"MACD Dead Cross ignored - Recent stop loss ({time_since_sl:.1f} mins ago)")
+                            return
+
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'dead',
@@ -523,12 +561,14 @@ class TradingBot:
                     # 이전 25분간의 EMA 크로스 확인
                     ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
                     if ema_cross_time:
-                        self.cross_history[symbol]['ema'] = [(
-                            ema_cross_time,
-                            'dead',
-                            ema_high,
-                            ema_low
-                        )]
+                        # Historical 크로스도 손절 이력 체크
+                        if not last_sl_time or time_since_sl >= 30:
+                            self.cross_history[symbol]['ema'] = [(
+                                ema_cross_time,
+                                'dead',
+                                ema_high,
+                                ema_low
+                            )]
                         
                 else:
                     self.signal_logger.info(
