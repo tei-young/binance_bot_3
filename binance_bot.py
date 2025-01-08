@@ -922,8 +922,10 @@ class TradingBot:
             if positions and float(positions[0]['contracts']) != 0:
                 position_size = float(positions[0]['contracts'])
                 position_side = 'long' if position_size > 0 else 'short'
-                self.execution_logger.info(
-                    f"Found existing position for {symbol}:\n"
+                
+                # 디버그 레벨로 변경하여 일반 로그에는 표시되지 않도록
+                self.trading_logger.debug(
+                    f"Active position exists for {symbol}:\n"
                     f"Side: {position_side}\n"
                     f"Size: {abs(position_size)}\n"
                     f"Entry Price: {positions[0]['entryPrice']}"
@@ -932,47 +934,46 @@ class TradingBot:
 
             # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
             if position_info and position_info['entry_order']:
-                entry_order = None
                 try:
                     # 진입 주문 상태 확인
                     entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
                     
                     # 진입 주문이 체결(filled)되었는데 현재 포지션이 없다면 청산된 상태
                     if entry_order['status'] == 'filled':
-                        self.execution_logger.info(f"Position was closed for {symbol}, cleaning up remaining orders")
+                        self.trading_logger.debug(f"Position was closed for {symbol}, cleaning up remaining orders")
                         
                         # 남은 SL/TP 주문 취소
                         if position_info['sl_order']:
                             try:
                                 self.exchange.cancel_order(position_info['sl_order'], symbol)
-                                self.execution_logger.info(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
+                                self.trading_logger.debug(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
                             except Exception as e:
-                                self.execution_logger.error(f"Error cancelling SL order: {e}")
+                                self.trading_logger.error(f"Error cancelling SL order: {e}")
                                 
                         if position_info['tp_order']:
                             try:
                                 self.exchange.cancel_order(position_info['tp_order'], symbol)
-                                self.execution_logger.info(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
+                                self.trading_logger.debug(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
                             except Exception as e:
-                                self.execution_logger.error(f"Error cancelling TP order: {e}")
+                                self.trading_logger.error(f"Error cancelling TP order: {e}")
                         
                         # 포지션 정보 초기화
                         self.positions[symbol] = {
-                        'entry_order': None,
-                        'sl_order': None,
-                        'tp_order': None,
-                        'position_type': None,
-                        'trailing_stop_applied': False,
-                        'entry_price': None
-                    }
+                            'entry_order': None,
+                            'sl_order': None,
+                            'tp_order': None,
+                            'position_type': None,
+                            'trailing_stop_applied': False,
+                            'entry_price': None
+                        }
                         
                 except Exception as e:
-                    self.execution_logger.error(f"Error checking entry order status: {e}")
+                    self.trading_logger.error(f"Error checking entry order status: {e}")
 
             return False
                 
         except Exception as e:
-            self.execution_logger.error(f"Error checking position for {symbol}: {e}")
+            self.trading_logger.error(f"Error checking position for {symbol}: {e}")
             return True  # 에러 시 안전하게 True 반환
 
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
