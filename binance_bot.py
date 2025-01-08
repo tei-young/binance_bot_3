@@ -1274,6 +1274,10 @@ class TradingBot:
                         # 주문 상태 확인
                         self.check_order_status(symbol)
                         
+                        # 기존 포지션 확인을 먼저 수행
+                        if self.check_existing_position(symbol):
+                            continue  # 포지션이 있으면 다음 심볼로 넘어감
+                        
                         df = self.get_historical_data(symbol)
                         if df is None:
                             continue
