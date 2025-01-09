@@ -1183,9 +1183,10 @@ class TradingBot:
     def check_order_status(self, symbol):
         """
         주문 상태를 확인하고 필요한 업데이트를 수행합니다.
-        - 스탑로스 주문 체결 확인
+        - 포지션 청산 확인 (SL/TP/수동)
+        - 남은 주문 취소
+        - 스탑로스 히스토리 업데이트
         - 트레일링 스탑 업데이트
-        - 포지션 정보 관리
         """
         try:
             position_info = self.positions[symbol]
@@ -1195,21 +1196,48 @@ class TradingBot:
             # 포지션이 있었는데 없어진 경우 확인
             positions = self.exchange.fetch_positions([symbol])
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0):
-                # 스탑로스 주문 상태 확인
+                # 청산 타입 확인 (SL/TP)
+                closing_type = None
                 if position_info['sl_order']:
                     try:
                         sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
                         if sl_order['status'] == 'filled':
-                            self.execution_logger.info(
-                                f"Position Closed - {'Trailing ' if position_info['trailing_stop_applied'] else ''}Stop Loss\n"
-                                f"Symbol: {symbol}\n"
-                                f"Time: {datetime.now()}\n"
-                                f"Position Type: {position_info['position_type']}"
-                            )
-                            # 스탑로스 히스토리 업데이트
+                            closing_type = 'Stop Loss'
+                            # 스탑로스 청산 시 재진입 제한을 위한 히스토리 업데이트
                             self.update_sl_history(symbol, position_info['position_type'])
                     except Exception as e:
                         self.execution_logger.error(f"Error checking stop loss order: {e}")
+
+                if position_info['tp_order'] and not closing_type:
+                    try:
+                        tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
+                        if tp_order['status'] == 'filled':
+                            closing_type = 'Take Profit'
+                    except Exception as e:
+                        self.execution_logger.error(f"Error checking take profit order: {e}")
+
+                # 모든 열린 주문 취소
+                try:
+                    open_orders = self.exchange.fetch_open_orders(symbol)
+                    for order in open_orders:
+                        try:
+                            self.exchange.cancel_order(order['id'], symbol)
+                            self.trading_logger.info(
+                                f"Cancelled remaining order for {symbol}: {order['id']}"
+                            )
+                        except Exception as cancel_error:
+                            self.trading_logger.error(f"Error cancelling order {order['id']}: {cancel_error}")
+                except Exception as e:
+                    self.execution_logger.error(f"Error fetching open orders: {e}")
+
+                # 포지션 청산 로깅
+                self.execution_logger.info(
+                    f"Position Closed - {closing_type if closing_type else 'Manual'}\n"
+                    f"Symbol: {symbol}\n"
+                    f"Time: {datetime.now()}\n"
+                    f"Position Type: {position_info['position_type']}\n"
+                    f"{'SL History updated' if closing_type == 'Stop Loss' else ''}"
+                )
                 
                 # 포지션 정보 초기화
                 self.positions[symbol] = {
