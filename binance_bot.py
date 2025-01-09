@@ -782,20 +782,12 @@ class TradingBot:
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
-        # 1. 지표 계산 먼저
-        df = self.calculate_indicators(df, symbol)
-        if df is None:
-            return None, None
-        
-        # 2. 크로스 데이터 저장
-        self.store_cross_data(df, symbol)
-        
-        # 현재 가격 확인 및 추세 확인
+        # 현재 가격 확인 및 포지션 타입 결정
         current_price = df['close'].iloc[-1]
         above_sma200 = current_price > df['sma200'].iloc[-1]
         position_type = 'long' if above_sma200 else 'short'
         
-        # 최근 손절 이력 확인
+        # 최근 손절 이력 확인을 먼저 수행
         last_sl_time = self.sl_history[symbol][position_type]
         if last_sl_time:
             time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
@@ -805,6 +797,14 @@ class TradingBot:
                     f"Recent stop loss ({time_since_sl:.1f} mins ago)"
                 )
                 return None, None
+        
+        # 1. 지표 계산 먼저
+        df = self.calculate_indicators(df, symbol)
+        if df is None:
+            return None, None
+        
+        # 2. 크로스 데이터 저장
+        self.store_cross_data(df, symbol)
         
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
@@ -1192,39 +1192,40 @@ class TradingBot:
             if not position_info['entry_order']:
                 return
 
-            # 스탑로스 주문이 있는 경우
-            if position_info['sl_order']:
-                try:
-                    sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
-                    # 스탑로스가 체결된 경우
-                    if sl_order['status'] == 'filled':
-                        self.execution_logger.info(
-                            f"Position Closed - {'Trailing ' if position_info['trailing_stop_applied'] else ''}Stop Loss\n"
-                            f"Symbol: {symbol}\n"
-                            f"Time: {datetime.now()}\n"
-                            f"Position Type: {position_info['position_type']}"
-                        )
-                        # 스탑로스 히스토리 업데이트
-                        self.update_sl_history(symbol, position_info['position_type'])
-                        # 포지션 정보 초기화
-                        self.positions[symbol] = {
-                            'entry_order': None,
-                            'sl_order': None,
-                            'tp_order': None,
-                            'position_type': None,
-                            'trailing_stop_applied': False,
-                            'entry_price': None
-                        }
-                        return
-                except Exception as e:
-                    self.execution_logger.error(f"Error checking stop loss order: {e}")
-
-            # 현재 포지션 확인
+            # 포지션이 있었는데 없어진 경우 확인
             positions = self.exchange.fetch_positions([symbol])
+            if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0):
+                # 스탑로스 주문 상태 확인
+                if position_info['sl_order']:
+                    try:
+                        sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
+                        if sl_order['status'] == 'filled':
+                            self.execution_logger.info(
+                                f"Position Closed - {'Trailing ' if position_info['trailing_stop_applied'] else ''}Stop Loss\n"
+                                f"Symbol: {symbol}\n"
+                                f"Time: {datetime.now()}\n"
+                                f"Position Type: {position_info['position_type']}"
+                            )
+                            # 스탑로스 히스토리 업데이트
+                            self.update_sl_history(symbol, position_info['position_type'])
+                    except Exception as e:
+                        self.execution_logger.error(f"Error checking stop loss order: {e}")
+                
+                # 포지션 정보 초기화
+                self.positions[symbol] = {
+                    'entry_order': None,
+                    'sl_order': None,
+                    'tp_order': None,
+                    'position_type': None,
+                    'trailing_stop_applied': False,
+                    'entry_price': None
+                }
+                return
+
+            # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
             if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
                 try:
                     current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    # 트레일링 스탑 업데이트
                     self.update_trailing_stop(
                         symbol,
                         position_info['entry_price'],
@@ -1234,30 +1235,6 @@ class TradingBot:
                     )
                 except Exception as e:
                     self.execution_logger.error(f"Error updating trailing stop: {e}")
-
-            # TP 주문 체결 확인 및 정리 (선택적)
-            if position_info['tp_order']:
-                try:
-                    tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
-                    if tp_order['status'] == 'filled':
-                        self.execution_logger.info(
-                            f"Position Closed - Take Profit\n"
-                            f"Symbol: {symbol}\n"
-                            f"Time: {datetime.now()}\n"
-                            f"Position Type: {position_info['position_type']}"
-                        )
-                        # 포지션 정보 초기화 (TP는 재진입 제한 없음)
-                        self.positions[symbol] = {
-                            'entry_order': None,
-                            'sl_order': None,
-                            'tp_order': None,
-                            'position_type': None,
-                            'trailing_stop_applied': False,
-                            'entry_price': None
-                        }
-                        return
-                except Exception as e:
-                    self.execution_logger.error(f"Error checking take profit order: {e}")
 
         except Exception as e:
             self.execution_logger.error(f"Error in check_order_status: {e}")
