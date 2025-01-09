@@ -782,12 +782,17 @@ class TradingBot:
 
     def check_entry_conditions(self, df, symbol):
         """진입 조건 확인"""
-        # 현재 가격 확인 및 포지션 타입 결정
+        # 1. 지표 계산 먼저
+        df = self.calculate_indicators(df, symbol)
+        if df is None:
+            return None, None
+        
+        # 2. 현재 가격 확인 및 포지션 타입 결정
         current_price = df['close'].iloc[-1]
         above_sma200 = current_price > df['sma200'].iloc[-1]
         position_type = 'long' if above_sma200 else 'short'
         
-        # 최근 손절 이력 확인을 먼저 수행
+        # 3. 최근 손절 이력 확인
         last_sl_time = self.sl_history[symbol][position_type]
         if last_sl_time:
             time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
@@ -798,12 +803,7 @@ class TradingBot:
                 )
                 return None, None
         
-        # 1. 지표 계산 먼저
-        df = self.calculate_indicators(df, symbol)
-        if df is None:
-            return None, None
-        
-        # 2. 크로스 데이터 저장
+        # 4. 크로스 데이터 저장
         self.store_cross_data(df, symbol)
         
         self.signal_logger.info(
