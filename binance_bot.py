@@ -11,7 +11,8 @@ from logging.handlers import RotatingFileHandler
 # 거래 설정
 TIMEFRAME = '5m'      # '1m' 또는 '5m'
 LEVERAGE = 10         # 레버리지 설정
-MARGIN_AMOUNT = 10    # 실제 사용할 증거금 (USDT)
+MARGIN_AMOUNT = 20    # 실제 사용할 증거금 (USDT)
+MAX_DAILY_LOSS = 20   # 일일 최대 손실 제한 (USDT)
 SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
@@ -79,6 +80,11 @@ class TradingBot:
                 self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
             except Exception as e:
                 self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
+        
+        # 손익 관련 속성 추가
+        self.daily_losses = 0  # 순수 손실 USDT
+        self.daily_profits = 0  # 순수 이익 USDT
+        self.last_pnl_reset = datetime.now().date()
 
     def setup_logging(self):
         """로깅 설정"""
@@ -109,6 +115,56 @@ class TradingBot:
         self.trading_logger = setup_logger('trading', 'trading.log')
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
+        
+    def check_daily_pnl(self):
+        """일일 손익 체크 및 리셋"""
+        try:
+            current_date = datetime.now().date()
+            
+            # 날짜가 바뀌었다면 손익 카운트 리셋
+            if current_date != self.last_pnl_reset:
+                # 리셋 전 마지막 집계 기록
+                self.profit_logger.info(
+                    f"=== Daily Summary {self.last_pnl_reset} ===\n"
+                    f"Total Profits: +{self.daily_profits} USDT\n"
+                    f"Total Losses: -{self.daily_losses} USDT"
+                )
+                
+                self.daily_losses = 0
+                self.daily_profits = 0
+                self.last_pnl_reset = current_date
+            
+            # 일일 최대 손실 초과 체크
+            if self.daily_losses >= MAX_DAILY_LOSS:
+                self.profit_logger.error(
+                    f"!!! MAX DAILY LOSS EXCEEDED !!!\n"
+                    f"Current Losses: -{self.daily_losses} USDT\n"
+                    f"Max Allowed: -{MAX_DAILY_LOSS} USDT\n"
+                    f"Bot shutdown initiated"
+                )
+                return False
+            return True
+                
+        except Exception as e:
+            self.profit_logger.error(f"Error in check_daily_pnl: {e}")
+            return False
+
+    def update_daily_pnl(self, symbol, pnl_amount):
+        """손익 발생 시 업데이트"""
+        try:
+            if pnl_amount > 0:  # 이익
+                self.daily_profits += pnl_amount
+                self.profit_logger.info(
+                    f"{symbol}: +{pnl_amount:.2f} USDT"
+                )
+            else:  # 손실
+                loss_amount = abs(pnl_amount)
+                self.daily_losses += loss_amount
+                self.profit_logger.info(
+                    f"{symbol}: -{loss_amount:.2f} USDT"
+                )
+        except Exception as e:
+            self.profit_logger.error(f"Error updating PnL: {e}")
     
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
