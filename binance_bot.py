@@ -987,6 +987,14 @@ class TradingBot:
                     f"Size: {abs(position_size)}\n"
                     f"Entry Price: {positions[0]['entryPrice']}"
                 )
+                
+                # 크로스 히스토리 초기화 추가
+                if position_info and not position_info['entry_order']:
+                    self.cross_history[symbol] = {
+                        'ema': [],
+                        'macd': []
+                    }
+                
                 return True
 
             # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
@@ -1022,6 +1030,12 @@ class TradingBot:
                             'position_type': None,
                             'trailing_stop_applied': False,
                             'entry_price': None
+                        }
+                        
+                        # 크로스 히스토리 초기화
+                        self.cross_history[symbol] = {
+                            'ema': [],
+                            'macd': []
                         }
                         
                 except Exception as e:
