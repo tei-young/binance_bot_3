@@ -1397,6 +1397,11 @@ class TradingBot:
                         
                         # 기존 포지션 확인을 먼저 수행
                         if self.check_existing_position(symbol):
+                            # 크로스 히스토리 초기화 추가
+                            self.cross_history[symbol] = {
+                                'ema': [],
+                                'macd': []
+                            }
                             continue  # 포지션이 있으면 다음 심볼로 넘어감
                         
                         df = self.get_historical_data(symbol)
