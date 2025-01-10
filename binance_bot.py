@@ -115,6 +115,7 @@ class TradingBot:
         self.trading_logger = setup_logger('trading', 'trading.log')
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
+        self.profit_logger = setup_logger('profit', 'profits.log')  # 손익기록 추가
         
     def check_daily_pnl(self):
         """일일 손익 체크 및 리셋"""
@@ -1360,10 +1361,15 @@ class TradingBot:
         self.trading_logger.info(f"Bot started running\n"
                             f"Leverage: {LEVERAGE}x\n"
                             f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                            f"Max Daily Loss: {MAX_DAILY_LOSS} USDT\n"
                             f"Trading Symbols: {TRADING_SYMBOLS}")
         
         while True:
             try:
+                # 일일 손실 한도 체크
+                if not self.check_daily_pnl():
+                    sys.exit("Bot shutdown due to max daily loss exceeded")
+                
                 for symbol in TRADING_SYMBOLS:
                     try:
                         # 주문 상태 확인
