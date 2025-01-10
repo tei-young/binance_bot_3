@@ -1116,8 +1116,14 @@ class TradingBot:
                     'sl_order': sl_order['id'],
                     'tp_order': tp_order['id'],
                     'position_type': position_type,
-                    'trailing_stop_applied': False, #트레일링 스탑 추가
-                    'entry_price': entry_price  # 진입가격 저장 추가
+                    'trailing_stop_applied': False,
+                    'entry_price': entry_price
+                }
+
+                # 크로스 히스토리 초기화
+                self.cross_history[symbol] = {
+                    'ema': [],
+                    'macd': []
                 }
 
                 # 성공적인 주문 실행 로깅
