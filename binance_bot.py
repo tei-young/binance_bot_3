@@ -1241,7 +1241,7 @@ class TradingBot:
         주문 상태를 확인하고 필요한 업데이트를 수행합니다.
         - 포지션 청산 확인 (SL/TP/수동)
         - 남은 주문 취소
-        - 스탑로스 히스토리 업데이트
+        - 손익 계산 및 기록
         - 트레일링 스탑 업데이트
         """
         try:
@@ -1259,8 +1259,6 @@ class TradingBot:
                         sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
                         if sl_order['status'] == 'filled':
                             closing_type = 'Stop Loss'
-                            # 스탑로스 청산 시 재진입 제한을 위한 히스토리 업데이트
-                            self.update_sl_history(symbol, position_info['position_type'])
                     except Exception as e:
                         self.execution_logger.error(f"Error checking stop loss order: {e}")
 
@@ -1271,6 +1269,41 @@ class TradingBot:
                             closing_type = 'Take Profit'
                     except Exception as e:
                         self.execution_logger.error(f"Error checking take profit order: {e}")
+
+                # 손익 계산
+                try:
+                    if closing_type:  # 청산된 경우 (SL/TP/수동)
+                        entry_price = position_info['entry_price']
+                        close_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        position_size = float(positions[0]['contracts'])
+                        
+                        # 레버리지가 적용된 전체 포지션 크기
+                        total_position_value = position_size * entry_price
+                        
+                        # 실제 증거금 기준으로 손익 계산 (레버리지 제외)
+                        actual_margin = total_position_value / LEVERAGE
+                        
+                        if position_info['position_type'] == 'long':
+                            price_change_pct = (close_price - entry_price) / entry_price
+                        else:
+                            price_change_pct = (entry_price - close_price) / entry_price
+                        
+                        # 실제 증거금 기준 손익
+                        pnl_usdt = actual_margin * price_change_pct
+                        
+                        # 손익 업데이트
+                        self.update_daily_pnl(symbol, pnl_usdt)
+                        
+                        # 손실 한도 체크
+                        if not self.check_daily_pnl():
+                            sys.exit("Bot shutdown due to max daily loss exceeded")
+                        
+                        # 스탑로스로 청산된 경우 히스토리 업데이트
+                        if closing_type == 'Stop Loss':
+                            self.update_sl_history(symbol, position_info['position_type'])
+                    
+                except Exception as e:
+                    self.profit_logger.error(f"Error calculating PnL for {symbol}: {e}")
 
                 # 모든 열린 주문 취소
                 try:
