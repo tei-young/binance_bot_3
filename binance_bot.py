@@ -12,7 +12,7 @@ from logging.handlers import RotatingFileHandler
 TIMEFRAME = '5m'      # '1m' 또는 '5m'
 LEVERAGE = 10         # 레버리지 설정
 MARGIN_AMOUNT = 20    # 실제 사용할 증거금 (USDT)
-MAX_DAILY_LOSS = 20   # 일일 최대 손실 제한 (USDT)
+MAX_DAILY_LOSS = 10   # 일일 최대 손실 제한 (USDT)
 SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
@@ -428,7 +428,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.042
+            MIN_SLOPE = 0.048
             THRESHOLD = 0.00005
             
             # EMA 크로스 체크
@@ -1294,25 +1294,28 @@ class TradingBot:
                 # 손익 계산
                 try:
                     if closing_type:  # 청산된 경우 (SL/TP/수동)
-                        entry_price = position_info['entry_price']
-                        close_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                        position_size = float(positions[0]['contracts'])
+                        entry_price = float(position_info['entry_price'])
                         
-                        # 레버리지가 적용된 전체 포지션 크기
-                        total_position_value = position_size * entry_price
-                        
-                        # 실제 증거금 기준으로 손익 계산 (레버리지 제외)
-                        actual_margin = total_position_value / LEVERAGE
+                        # 청산 가격 결정
+                        if closing_type == 'Stop Loss':
+                            close_price = float(sl_order['price'])
+                        elif closing_type == 'Take Profit':
+                            close_price = float(tp_order['price'])
+                        else:
+                            close_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                            
+                        # 원래 포지션 크기 계산
+                        original_margin = MARGIN_AMOUNT  # 실제 사용된 증거금
                         
                         if position_info['position_type'] == 'long':
                             price_change_pct = (close_price - entry_price) / entry_price
-                        else:
+                        else:  # short
                             price_change_pct = (entry_price - close_price) / entry_price
                         
-                        # 실제 증거금 기준 손익
-                        pnl_usdt = actual_margin * price_change_pct
+                        # 실제 손익 계산 (레버리지 제외)
+                        pnl_usdt = original_margin * price_change_pct
                         
-                        # 손익 업데이트
+                        # 손익 업데이트 및 로깅
                         self.update_daily_pnl(symbol, pnl_usdt)
                         
                         # 손실 한도 체크
@@ -1322,7 +1325,7 @@ class TradingBot:
                         # 스탑로스로 청산된 경우 히스토리 업데이트
                         if closing_type == 'Stop Loss':
                             self.update_sl_history(symbol, position_info['position_type'])
-                    
+                            
                 except Exception as e:
                     self.profit_logger.error(f"Error calculating PnL for {symbol}: {e}")
 
