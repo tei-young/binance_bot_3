@@ -86,13 +86,19 @@ class TradingBot:
         self.daily_profits = 0  # 순수 이익 USDT
         self.last_pnl_reset = datetime.now().date()
 
-    def setup_logging(self):
+    def setup_logging(self, new_date=None):
         """로깅 설정"""
         if not os.path.exists('logs'):
             os.makedirs('logs')
         
-        # 오늘 날짜 가져오기
-        today = datetime.now().strftime('%y%m%d')
+        # 로거 초기화 (기존 핸들러 제거)
+        for logger_name in ['trading', 'signal', 'execution', 'profit']:
+            logger = logging.getLogger(logger_name)
+            for handler in logger.handlers[:]:
+                logger.removeHandler(handler)
+        
+        # 날짜 설정
+        today = new_date if new_date else datetime.now().strftime('%y%m%d')
         
         # 로거 설정 함수
         def setup_logger(name, log_file):
@@ -115,7 +121,18 @@ class TradingBot:
         self.trading_logger = setup_logger('trading', 'trading.log')
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
-        self.profit_logger = setup_logger('profit', 'profits.log')  # 손익기록 추가
+        self.profit_logger = setup_logger('profit', 'profits.log')
+        
+        # 현재 로그 날짜 저장
+        self.current_log_date = datetime.now().date()
+
+    def check_and_update_loggers(self):
+        """날짜 변경 확인 및 로거 업데이트"""
+        current_date = datetime.now().date()
+        if current_date != self.current_log_date:
+            # 새로운 날짜로 로거 재설정
+            self.setup_logging(current_date.strftime('%y%m%d'))
+            self.trading_logger.info(f"New day started - Logs reset for {current_date}")
         
     def check_daily_pnl(self):
         """일일 손익 체크 및 리셋"""
@@ -428,7 +445,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.048
+            MIN_SLOPE = 0.042
             THRESHOLD = 0.00005
             
             # EMA 크로스 체크
@@ -1389,6 +1406,9 @@ class TradingBot:
         
         while True:
             try:
+                # 로거 날짜 체크 및 업데이트
+                self.check_and_update_loggers()
+                
                 # 일일 손실 한도 체크
                 if not self.check_daily_pnl():
                     sys.exit("Bot shutdown due to max daily loss exceeded")
