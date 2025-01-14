@@ -1048,9 +1048,11 @@ class TradingBot:
                             'entry_order': None,
                             'sl_order': None,
                             'tp_order': None,
+                            'trailing_sl_order': None,    # 추가
                             'position_type': None,
                             'trailing_stop_applied': False,
-                            'entry_price': None
+                            'entry_price': None,
+                            'last_trailing_price': None   # 추가
                         }
                         
                         # 크로스 히스토리 초기화
