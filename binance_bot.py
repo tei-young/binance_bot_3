@@ -445,7 +445,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.042
+            MIN_SLOPE = 0.04
             THRESHOLD = 0.00005
             
             # EMA 크로스 체크
@@ -1197,67 +1197,88 @@ class TradingBot:
 
     def update_trailing_stop(self, symbol, entry_price, current_price, signal, contract_amount):
         try:
+            position_info = self.positions[symbol]
+            
+            # 이미 트레일링 스탑이 적용된 경우 스킵
+            if position_info['trailing_stop_applied']:
+                return True
+            
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.8:
+                if profit_percent >= 1.8:  # 1.8% 이상 수익 시
                     new_stop_loss = entry_price * 1.015
                     
-                    open_orders = self.exchange.fetch_open_orders(symbol)
-                    for order in open_orders:
-                        if order['type'] == 'stop':
-                            self.exchange.cancel_order(order['id'], symbol)
-                    
-                    sl_order = self.exchange.create_order(
-                        symbol,
-                        'stop',
-                        'sell',
-                        contract_amount,
-                        new_stop_loss,
-                        {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
-                    )
-                    
-                    self.execution_logger.info(
-                        f"Trailing Stop Updated\n"
-                        f"Symbol: {symbol}\n"
-                        f"Time: {datetime.now()}\n"
-                        f"Entry: {entry_price}\n"
-                        f"Current Price: {current_price}\n"
-                        f"New Stop Loss: {new_stop_loss}\n"
-                        f"Profit %: {profit_percent:.2f}%\n"
-                        f"Order ID: {sl_order['id']}"
-                    )
-                    
+                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
+                    try:
+                        trailing_sl_order = self.exchange.create_order(
+                            symbol,
+                            'stop',
+                            'sell',
+                            contract_amount,
+                            new_stop_loss,
+                            {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
+                        )
+                        
+                        # trailing_sl_order 정보 추가
+                        self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
+                        self.positions[symbol]['trailing_stop_applied'] = True
+                        
+                        self.execution_logger.info(
+                            f"Trailing Stop Added (Original SL maintained)\n"
+                            f"Symbol: {symbol}\n"
+                            f"Time: {datetime.now()}\n"
+                            f"Entry: {entry_price}\n"
+                            f"Current Price: {current_price}\n"
+                            f"Original SL: Maintained\n"
+                            f"Trailing SL: {new_stop_loss}\n"
+                            f"Profit %: {profit_percent:.2f}%\n"
+                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                        )
+                        return True
+                        
+                    except Exception as e:
+                        self.execution_logger.error(f"Error creating trailing SL order: {e}")
+                        return False
+                        
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.8:
+                if profit_percent >= 1.8:  # 1.8% 이상 수익 시
                     new_stop_loss = entry_price * 0.985
                     
-                    open_orders = self.exchange.fetch_open_orders(symbol)
-                    for order in open_orders:
-                        if order['type'] == 'stop':
-                            self.exchange.cancel_order(order['id'], symbol)
-                    
-                    sl_order = self.exchange.create_order(
-                        symbol,
-                        'stop',
-                        'buy',
-                        contract_amount,
-                        new_stop_loss,
-                        {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
-                    )
-                    
-                    self.execution_logger.info(
-                        f"Trailing Stop Updated\n"
-                        f"Symbol: {symbol}\n"
-                        f"Time: {datetime.now()}\n"
-                        f"Entry: {entry_price}\n" 
-                        f"Current Price: {current_price}\n"
-                        f"New Stop Loss: {new_stop_loss}\n"
-                        f"Profit %: {profit_percent:.2f}%\n"
-                        f"Order ID: {sl_order['id']}"
-                    )
+                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
+                    try:
+                        trailing_sl_order = self.exchange.create_order(
+                            symbol,
+                            'stop',
+                            'buy',
+                            contract_amount,
+                            new_stop_loss,
+                            {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
+                        )
+                        
+                        # trailing_sl_order 정보 추가
+                        self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
+                        self.positions[symbol]['trailing_stop_applied'] = True
+                        
+                        self.execution_logger.info(
+                            f"Trailing Stop Added (Original SL maintained)\n"
+                            f"Symbol: {symbol}\n"
+                            f"Time: {datetime.now()}\n"
+                            f"Entry: {entry_price}\n"
+                            f"Current Price: {current_price}\n"
+                            f"Original SL: Maintained\n"
+                            f"Trailing SL: {new_stop_loss}\n"
+                            f"Profit %: {profit_percent:.2f}%\n"
+                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                        )
+                        return True
+                        
+                    except Exception as e:
+                        self.execution_logger.error(f"Error creating trailing SL order: {e}")
+                        return False
             
             return True
+            
         except Exception as e:
             self.execution_logger.error(f"Error updating trailing stop: {e}")
             return False
