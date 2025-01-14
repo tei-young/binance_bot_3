@@ -82,13 +82,13 @@ class TradingBot:
         self.daily_profits = 0  # 순수 이익 USDT
         self.last_pnl_reset = datetime.now().date()
     
-    # 레버리지 설정
-    for symbol in TRADING_SYMBOLS:
-        try:
-            self.exchange.set_leverage(LEVERAGE, symbol)
-            self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
-        except Exception as e:
-            self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
+        # 레버리지 설정
+        for symbol in TRADING_SYMBOLS:
+            try:
+                self.exchange.set_leverage(LEVERAGE, symbol)
+                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+            except Exception as e:
+                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
 
     def setup_logging(self, new_date=None):
         """로깅 설정"""
@@ -1305,7 +1305,7 @@ class TradingBot:
         - 포지션 청산 확인 (SL/TP/수동)
         - 남은 주문 취소
         - 손익 계산 및 기록
-        - 트레일링 스탑 업데이트/체크
+        - 트레일링 스탑 업데이트
         """
         try:
             position_info = self.positions[symbol]
@@ -1315,9 +1315,10 @@ class TradingBot:
             # 포지션이 있었는데 없어진 경우 확인
             positions = self.exchange.fetch_positions([symbol])
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0):
-                # 청산 타입 확인 (SL/TP/Trailing SL)
+                self.execution_logger.info(f"Position closed detected for {symbol}, cleaning up orders...")
+                
+                # 청산 타입 확인 (SL/TP)
                 closing_type = None
-                # 기존 스탑로스 체크
                 if position_info['sl_order']:
                     try:
                         sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
@@ -1325,17 +1326,7 @@ class TradingBot:
                             closing_type = 'Stop Loss'
                     except Exception as e:
                         self.execution_logger.error(f"Error checking stop loss order: {e}")
-                
-                # 트레일링 스탑 체크
-                if position_info['trailing_sl_order'] and not closing_type:
-                    try:
-                        trailing_sl_order = self.exchange.fetch_order(position_info['trailing_sl_order'], symbol)
-                        if trailing_sl_order['status'] == 'filled':
-                            closing_type = 'Trailing Stop'
-                    except Exception as e:
-                        self.execution_logger.error(f"Error checking trailing stop order: {e}")
 
-                # TP 체크
                 if position_info['tp_order'] and not closing_type:
                     try:
                         tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
@@ -1346,14 +1337,12 @@ class TradingBot:
 
                 # 손익 계산
                 try:
-                    if closing_type:  # 청산된 경우
+                    if closing_type:  # 청산된 경우 (SL/TP/수동)
                         entry_price = float(position_info['entry_price'])
                         
                         # 청산 가격 결정
                         if closing_type == 'Stop Loss':
                             close_price = float(sl_order['price'])
-                        elif closing_type == 'Trailing Stop':
-                            close_price = float(trailing_sl_order['price'])
                         elif closing_type == 'Take Profit':
                             close_price = float(tp_order['price'])
                         else:
@@ -1377,26 +1366,39 @@ class TradingBot:
                         if not self.check_daily_pnl():
                             sys.exit("Bot shutdown due to max daily loss exceeded")
                         
-                        # 스탑로스나 트레일링 스탑으로 청산된 경우 히스토리 업데이트
-                        if closing_type in ['Stop Loss', 'Trailing Stop']:
+                        # 스탑로스로 청산된 경우 히스토리 업데이트
+                        if closing_type == 'Stop Loss':
                             self.update_sl_history(symbol, position_info['position_type'])
                                 
                 except Exception as e:
                     self.profit_logger.error(f"Error calculating PnL for {symbol}: {e}")
 
-                # 모든 열린 주문 취소
+                # 즉시 모든 열린 주문 취소
                 try:
                     open_orders = self.exchange.fetch_open_orders(symbol)
-                    for order in open_orders:
-                        try:
-                            self.exchange.cancel_order(order['id'], symbol)
-                            self.trading_logger.info(
-                                f"Cancelled remaining order for {symbol}: {order['id']}"
-                            )
-                        except Exception as cancel_error:
-                            self.trading_logger.error(f"Error cancelling order {order['id']}: {cancel_error}")
+                    if open_orders:
+                        self.execution_logger.info(f"Found {len(open_orders)} open orders to cancel for {symbol}")
+                        for order in open_orders:
+                            try:
+                                self.exchange.cancel_order(order['id'], symbol)
+                                self.execution_logger.info(
+                                    f"Successfully cancelled order:\n"
+                                    f"Symbol: {symbol}\n"
+                                    f"Order ID: {order['id']}\n"
+                                    f"Type: {order.get('type')}\n"
+                                    f"Side: {order.get('side')}"
+                                )
+                            except Exception as cancel_error:
+                                self.execution_logger.error(
+                                    f"Failed to cancel order:\n"
+                                    f"Symbol: {symbol}\n"
+                                    f"Order ID: {order['id']}\n"
+                                    f"Error: {str(cancel_error)}"
+                                )
+                    else:
+                        self.execution_logger.info(f"No open orders found for {symbol}")
                 except Exception as e:
-                    self.execution_logger.error(f"Error fetching open orders: {e}")
+                    self.execution_logger.error(f"Error managing orders after position close: {str(e)}")
 
                 # 포지션 청산 로깅
                 self.execution_logger.info(
@@ -1404,10 +1406,7 @@ class TradingBot:
                     f"Symbol: {symbol}\n"
                     f"Time: {datetime.now()}\n"
                     f"Position Type: {position_info['position_type']}\n"
-                    f"Entry Price: {position_info['entry_price']}\n"
-                    f"Close Price: {close_price if 'close_price' in locals() else 'Unknown'}\n"
-                    f"PnL: {pnl_usdt:.2f} USDT\n"
-                    f"{'SL History updated' if closing_type in ['Stop Loss', 'Trailing Stop'] else ''}"
+                    f"{'SL History updated' if closing_type == 'Stop Loss' else ''}"
                 )
                 
                 # 포지션 정보 초기화
@@ -1418,8 +1417,7 @@ class TradingBot:
                     'trailing_sl_order': None,
                     'position_type': None,
                     'trailing_stop_applied': False,
-                    'entry_price': None,
-                    'last_trailing_price': None
+                    'entry_price': None
                 }
                 return
 
@@ -1427,13 +1425,9 @@ class TradingBot:
             if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
                 try:
                     current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    
-                    # 트레일링 스탑이 적용되었다면 last_trailing_price 기준으로 수익률 계산
-                    reference_price = position_info['last_trailing_price'] if position_info['last_trailing_price'] else position_info['entry_price']
-                    
                     self.update_trailing_stop(
                         symbol,
-                        reference_price,  # 트레일링 스탑 적용 여부에 따라 기준가격 변경
+                        position_info['entry_price'],
                         current_price,
                         'buy' if position_info['position_type'] == 'long' else 'sell',
                         float(positions[0]['contracts'])
