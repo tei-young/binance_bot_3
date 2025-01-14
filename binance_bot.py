@@ -1305,7 +1305,7 @@ class TradingBot:
         - 포지션 청산 확인 (SL/TP/수동)
         - 남은 주문 취소
         - 손익 계산 및 기록
-        - 트레일링 스탑 업데이트
+        - 트레일링 스탑 업데이트/체크
         """
         try:
             position_info = self.positions[symbol]
@@ -1315,8 +1315,9 @@ class TradingBot:
             # 포지션이 있었는데 없어진 경우 확인
             positions = self.exchange.fetch_positions([symbol])
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0):
-                # 청산 타입 확인 (SL/TP)
+                # 청산 타입 확인 (SL/TP/Trailing SL)
                 closing_type = None
+                # 기존 스탑로스 체크
                 if position_info['sl_order']:
                     try:
                         sl_order = self.exchange.fetch_order(position_info['sl_order'], symbol)
@@ -1324,7 +1325,17 @@ class TradingBot:
                             closing_type = 'Stop Loss'
                     except Exception as e:
                         self.execution_logger.error(f"Error checking stop loss order: {e}")
+                
+                # 트레일링 스탑 체크
+                if position_info['trailing_sl_order'] and not closing_type:
+                    try:
+                        trailing_sl_order = self.exchange.fetch_order(position_info['trailing_sl_order'], symbol)
+                        if trailing_sl_order['status'] == 'filled':
+                            closing_type = 'Trailing Stop'
+                    except Exception as e:
+                        self.execution_logger.error(f"Error checking trailing stop order: {e}")
 
+                # TP 체크
                 if position_info['tp_order'] and not closing_type:
                     try:
                         tp_order = self.exchange.fetch_order(position_info['tp_order'], symbol)
@@ -1335,17 +1346,19 @@ class TradingBot:
 
                 # 손익 계산
                 try:
-                    if closing_type:  # 청산된 경우 (SL/TP/수동)
+                    if closing_type:  # 청산된 경우
                         entry_price = float(position_info['entry_price'])
                         
                         # 청산 가격 결정
                         if closing_type == 'Stop Loss':
                             close_price = float(sl_order['price'])
+                        elif closing_type == 'Trailing Stop':
+                            close_price = float(trailing_sl_order['price'])
                         elif closing_type == 'Take Profit':
                             close_price = float(tp_order['price'])
                         else:
                             close_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                            
+                                
                         # 원래 포지션 크기 계산
                         original_margin = MARGIN_AMOUNT  # 실제 사용된 증거금
                         
@@ -1364,10 +1377,10 @@ class TradingBot:
                         if not self.check_daily_pnl():
                             sys.exit("Bot shutdown due to max daily loss exceeded")
                         
-                        # 스탑로스로 청산된 경우 히스토리 업데이트
-                        if closing_type == 'Stop Loss':
+                        # 스탑로스나 트레일링 스탑으로 청산된 경우 히스토리 업데이트
+                        if closing_type in ['Stop Loss', 'Trailing Stop']:
                             self.update_sl_history(symbol, position_info['position_type'])
-                            
+                                
                 except Exception as e:
                     self.profit_logger.error(f"Error calculating PnL for {symbol}: {e}")
 
@@ -1391,7 +1404,10 @@ class TradingBot:
                     f"Symbol: {symbol}\n"
                     f"Time: {datetime.now()}\n"
                     f"Position Type: {position_info['position_type']}\n"
-                    f"{'SL History updated' if closing_type == 'Stop Loss' else ''}"
+                    f"Entry Price: {position_info['entry_price']}\n"
+                    f"Close Price: {close_price if 'close_price' in locals() else 'Unknown'}\n"
+                    f"PnL: {pnl_usdt:.2f} USDT\n"
+                    f"{'SL History updated' if closing_type in ['Stop Loss', 'Trailing Stop'] else ''}"
                 )
                 
                 # 포지션 정보 초기화
@@ -1399,9 +1415,11 @@ class TradingBot:
                     'entry_order': None,
                     'sl_order': None,
                     'tp_order': None,
+                    'trailing_sl_order': None,
                     'position_type': None,
                     'trailing_stop_applied': False,
-                    'entry_price': None
+                    'entry_price': None,
+                    'last_trailing_price': None
                 }
                 return
 
@@ -1409,9 +1427,13 @@ class TradingBot:
             if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
                 try:
                     current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                    
+                    # 트레일링 스탑이 적용되었다면 last_trailing_price 기준으로 수익률 계산
+                    reference_price = position_info['last_trailing_price'] if position_info['last_trailing_price'] else position_info['entry_price']
+                    
                     self.update_trailing_stop(
                         symbol,
-                        position_info['entry_price'],
+                        reference_price,  # 트레일링 스탑 적용 여부에 따라 기준가격 변경
                         current_price,
                         'buy' if position_info['position_type'] == 'long' else 'sell',
                         float(positions[0]['contracts'])
