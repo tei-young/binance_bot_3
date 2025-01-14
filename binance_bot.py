@@ -1209,8 +1209,8 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.8:  # 1.8% 이상 수익 시
-                    new_stop_loss = entry_price * 1.015
+                if profit_percent >= 1.0:  # 1.8% -> 1.0% 로 수정
+                    new_stop_loss = entry_price * 1.007  # 1.015 -> 1.007 로 수정 (0.7%)
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
@@ -1246,8 +1246,8 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.8:  # 1.8% 이상 수익 시
-                    new_stop_loss = entry_price * 0.985
+                if profit_percent >= 1.0:  # 1.8% -> 1.0% 로 수정
+                    new_stop_loss = entry_price * 0.993  # 0.985 -> 0.993 로 수정 (0.7%)
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
