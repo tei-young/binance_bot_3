@@ -59,7 +59,11 @@ class TradingBot:
                 'entry_order': None,
                 'sl_order': None,
                 'tp_order': None,
-                'position_type': None
+                'trailing_sl_order': None,    # 추가: 트레일링 스탑 주문 ID
+                'position_type': None,
+                'trailing_stop_applied': False,
+                'entry_price': None,
+                'last_trailing_price': None   # 추가: 마지막 트레일링 스탑 가격
             }
             for symbol in TRADING_SYMBOLS
         }
@@ -73,18 +77,18 @@ class TradingBot:
             for symbol in TRADING_SYMBOLS
         }
         
-        # 레버리지 설정
-        for symbol in TRADING_SYMBOLS:
-            try:
-                self.exchange.set_leverage(LEVERAGE, symbol)
-                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
-            except Exception as e:
-                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
-        
         # 손익 관련 속성 추가
         self.daily_losses = 0  # 순수 손실 USDT
         self.daily_profits = 0  # 순수 이익 USDT
         self.last_pnl_reset = datetime.now().date()
+    
+    # 레버리지 설정
+    for symbol in TRADING_SYMBOLS:
+        try:
+            self.exchange.set_leverage(LEVERAGE, symbol)
+            self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+        except Exception as e:
+            self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
 
     def setup_logging(self, new_date=None):
         """로깅 설정"""
