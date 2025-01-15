@@ -992,6 +992,13 @@ class TradingBot:
     def check_existing_position(self, symbol):
         """현재 보유 중인 포지션과 주문 상태 확인"""
         try:
+            # API 요청 전 시간 체크
+            server_time = self.exchange.fetch_time()
+            time_diff = server_time - int(time.time() * 1000)
+            if abs(time_diff) > 1000:  # 1초 이상 차이나면 동기화
+                self.exchange.options['timeDiff'] = time_diff
+                self.trading_logger.info(f"Time resynchronized. New offset: {time_diff}ms")
+           
             # 심볼별 현재 포지션 확인
             positions = self.exchange.fetch_positions([symbol])
             position_info = self.positions.get(symbol)
