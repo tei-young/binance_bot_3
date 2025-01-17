@@ -174,6 +174,12 @@ class TradingBot:
     def update_daily_pnl(self, symbol, pnl_amount):
         """손익 발생 시 업데이트"""
         try:
+            # execution.log에 기록
+            self.execution_logger.info(
+                f"Updating PnL for {symbol}: {pnl_amount:.2f} USDT\n"
+                f"Before update - Losses: {self.daily_losses:.2f}, Profits: {self.daily_profits:.2f}"
+            )
+
             if pnl_amount > 0:  # 이익
                 self.daily_profits += pnl_amount
                 self.profit_logger.info(
@@ -185,7 +191,14 @@ class TradingBot:
                 self.profit_logger.info(
                     f"{symbol}: -{loss_amount:.2f} USDT"
                 )
+
+            # 업데이트 후 상태도 기록
+            self.execution_logger.info(
+                f"After update - Losses: {self.daily_losses:.2f}, Profits: {self.daily_profits:.2f}"
+            )
+
         except Exception as e:
+            self.execution_logger.error(f"Error updating PnL: {e}")
             self.profit_logger.error(f"Error updating PnL: {e}")
     
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
