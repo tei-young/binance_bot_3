@@ -991,14 +991,7 @@ class TradingBot:
 
     def check_existing_position(self, symbol):
         """현재 보유 중인 포지션과 주문 상태 확인"""
-        try:
-            # API 요청 전 시간 체크
-            server_time = self.exchange.fetch_time()
-            time_diff = server_time - int(time.time() * 1000)
-            if abs(time_diff) > 1000:  # 1초 이상 차이나면 동기화
-                self.exchange.options['timeDiff'] = time_diff
-                self.trading_logger.info(f"Time resynchronized. New offset: {time_diff}ms")
-           
+        try:           
             # 심볼별 현재 포지션 확인
             positions = self.exchange.fetch_positions([symbol])
             position_info = self.positions.get(symbol)
@@ -1218,7 +1211,7 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0% 로 수정
+                if profit_percent >= 1.3:  # 1.8% -> 1.0% -> 1.3
                     new_stop_loss = entry_price * 1.004  # 1.015 -> 1.007 -> 1.004 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
@@ -1255,7 +1248,7 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0% 로 수정
+                if profit_percent >= 1.3:  # 1.8% -> 1.0% -> 1.3
                     new_stop_loss = entry_price * 0.996  # 0.985 -> 0.993 -> 0.996 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
@@ -1448,6 +1441,9 @@ class TradingBot:
             self.execution_logger.error(f"Error in check_order_status: {e}")
 
     def run(self):
+        last_time_sync = 0
+        sync_interval = 300  # 5분마다 시간 동기화
+
         self.trading_logger.info(f"Bot started running\n"
                             f"Leverage: {LEVERAGE}x\n"
                             f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
@@ -1456,6 +1452,20 @@ class TradingBot:
         
         while True:
             try:
+                current_time = time.time()
+                
+                # 주기적 시간 동기화
+                if current_time - last_time_sync >= sync_interval:
+                    try:
+                        server_time = self.exchange.fetch_time()
+                        time_diff = server_time - int(current_time * 1000)
+                        if abs(time_diff) > 1000:
+                            self.exchange.options['timeDiff'] = time_diff
+                            self.trading_logger.info(f"Time synchronized. Offset: {time_diff}ms")
+                        last_time_sync = current_time
+                    except Exception as e:
+                        self.trading_logger.error(f"Error syncing time: {e}")
+                        
                 # 로거 날짜 체크 및 업데이트
                 self.check_and_update_loggers()
                 
