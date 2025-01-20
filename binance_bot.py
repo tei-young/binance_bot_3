@@ -246,32 +246,30 @@ class TradingBot:
             
         except Exception as e:
             self.cross_analysis_logger.error(f"Error analyzing cross pattern: {e}")
-            
-    def is_gradual_cross(self, ema_distances, ema12_changes):
-        """완만한 크로스 판별"""
+                
+    def is_strong_cross(self, ema_distances, ema12_changes):
+        """강한 크로스인지 판별"""
         try:
-            # 1. EMA Distance 체크
+            # EMA Distance가 충분히 큰지
             max_distance = max(float(d) for d in ema_distances)
-            if max_distance > 0.1:  # 0.1%
+            if max_distance < 0.1:  # 0.1% 미만이면 약한 크로스
                 return False
                 
-            # 2. EMA12 Changes 체크
+            # EMA12의 변화가 충분히 큰지
             max_change = max(abs(float(c)) for c in ema12_changes)
-            if max_change > 0.1:  # 0.1%
+            if max_change < 0.1:  # 0.1% 미만이면 약한 크로스
                 return False
                 
-            # 3. 변화의 일관성 체크
+            # 방향의 일관성
             changes = [float(c) for c in ema12_changes]
-            direction_changes = sum(1 for i in range(len(changes)-1) if 
-                                (changes[i] > 0 and changes[i+1] < 0) or
-                                (changes[i] < 0 and changes[i+1] > 0))
-            if direction_changes > 1:  # 방향 전환이 많으면 불안정
+            consistent_direction = all(c > 0 for c in changes) or all(c < 0 for c in changes)
+            if not consistent_direction:  # 방향이 일관되지 않으면 약한 크로스
                 return False
                 
-            return True
+            return True  # 모든 조건을 만족하면 강한 크로스
                 
         except Exception as e:
-            self.cross_analysis_logger.error(f"Error in gradual cross check: {e}")
+            self.cross_analysis_logger.error(f"Error in strong cross check: {e}")
             return False
 
     def check_and_update_loggers(self):
