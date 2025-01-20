@@ -587,6 +587,10 @@ class TradingBot:
                 
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
                 
+                # 크로스 분석용 (slope 조건 제외)
+                if above_sma200 and ma_color == 'green':
+                    self.analyze_cross_pattern(df, symbol, 'golden', current_time)
+                
                 if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
@@ -629,6 +633,10 @@ class TradingBot:
                     df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_ema_cross_angle(df, current_idx)
+                
+                # 크로스 분석용 (slope 조건 제외)
+                if not above_sma200 and ma_color == 'red':
+                    self.analyze_cross_pattern(df, symbol, 'dead', current_time)
                 
                 if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['ema'] = [(
