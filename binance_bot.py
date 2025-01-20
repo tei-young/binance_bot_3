@@ -873,7 +873,7 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            MIN_SLOPE = 0.042
+            MIN_SLOPE = 0.042  # MACD용 기존 MIN_SLOPE 유지
 
             self.signal_logger.info(
                 f"\nChecking Historical {target_indicator.upper()} Crosses\n"
@@ -887,7 +887,7 @@ class TradingBot:
                 period_high = candle_data['high'].max()
                 period_low = candle_data['low'].min()
 
-                if target_indicator == 'macd':
+                if target_indicator == 'macd':  # MACD는 기존 로직 유지
                     if ((window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
                             window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
                             cross_type == 'golden') or
@@ -895,25 +895,15 @@ class TradingBot:
                             window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
                             cross_type == 'dead')):
                         
-                        # 해당 시점의 SMA200, ma_color 확인
                         above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
                         
                         cross_slope = self.calculate_macd_cross_angle(window_data, check_idx)
                         if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
                                                         (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
-                            self.signal_logger.info(
-                                f"Found Historical MACD {cross_type.title()} Cross\n"
-                                f"Time: {window_data.index[check_idx]}\n"
-                                f"Cross Slope: {cross_slope}%\n"
-                                f"Candle High: {period_high}\n"
-                                f"Candle Low: {period_low}\n"
-                                f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
-                                f"MA Color: {ma_color}"
-                            )
                             return window_data.index[check_idx], period_high, period_low
 
-                else:
+                else:  # EMA는 새로운 로직 적용
                     if ((window_data['ema12'].iloc[check_idx-1] < window_data['ema26'].iloc[check_idx-1] and 
                             window_data['ema12'].iloc[check_idx] > window_data['ema26'].iloc[check_idx] and
                             cross_type == 'golden') or
@@ -921,22 +911,27 @@ class TradingBot:
                             window_data['ema12'].iloc[check_idx] < window_data['ema26'].iloc[check_idx] and
                             cross_type == 'dead')):
                         
-                        # 해당 시점의 SMA200, ma_color 확인
                         above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
                         
-                        cross_slope = self.calculate_ema_cross_angle(window_data, check_idx)
-                        if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
-                            self.signal_logger.info(
-                                f"Found Historical EMA {cross_type.title()} Cross\n"
-                                f"Time: {window_data.index[check_idx]}\n"
-                                f"Cross Slope: {cross_slope}%\n"
-                                f"Candle High: {period_high}\n"
-                                f"Candle Low: {period_low}\n"
-                                f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
-                                f"MA Color: {ma_color}"
-                            )
+                        # EMA 크로스 데이터 준비
+                        pre_cross = {
+                            'ema_distances': [],
+                            'ema12_changes': []
+                        }
+                        
+                        for j in range(check_idx - 3, check_idx + 1):
+                            if j > 0:
+                                distance = abs(window_data['ema12'].iloc[j] - window_data['ema26'].iloc[j])
+                                normalized_distance = distance / window_data['close'].iloc[j] * 100
+                                pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
+                                
+                                ema12_change = (window_data['ema12'].iloc[j] - window_data['ema12'].iloc[j-1]) / window_data['ema12'].iloc[j-1] * 100
+                                pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
+                        
+                        is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
+                        if is_strong and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
+                                    (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
 
             return None, None, None
