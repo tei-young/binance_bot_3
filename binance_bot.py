@@ -622,20 +622,38 @@ class TradingBot:
             MIN_SLOPE = 0.04
             THRESHOLD = 0.00005
             
-            # EMA 크로스 체크
+            # EMA 골든크로스 체크
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
                     df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
                 (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
                     df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
                     df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
                 
-                cross_slope = self.calculate_ema_cross_angle(df, current_idx)
+                # EMA 크로스 데이터 준비
+                pre_cross = {
+                    'ema_distances': [],
+                    'ema12_changes': []
+                }
+                
+                for i in range(current_idx - 3, current_idx + 1):
+                    if i > 0:
+                        # EMA 간 거리
+                        distance = abs(df['ema12'].iloc[i] - df['ema26'].iloc[i])
+                        normalized_distance = distance / df['close'].iloc[i] * 100
+                        pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
+                        
+                        # EMA12 변화
+                        ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
+                        pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
                 # 크로스 분석용 (slope 조건 제외)
                 if above_sma200 and ma_color == 'green':
                     self.analyze_cross_pattern(df, symbol, 'golden', current_time)
                 
-                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                # 크로스 강도 확인 및 트레이딩 로직
+                is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
+                
+                if above_sma200 and ma_color == 'green' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'golden',
@@ -644,7 +662,7 @@ class TradingBot:
                     )]
                     self.signal_logger.info(
                         f"NEW EMA Golden Cross at {current_time}\n"
-                        f"Cross Slope: {cross_slope}%\n"
+                        f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
                         f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
@@ -667,7 +685,7 @@ class TradingBot:
                         f"EMA Golden Cross ignored - conditions not met\n"
                         f"Above SMA200: {above_sma200}\n"
                         f"MA Color: {ma_color}\n"
-                        f"Cross Slope: {cross_slope}%"
+                        f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
                         
             elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
@@ -676,13 +694,31 @@ class TradingBot:
                     df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
                     df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
                 
-                cross_slope = self.calculate_ema_cross_angle(df, current_idx)
+                # EMA 크로스 데이터 준비
+                pre_cross = {
+                    'ema_distances': [],
+                    'ema12_changes': []
+                }
+                
+                for i in range(current_idx - 3, current_idx + 1):
+                    if i > 0:
+                        # EMA 간 거리
+                        distance = abs(df['ema12'].iloc[i] - df['ema26'].iloc[i])
+                        normalized_distance = distance / df['close'].iloc[i] * 100
+                        pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
+                        
+                        # EMA12 변화
+                        ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
+                        pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
                 # 크로스 분석용 (slope 조건 제외)
                 if not above_sma200 and ma_color == 'red':
                     self.analyze_cross_pattern(df, symbol, 'dead', current_time)
                 
-                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                # 크로스 강도 확인 및 트레이딩 로직
+                is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
+                
+                if not above_sma200 and ma_color == 'red' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'dead',
@@ -691,7 +727,7 @@ class TradingBot:
                     )]
                     self.signal_logger.info(
                         f"NEW EMA Dead Cross at {current_time}\n"
-                        f"Cross Slope: {cross_slope}%\n"
+                        f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
                         f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
@@ -714,8 +750,9 @@ class TradingBot:
                         f"EMA Dead Cross ignored - conditions not met\n"
                         f"Below SMA200: {not above_sma200}\n"
                         f"MA Color: {ma_color}\n"
-                        f"Cross Slope: {cross_slope}%"
+                        f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
+                    
             else:
                 self.signal_logger.info("No new EMA cross")
                         
