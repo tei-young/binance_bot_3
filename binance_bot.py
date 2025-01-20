@@ -126,6 +126,122 @@ class TradingBot:
         self.cross_analysis_logger = setup_logger('cross_analysis', 'cross_analysis.log')  # 새로운 로거
         
         self.current_log_date = datetime.now().date()
+        
+    def analyze_cross_pattern(self, df, symbol, cross_type, cross_time):
+        """크로스 패턴 분석 - MACD, Slope 조건 제외한 모든 크로스"""
+        try:
+            current_idx = df.index.get_loc(cross_time)
+            cross_price = df['close'].iloc[current_idx]
+            
+            # 1. 크로스 전 15분 데이터 분석
+            pre_cross = {
+                'ema_distances': [],  # EMA 간 거리
+                'ema12_changes': [],  # EMA12 변화율
+                'price_changes': [],  # 가격 변화율
+                'volumes': [],        # 거래량
+                'candle_info': []     # 캔들 정보
+            }
+            
+            for i in range(current_idx - 3, current_idx + 1):
+                if i > 0:
+                    # EMA 간 거리
+                    distance = abs(df['ema12'].iloc[i] - df['ema26'].iloc[i])
+                    normalized_distance = distance / df['close'].iloc[i] * 100
+                    pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
+                    
+                    # EMA12 변화
+                    ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
+                    pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
+                    
+                    # 가격 변화
+                    price_change = (df['close'].iloc[i] - df['close'].iloc[i-1]) / df['close'].iloc[i-1] * 100
+                    pre_cross['price_changes'].append(f"{price_change:.3f}")
+                    
+                    # 거래량
+                    pre_cross['volumes'].append(df['volume'].iloc[i])
+                    
+                    # 캔들 정보
+                    candle = {
+                        'body': abs(df['close'].iloc[i] - df['open'].iloc[i]) / df['open'].iloc[i] * 100,
+                        'upper_shadow': (df['high'].iloc[i] - max(df['open'].iloc[i], df['close'].iloc[i])) / df['open'].iloc[i] * 100,
+                        'lower_shadow': (min(df['open'].iloc[i], df['close'].iloc[i]) - df['low'].iloc[i]) / df['open'].iloc[i] * 100
+                    }
+                    pre_cross['candle_info'].append(candle)
+            
+            # Pre-cross 데이터 리스트 생성
+            body_sizes = [f'{candle["body"]:.3f}' for candle in pre_cross['candle_info']]
+            upper_shadows = [f'{candle["upper_shadow"]:.3f}' for candle in pre_cross['candle_info']]
+            lower_shadows = [f'{candle["lower_shadow"]:.3f}' for candle in pre_cross['candle_info']]
+            
+            # Pre-cross 로깅
+            self.cross_analysis_logger.info(
+                f"\n{'='*50}\n"
+                f"EMA Cross Analysis - {symbol}\n"
+                f"Time: {cross_time}\n"
+                f"Type: {cross_type}\n"
+                f"Price at Cross: {cross_price}\n"
+                f"\n1. Pre-Cross Pattern (15min):\n"
+                f"EMA Distance Changes (%): {pre_cross['ema_distances']}\n"
+                f"EMA12 Changes (%): {pre_cross['ema12_changes']}\n"
+                f"Price Changes (%): {pre_cross['price_changes']}\n"
+                f"Candle Analysis:\n"
+                f"    Body Sizes (%): {body_sizes}\n"
+                f"    Upper Shadows (%): {upper_shadows}\n"
+                f"    Lower Shadows (%): {lower_shadows}\n"
+                f"Volumes: {pre_cross['volumes']}"
+            )
+            
+            # 2. 크로스 후 30분 가격 추적
+            post_cross = {
+                'price_changes': [],      # 5분마다의 가격 변화
+                'max_change': 0,          # 최대 변동폭
+                'max_change_time': 0,     # 최대 변동 발생 시점
+                'candle_info': [],        # 캔들 정보
+                'volumes': []             # 거래량
+            }
+            
+            for i in range(1, 7):  # 5분 간격으로 6봉 추적
+                check_idx = current_idx + i
+                if check_idx < len(df):
+                    current_price = df['close'].iloc[check_idx]
+                    price_change = (current_price - cross_price) / cross_price * 100
+                    post_cross['price_changes'].append(f"{price_change:.3f}")
+                    
+                    # 거래량 추적
+                    post_cross['volumes'].append(df['volume'].iloc[check_idx])
+                    
+                    # 캔들 정보 추적
+                    candle = {
+                        'body': abs(df['close'].iloc[check_idx] - df['open'].iloc[check_idx]) / df['open'].iloc[check_idx] * 100,
+                        'upper_shadow': (df['high'].iloc[check_idx] - max(df['open'].iloc[check_idx], df['close'].iloc[check_idx])) / df['open'].iloc[check_idx] * 100,
+                        'lower_shadow': (min(df['open'].iloc[check_idx], df['close'].iloc[check_idx]) - df['low'].iloc[check_idx]) / df['open'].iloc[check_idx] * 100
+                    }
+                    post_cross['candle_info'].append(candle)
+                    
+                    if abs(price_change) > abs(post_cross['max_change']):
+                        post_cross['max_change'] = price_change
+                        post_cross['max_change_time'] = i * 5
+
+            # Post-cross 데이터 리스트 생성
+            post_body_sizes = [f'{candle["body"]:.3f}' for candle in post_cross['candle_info']]
+            post_upper_shadows = [f'{candle["upper_shadow"]:.3f}' for candle in post_cross['candle_info']]
+            post_lower_shadows = [f'{candle["lower_shadow"]:.3f}' for candle in post_cross['candle_info']]
+            
+            # Post-cross 로깅
+            self.cross_analysis_logger.info(
+                f"\n2. Post-Cross Movement (30min):\n"
+                f"5min Price Changes (%): {post_cross['price_changes']}\n"
+                f"Maximum Change: {post_cross['max_change']:.3f}% after {post_cross['max_change_time']} minutes\n"
+                f"Candle Analysis:\n"
+                f"    Body Sizes (%): {post_body_sizes}\n"
+                f"    Upper Shadows (%): {post_upper_shadows}\n"
+                f"    Lower Shadows (%): {post_lower_shadows}\n"
+                f"Volumes: {post_cross['volumes']}\n"
+                f"{'='*50}"
+            )
+            
+        except Exception as e:
+            self.cross_analysis_logger.error(f"Error analyzing cross pattern: {e}")
 
     def check_and_update_loggers(self):
         """날짜 변경 확인 및 로거 업데이트"""
