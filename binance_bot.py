@@ -173,8 +173,22 @@ class TradingBot:
             upper_shadows = [f'{candle["upper_shadow"]:.3f}' for candle in pre_cross['candle_info']]
             lower_shadows = [f'{candle["lower_shadow"]:.3f}' for candle in pre_cross['candle_info']]
             
-            # 완만한 크로스 판별
+            # 기존 strong 판별
             is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
+            
+            # 새로운 strong 판별 로직 추가
+            distances = [float(d) for d in pre_cross['ema_distances']]
+            changes = [float(c) for c in pre_cross['ema12_changes']]
+            
+            max_distance = max(distances)
+            distance_decrease = all(distances[i] >= distances[i+1] for i in range(len(distances)-1))
+            max_change = max(abs(c) for c in changes)
+            
+            is_strong_new = (
+                max_distance > 0.3 and
+                distance_decrease and
+                max_change > 0.3
+            )
             
             # Pre-cross 로깅
             self.cross_analysis_logger.info(
@@ -182,7 +196,8 @@ class TradingBot:
                 f"EMA Cross Analysis - {symbol}\n"
                 f"Time: {cross_time}\n"
                 f"Type: {cross_type}\n"
-                f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
+                f"Cross Character (Current): {'Strong' if is_strong else 'Weak'}\n"
+                f"Cross Character (New): {'Strong' if is_strong_new else 'Weak'}\n"
                 f"Price at Cross: {cross_price}\n"
                 f"\n1. Pre-Cross Pattern (15min):\n"
                 f"EMA Distance Changes (%): {pre_cross['ema_distances']}\n"
