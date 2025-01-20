@@ -174,7 +174,7 @@ class TradingBot:
             lower_shadows = [f'{candle["lower_shadow"]:.3f}' for candle in pre_cross['candle_info']]
             
             # 완만한 크로스 판별
-            is_gradual = self.is_gradual_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
+            is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
             
             # Pre-cross 로깅
             self.cross_analysis_logger.info(
@@ -182,7 +182,7 @@ class TradingBot:
                 f"EMA Cross Analysis - {symbol}\n"
                 f"Time: {cross_time}\n"
                 f"Type: {cross_type}\n"
-                f"Cross Character: {'Gradual' if is_gradual else 'Strong'}\n"
+                f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                 f"Price at Cross: {cross_price}\n"
                 f"\n1. Pre-Cross Pattern (15min):\n"
                 f"EMA Distance Changes (%): {pre_cross['ema_distances']}\n"
