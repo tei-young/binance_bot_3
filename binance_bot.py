@@ -1448,10 +1448,16 @@ class TradingBot:
             if not position_info['entry_order']:
                 return
 
-            # 포지션이 있었는데 없어진 경우 확인
+            # 진입 주문 시간 확인과 5분 체크 추가
+            entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+            order_time = pd.to_datetime(entry_order['datetime'])
+            current_time = pd.to_datetime(datetime.now())
+            time_elapsed = (current_time - order_time).total_seconds() / 60
+
+            # 포지션이 있었는데 없어진 경우 확인 (5분 시간 조건 추가)
             positions = self.exchange.fetch_positions([symbol])
-            if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0):
-                self.execution_logger.info(f"Position closed detected for {symbol}, cleaning up orders...")
+            if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0) and time_elapsed > 5:
+                self.execution_logger.info(f"Position closed or order timeout after {time_elapsed:.1f} minutes for {symbol}, cleaning up orders...")
                 
                 # 청산 타입 확인 (SL/TP)
                 closing_type = None
