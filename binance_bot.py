@@ -1526,7 +1526,7 @@ class TradingBot:
 
             # 진입 주문 시간 확인과 5분 체크 추가
             entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
-            order_time = pd.to_datetime(entry_order['datetime'])
+            order_time = pd.to_datetime(entry_order['datetime']).tz_localize(None)
             current_time = pd.to_datetime(datetime.now())
             time_elapsed = (current_time - order_time).total_seconds() / 60
 
