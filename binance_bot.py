@@ -96,7 +96,7 @@ class TradingBot:
             os.makedirs('logs')
         
         # 로거 초기화 (기존 핸들러 제거)
-        for logger_name in ['trading', 'signal', 'execution', 'profit']:
+        for logger_name in ['trading', 'signal', 'execution', 'profit', 'cross_analysis']:  # cross_analysis 추가
             logger = logging.getLogger(logger_name)
             for handler in logger.handlers[:]:
                 logger.removeHandler(handler)
@@ -104,12 +104,9 @@ class TradingBot:
         # 날짜 설정
         today = new_date if new_date else datetime.now().strftime('%y%m%d')
         
-        # 로거 설정 함수
         def setup_logger(name, log_file):
             logger = logging.getLogger(name)
             logger.setLevel(logging.INFO)
-            
-            # 파일명에 날짜 추가
             dated_log_file = f"{today}_{log_file}"
             handler = RotatingFileHandler(
                 f'logs/{dated_log_file}',
@@ -126,8 +123,8 @@ class TradingBot:
         self.signal_logger = setup_logger('signal', 'signals.log')
         self.execution_logger = setup_logger('execution', 'executions.log')
         self.profit_logger = setup_logger('profit', 'profits.log')
+        self.cross_analysis_logger = setup_logger('cross_analysis', 'cross_analysis.log')  # 새로운 로거
         
-        # 현재 로그 날짜 저장
         self.current_log_date = datetime.now().date()
 
     def check_and_update_loggers(self):
@@ -1224,8 +1221,8 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.3:  # 1.8% -> 1.0% -> 1.3
-                    new_stop_loss = entry_price * 1.004  # 1.015 -> 1.007 -> 1.004 로 수정
+                if profit_percent >= 1.0:  # 1.8% -> 1.0%
+                    new_stop_loss = entry_price * 1.003  # 1.015 -> 1.007 -> 1.003 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
@@ -1261,8 +1258,8 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.3:  # 1.8% -> 1.0% -> 1.3
-                    new_stop_loss = entry_price * 0.996  # 0.985 -> 0.993 -> 0.996 로 수정
+                if profit_percent >= 1.0:  # 1.8% -> 1.0%
+                    new_stop_loss = entry_price * 0.997  # 0.985 -> 0.993 -> 0.997 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
