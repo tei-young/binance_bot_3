@@ -242,6 +242,33 @@ class TradingBot:
             
         except Exception as e:
             self.cross_analysis_logger.error(f"Error analyzing cross pattern: {e}")
+            
+    def is_gradual_cross(self, ema_distances, ema12_changes):
+        """완만한 크로스 판별"""
+        try:
+            # 1. EMA Distance 체크
+            max_distance = max(float(d) for d in ema_distances)
+            if max_distance > 0.1:  # 0.1%
+                return False
+                
+            # 2. EMA12 Changes 체크
+            max_change = max(abs(float(c)) for c in ema12_changes)
+            if max_change > 0.1:  # 0.1%
+                return False
+                
+            # 3. 변화의 일관성 체크
+            changes = [float(c) for c in ema12_changes]
+            direction_changes = sum(1 for i in range(len(changes)-1) if 
+                                (changes[i] > 0 and changes[i+1] < 0) or
+                                (changes[i] < 0 and changes[i+1] > 0))
+            if direction_changes > 1:  # 방향 전환이 많으면 불안정
+                return False
+                
+            return True
+                
+        except Exception as e:
+            self.cross_analysis_logger.error(f"Error in gradual cross check: {e}")
+            return False
 
     def check_and_update_loggers(self):
         """날짜 변경 확인 및 로거 업데이트"""
