@@ -265,23 +265,29 @@ class TradingBot:
     def is_strong_cross(self, ema_distances, ema12_changes):
         """강한 크로스인지 판별"""
         try:
-            # EMA Distance가 충분히 큰지
+            # 1. EMA Distance 체크
             max_distance = max(float(d) for d in ema_distances)
-            if max_distance < 0.1:  # 0.1% 미만이면 약한 크로스
+            if max_distance < 0.2:  # 0.2% 미만이면 약한 크로스
                 return False
                 
-            # EMA12의 변화가 충분히 큰지
+            # 2. EMA12의 변화 체크
             max_change = max(abs(float(c)) for c in ema12_changes)
-            if max_change < 0.1:  # 0.1% 미만이면 약한 크로스
+            if max_change < 0.2:  # 0.2% 미만이면 약한 크로스
                 return False
                 
-            # 방향의 일관성
+            # 3. 방향의 일관성과 평균 변화율 체크
             changes = [float(c) for c in ema12_changes]
             consistent_direction = all(c > 0 for c in changes) or all(c < 0 for c in changes)
-            if not consistent_direction:  # 방향이 일관되지 않으면 약한 크로스
+            
+            if not consistent_direction:
                 return False
                 
-            return True  # 모든 조건을 만족하면 강한 크로스
+            # 4. 평균 변화율 체크
+            avg_change = sum(changes) / len(changes)
+            if abs(avg_change) < 0.1:  # 평균 변화율이 너무 작으면 reject
+                return False
+                
+            return True
                 
         except Exception as e:
             self.cross_analysis_logger.error(f"Error in strong cross check: {e}")
