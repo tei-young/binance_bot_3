@@ -21,11 +21,11 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                  'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
-                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
+                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'GRASS/USDT',
                 'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 'EOS/USDT',
                 'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 'PENGU/USDT', 'AIXBT/USDT', 'ATA/USDT',
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
-                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT']
+                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT', 'VANA/USDT', 'MELANIA/USDT']
 
 class TradingBot:
     def __init__(self, api_key, api_secret):
@@ -652,14 +652,14 @@ class TradingBot:
                         ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
                         pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
-                # 크로스 분석용 (slope 조건 제외)
-                if above_sma200 and ma_color == 'green':
+                # 크로스 분석용 (slope 조건 제외) + (SMA200제거)
+                if ma_color == 'green':
                     self.analyze_cross_pattern(df, symbol, 'golden', current_time)
                 
                 # 크로스 강도 확인 및 트레이딩 로직
                 is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
                 
-                if above_sma200 and ma_color == 'green' and is_strong:
+                if ma_color == 'green' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'golden',
@@ -671,7 +671,6 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
@@ -689,7 +688,6 @@ class TradingBot:
                 else:
                     self.signal_logger.info(
                         f"EMA Golden Cross ignored - conditions not met\n"
-                        f"Above SMA200: {above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
@@ -717,14 +715,14 @@ class TradingBot:
                         ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
                         pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
-                # 크로스 분석용 (slope 조건 제외)
-                if not above_sma200 and ma_color == 'red':
+                # 크로스 분석용 (slope 조건 제외) + (SMA200제거)
+                if  ma_color == 'red':
                     self.analyze_cross_pattern(df, symbol, 'dead', current_time)
                 
                 # 크로스 강도 확인 및 트레이딩 로직
                 is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
                 
-                if not above_sma200 and ma_color == 'red' and is_strong:
+                if ma_color == 'red' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         current_time,
                         'dead',
@@ -736,7 +734,6 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
@@ -754,7 +751,6 @@ class TradingBot:
                 else:
                     self.signal_logger.info(
                         f"EMA Dead Cross ignored - conditions not met\n"
-                        f"Below SMA200: {not above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
@@ -771,7 +767,7 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                if ma_color == 'green' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'golden',
@@ -783,7 +779,6 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
@@ -801,7 +796,6 @@ class TradingBot:
                 else:
                     self.signal_logger.info(
                         f"MACD Golden Cross ignored - conditions not met\n"
-                        f"Above SMA200: {above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Slope: {cross_slope}%"
                     )
@@ -814,7 +808,7 @@ class TradingBot:
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                if ma_color == 'red' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         current_time,
                         'dead',
@@ -826,7 +820,6 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
@@ -844,7 +837,6 @@ class TradingBot:
                 else:
                     self.signal_logger.info(
                         f"MACD Dead Cross ignored - conditions not met\n"
-                        f"Below SMA200: {not above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Slope: {cross_slope}%"
                     )
@@ -879,7 +871,7 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            MIN_SLOPE = 0.042  # MACD용 기존 MIN_SLOPE 유지
+            MIN_SLOPE = 0.04  # MACD용 기존 MIN_SLOPE 유지
 
             self.signal_logger.info(
                 f"\nChecking Historical {target_indicator.upper()} Crosses\n"
@@ -901,12 +893,11 @@ class TradingBot:
                             window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
                             cross_type == 'dead')):
                         
-                        above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
                         
                         cross_slope = self.calculate_macd_cross_angle(window_data, check_idx)
-                        if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
+                        if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and ma_color == 'green') or
+                                                        (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
 
                 else:  # EMA는 새로운 로직 적용
@@ -917,7 +908,6 @@ class TradingBot:
                             window_data['ema12'].iloc[check_idx] < window_data['ema26'].iloc[check_idx] and
                             cross_type == 'dead')):
                         
-                        above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
                         
                         # EMA 크로스 데이터 준비
@@ -936,8 +926,8 @@ class TradingBot:
                                 pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                         
                         is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
-                        if is_strong and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                    (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
+                        if is_strong and ((cross_type == 'golden' and ma_color == 'green') or
+                                    (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
 
             return None, None, None
@@ -1074,17 +1064,16 @@ class TradingBot:
             self.signal_logger.error(f"Error in cross validity check: {e}")
             return False
 
-    def check_entry_conditions(self, df, symbol):
+    def check_entry_conditions(self, df, symbol, cross_type):
         """진입 조건 확인"""
         # 1. 지표 계산 먼저
         df = self.calculate_indicators(df, symbol)
         if df is None:
             return None, None
         
-        # 2. 현재 가격 확인 및 포지션 타입 결정
+        # 2. 현재 가격 확인 및 포지션 타입 결정 (SMA 200 제거 및 cross_type 정보를 전달받아야 함)
         current_price = df['close'].iloc[-1]
-        above_sma200 = current_price > df['sma200'].iloc[-1]
-        position_type = 'long' if above_sma200 else 'short'
+        position_type = 'long' if cross_type == 'golden' else 'short'
         
         # 3. 최근 손절 이력 확인
         last_sl_time = self.sl_history[symbol][position_type]
@@ -1102,12 +1091,11 @@ class TradingBot:
         
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
-            f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
         )
         
         # MA angles JD 색상 확인
         mangles_color = df['mangles_jd_color'].iloc[-1]
-        mangles_valid = (above_sma200 and mangles_color == 'green') or (not above_sma200 and mangles_color == 'red')
+        mangles_valid = (mangles_color == 'green') or (mangles_color == 'red')
         self.signal_logger.info(
             f"2. MA angles JD Color: {mangles_color.upper()} - {mangles_valid}"
         )
