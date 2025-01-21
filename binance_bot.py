@@ -482,7 +482,6 @@ class TradingBot:
             self.trading_logger.info(f"DataFrame columns: {df.columns.tolist()}")
             
             # 기본 지표 계산
-            df['sma200'] = ta.trend.sma_indicator(df['close'], window=200)
             df['ema12'] = ta.trend.ema_indicator(df['close'], window=12)
             df['ema26'] = ta.trend.ema_indicator(df['close'], window=26)
             
@@ -612,7 +611,6 @@ class TradingBot:
             current_time = df.index[current_idx]
             formatted_time = current_time.floor('5min')
             
-            above_sma200 = df['close'].iloc[current_idx] > df['sma200'].iloc[current_idx]
             ma_color = df['mangles_jd_color'].iloc[current_idx]
             
             candle_start = formatted_time
