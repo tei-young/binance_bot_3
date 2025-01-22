@@ -1182,38 +1182,43 @@ class TradingBot:
         return None, None
 
     def determine_stop_loss(self, df, crosses, position_type, entry_price):
-        """
-        먼저 발생한 크로스의 시점을 기준으로 이전 5분간의 high/low로 stop loss 설정
-        """
         try:
             if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error("Missing cross data")
                 return None
-                    
-            # 두 크로스의 시간 비교
+                
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
             
-            # 먼저 발생한 크로스 찾기
-            first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
-            first_cross_time = ema_time if ema_time <= macd_time else macd_time
-                
-            # 먼저 발생한 크로스 시점 기준 이전 5분 데이터 추출
-            sl_start = first_cross_time - pd.Timedelta(minutes=5)
-            sl_mask = (df.index >= sl_start) & (df.index <= first_cross_time)
-            sl_data = df[sl_mask]
+            # 동일 캔들 체크
+            if abs((ema_time - macd_time).total_seconds()) < 300:
+                # 마지막 크로스 시점의 캔들 high/low 사용
+                last_cross_time = max(ema_time, macd_time)
+                sl_end = last_cross_time.ceil('5min')
+                sl_start = sl_end - pd.Timedelta(minutes=5)
+            else:
+                # 먼저 발생한 크로스의 캔들 high/low 사용
+                first_cross_time = min(ema_time, macd_time)
+                sl_end = first_cross_time.ceil('5min')
+                sl_start = sl_end - pd.Timedelta(minutes=5)
             
-            # 해당 구간의 high/low 계산
+            self.execution_logger.info(
+                f"Stop Loss Range Calculation:\n"
+                f"EMA Cross Time: {ema_time}\n"
+                f"MACD Cross Time: {macd_time}\n"
+                f"SL Range: {sl_start} to {sl_end}"
+            )
+            
+            sl_mask = (df.index >= sl_start) & (df.index < sl_end)
+            sl_data = df[sl_mask]
             period_high = sl_data['high'].max()
             period_low = sl_data['low'].min()
                 
-            # position type에 따른 stop loss 설정
             stop_loss = period_low if position_type == 'long' else period_high
-                
-            # SL 거리 검증
+            
             sl_distance = abs(stop_loss - entry_price)
-            min_sl_distance = entry_price * 0.003  # 최소 0.3% 차이
-                
+            min_sl_distance = entry_price * 0.003
+            
             if sl_distance < min_sl_distance:
                 self.execution_logger.warning(
                     f"Stop loss too close to entry price:\n"
@@ -1222,17 +1227,16 @@ class TradingBot:
                     f"Distance: {sl_distance} (minimum required: {min_sl_distance})"
                 )
                 return None
-                
+                    
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
-                f"First cross time: {first_cross_time}\n"
-                f"Data range: {sl_start} to {first_cross_time}\n"
+                f"Data range: {sl_start} to {sl_end}\n"
                 f"Stop loss price: {stop_loss}\n"
                 f"Distance from entry: {sl_distance} ({(sl_distance/entry_price)*100:.3f}%)"
             )
-                    
-            return stop_loss
                         
+            return stop_loss
+                            
         except Exception as e:
             self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
@@ -1478,8 +1482,8 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.2:  # 1.8% -> 1.0%
-                    new_stop_loss = entry_price * 1.002  # 1.015 -> 1.007 -> 1.002 로 수정
+                if profit_percent >= 1.4:  # 1.8% -> 1.4%
+                    new_stop_loss = entry_price * 1.005  # 1.015 -> 1.007 -> 1.005 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
@@ -1515,8 +1519,8 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.2:  # 1.8% -> 1.2%
-                    new_stop_loss = entry_price * 0.998  # 0.985 -> 0.993 -> 0.998 로 수정
+                if profit_percent >= 1.4:  # 1.8% -> 1.4%
+                    new_stop_loss = entry_price * 0.995  # 0.985 -> 0.993 -> 0.995 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
