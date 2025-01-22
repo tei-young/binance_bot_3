@@ -677,7 +677,9 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                    # 이전 25분간의 MACD 크로스 확인
+                # MACD 크로스 히스토리 확인
+                if not self.cross_history[symbol]['macd']:      
+                    # 없다면 이전 25분간의 MACD 크로스 확인
                     macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
                     if macd_cross_time:
                         self.cross_history[symbol]['macd'] = [(
@@ -745,7 +747,9 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                    # 이전 25분간의 MACD 크로스 확인
+                # MACD 크로스 히스토리 확인
+                if not self.cross_history[symbol]['macd']:      
+                    # 없다면 이전 25분간의 MACD 크로스 확인
                     macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
                     if macd_cross_time:
                         self.cross_history[symbol]['macd'] = [(
@@ -794,7 +798,9 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                    # 이전 25분간의 EMA 크로스 확인
+                # EMA 크로스 히스토리 확인
+                if not self.cross_history[symbol]['ema']:  
+                    # 없다면 이전 25분간의 EMA 크로스 확인
                     ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
                     if ema_cross_time:
                         self.cross_history[symbol]['ema'] = [(
@@ -839,8 +845,10 @@ class TradingBot:
                         f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
-                    
-                    # 이전 25분간의 EMA 크로스 확인
+                
+                # EMA 크로스 히스토리 확인
+                if not self.cross_history[symbol]['ema']:    
+                    # 없다면 이전 25분간의 EMA 크로스 확인
                     ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
                     if ema_cross_time:
                         self.cross_history[symbol]['ema'] = [(
