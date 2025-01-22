@@ -628,12 +628,14 @@ class TradingBot:
             MIN_SLOPE = 0.04
             THRESHOLD = 0.00005
             
-            # EMA 골든크로스 체크
+            # EMA 골든크로스 체크 - t-1, t-0 / t-2, t-1 비교 추가
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
-                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
+                (df['ema12'].iloc[current_idx-2] < df['ema26'].iloc[current_idx-2] and 
+                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1]) or
                 (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
-                    df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
+                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
                 
                 # EMA 크로스 데이터 준비
                 pre_cross = {
@@ -694,11 +696,14 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
                         
+            # EMA 데드크로스 체크 - t-1, t-0 / t-2, t-1 비교 추가            
             elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
-                    (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
-                    df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
+                (df['ema12'].iloc[current_idx-2] > df['ema26'].iloc[current_idx-2] and 
+                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1]) or
+                (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
+                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
                 
                 # EMA 크로스 데이터 준비
                 pre_cross = {
@@ -762,12 +767,14 @@ class TradingBot:
             else:
                 self.signal_logger.info("No new EMA cross")
                         
-            # MACD 크로스 체크
+            # MACD 골든 크로스 체크 - t-1, t-0 / t-2, t-1 체크 추가
             if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
-                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
+                (df['macd'].iloc[current_idx-2] < df['macd_signal'].iloc[current_idx-2] and 
+                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1]) or
                 (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
-                    df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
+                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
@@ -806,11 +813,14 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%"
                     )
                         
+            # MACD 데드 크로스 체크 - t-1, t-0 / t-2, t-1 체크 추가
             elif ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
-                    (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
-                    df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
+                (df['macd'].iloc[current_idx-2] > df['macd_signal'].iloc[current_idx-2] and 
+                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1]) or
+                (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
+                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
