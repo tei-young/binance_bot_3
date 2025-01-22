@@ -755,7 +755,16 @@ class TradingBot:
                     
             else:
                 self.signal_logger.info("No new EMA cross")
-                        
+            
+            # MACD 로깅 추가
+            self.signal_logger.info(
+                f"\nMACD Cross Analysis at {current_time}:\n"
+                f"Last 3 candles MACD values:\n"
+                f"  T-2: MACD={df['macd'].iloc[current_idx-2]:.8f}, Signal={df['macd_signal'].iloc[current_idx-2]:.8f}, Diff={df['macd'].iloc[current_idx-2] - df['macd_signal'].iloc[current_idx-2]:.8f}\n"
+                f"  T-1: MACD={df['macd'].iloc[current_idx-1]:.8f}, Signal={df['macd_signal'].iloc[current_idx-1]:.8f}, Diff={df['macd'].iloc[current_idx-1] - df['macd_signal'].iloc[current_idx-1]:.8f}\n"
+                f"   T0: MACD={df['macd'].iloc[current_idx]:.8f}, Signal={df['macd_signal'].iloc[current_idx]:.8f}, Diff={df['macd'].iloc[current_idx] - df['macd_signal'].iloc[current_idx]:.8f}"
+            )
+                                    
             # MACD 크로스 체크
             if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
                     df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
@@ -1062,57 +1071,61 @@ class TradingBot:
             self.signal_logger.error(f"Error in cross validity check: {e}")
             return False
 
-    def check_entry_conditions(self, df, symbol, cross_type):
+    def check_entry_conditions(self, df, symbol):  # cross_type 파라미터 제거
         """진입 조건 확인"""
         # 1. 지표 계산 먼저
         df = self.calculate_indicators(df, symbol)
         if df is None:
             return None, None
         
-        # 2. 현재 가격 확인 및 포지션 타입 결정 (SMA 200 제거 및 cross_type 정보를 전달받아야 함)
+        # 2. 현재 가격 확인
         current_price = df['close'].iloc[-1]
-        position_type = 'long' if cross_type == 'golden' else 'short'
         
-        # 3. 최근 손절 이력 확인
-        last_sl_time = self.sl_history[symbol][position_type]
-        if last_sl_time:
-            time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
-            if time_since_sl < 30:  # 30분 이내
-                self.trading_logger.info(
-                    f"Skipping {position_type} trade for {symbol}: "
-                    f"Recent stop loss ({time_since_sl:.1f} mins ago)"
-                )
-                return None, None
-        
-        # 4. 크로스 데이터 저장
+        # 3. 크로스 데이터 저장 (여기서 크로스 타입이 결정됨)
         self.store_cross_data(df, symbol)
+        
+        # 4. mangles_jd 색상 확인
+        mangles_color = df['mangles_jd_color'].iloc[-1]
+        mangles_valid = (mangles_color == 'green') or (mangles_color == 'red')
         
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
         )
         
-        # MA angles JD 색상 확인
-        mangles_color = df['mangles_jd_color'].iloc[-1]
-        mangles_valid = (mangles_color == 'green') or (mangles_color == 'red')
         self.signal_logger.info(
             f"2. MA angles JD Color: {mangles_color.upper()} - {mangles_valid}"
         )
         
         if not mangles_valid:
             return None, None
+            
+        # 5. 크로스 기록을 통해 position_type 결정
+        if self.cross_history[symbol]['ema'] and self.cross_history[symbol]['macd']:
+            position_type = 'long' if self.cross_history[symbol]['ema'][0][1] == 'golden' else 'short'
+            
+            # 6. 손절 이력 확인
+            last_sl_time = self.sl_history[symbol][position_type]
+            if last_sl_time:
+                time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                if time_since_sl < 30:  # 30분 이내
+                    self.trading_logger.info(
+                        f"Skipping {position_type} trade for {symbol}: "
+                        f"Recent stop loss ({time_since_sl:.1f} mins ago)"
+                    )
+                    return None, None
         
-        if self.check_cross_validity(symbol, position_type):
-            entry_message = (
-                f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
-                f"Symbol: {symbol}\n"
-                f"Position: {position_type.upper()}\n"
-                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"Price: {current_price}\n"
-                f"{'='*50}"
-            )
-            self.signal_logger.info(entry_message)
-            self.execution_logger.info(entry_message)
-            return position_type, self.cross_history[symbol]
+            if self.check_cross_validity(symbol, position_type):
+                entry_message = (
+                    f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position: {position_type.upper()}\n"
+                    f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"Price: {current_price}\n"
+                    f"{'='*50}"
+                )
+                self.signal_logger.info(entry_message)
+                self.execution_logger.info(entry_message)
+                return position_type, self.cross_history[symbol]
         
         return None, None
 
