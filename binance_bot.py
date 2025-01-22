@@ -887,31 +887,42 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            MIN_SLOPE = 0.04  # MACD용 기존 MIN_SLOPE 유지
+            MIN_SLOPE = 0.04
 
             self.signal_logger.info(
                 f"\nChecking Historical {target_indicator.upper()} Crosses\n"
                 f"Time Range: {window_start} to {current_time}"
             )
 
-            for i in range(0, len(window_data)-5, 5):
-                check_idx = i + 5
+            # MACD historical 모든 시점 체크하도록 수정
+            for i in range(len(window_data)-1):
+                check_idx = i + 1
                 candle_start = window_data.index[check_idx] - pd.Timedelta(minutes=5)
                 candle_data = window_data[(window_data.index >= candle_start) & (window_data.index <= window_data.index[check_idx])]
                 period_high = candle_data['high'].max()
                 period_low = candle_data['low'].min()
 
-                if target_indicator == 'macd':  # MACD는 기존 로직 유지
-                    if ((window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
-                            window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
-                            cross_type == 'golden') or
+                if target_indicator == 'macd':
+                    cross_condition = (
+                        (window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
+                        window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
+                        cross_type == 'golden') or
                         (window_data['macd'].iloc[check_idx-1] > window_data['macd_signal'].iloc[check_idx-1] and 
-                            window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
-                            cross_type == 'dead')):
-                        
+                        window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
+                        cross_type == 'dead')
+                    )
+
+                    if cross_condition:
+                        # 크로스 발생 로깅
+                        self.signal_logger.info(
+                            f"Found {target_indicator} cross at {window_data.index[check_idx]}:\n"
+                            f"Previous MACD={window_data['macd'].iloc[check_idx-1]:.8f}, Signal={window_data['macd_signal'].iloc[check_idx-1]:.8f}\n"
+                            f"Current  MACD={window_data['macd'].iloc[check_idx]:.8f}, Signal={window_data['macd_signal'].iloc[check_idx]:.8f}"
+                        )
+
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
-                        
                         cross_slope = self.calculate_macd_cross_angle(window_data, check_idx)
+                        
                         if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and ma_color == 'green') or
                                                         (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
