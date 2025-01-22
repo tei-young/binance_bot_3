@@ -944,6 +944,13 @@ class TradingBot:
                         if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and ma_color == 'green') or
                                                         (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
+                        else:
+                            # historical cross not met 로깅추가
+                            self.signal_logger.info(
+                                f"Historical {target_indicator.upper()} {cross_type} Cross ignored - conditions not met\n"
+                                f"MA Color: {ma_color}\n"
+                                f"Cross Slope: {cross_slope}%"
+                            )
 
                 else:  # EMA는 새로운 로직 적용
                     if ((window_data['ema12'].iloc[check_idx-1] < window_data['ema26'].iloc[check_idx-1] and 
@@ -974,6 +981,13 @@ class TradingBot:
                         if is_strong and ((cross_type == 'golden' and ma_color == 'green') or
                                     (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
+                        else:
+                            # historical cross not met 로깅추가
+                            self.signal_logger.info(
+                                f"Historical {target_indicator.upper()} {cross_type} Cross ignored - conditions not met\n"
+                                f"MA Color: {ma_color}\n"
+                                f"Cross Character: {'Strong' if is_strong else 'Weak'}"
+                            )
 
             return None, None, None
 
