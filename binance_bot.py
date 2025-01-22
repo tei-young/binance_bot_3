@@ -683,18 +683,18 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                # 기존 MACD 크로스 히스토리 확인
-                if not self.cross_history[symbol]['macd']:
-                    # 히스토리 없다면, 이전 25분간의 MACD 크로스 확인
-                    macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
-                    if macd_cross_time:
-                        self.cross_history[symbol]['macd'] = [(
-                            macd_cross_time,
-                            'golden',
-                            macd_high,
-                            macd_low
-                        )]
-                        return  # 유효한 크로스 쌍 발견 시 종료
+                    # 기존 MACD 크로스 히스토리 확인
+                    if not self.cross_history[symbol]['macd']:
+                        # 히스토리 없다면, 이전 25분간의 MACD 크로스 확인
+                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
+                        if macd_cross_time:
+                            self.cross_history[symbol]['macd'] = [(
+                                macd_cross_time,
+                                'golden',
+                                macd_high,
+                                macd_low
+                            )]
+                            return  # 유효한 크로스 쌍 발견 시 종료
                         
                 else:
                     self.signal_logger.info(
@@ -751,18 +751,18 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                # 기존 MACD 크로스 히스토리 확인
-                if not self.cross_history[symbol]['macd']:
-                    # 히스토리 없다면, 이전 25분간의 MACD 크로스 확인
-                    macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
-                    if macd_cross_time:
-                        self.cross_history[symbol]['macd'] = [(
-                            macd_cross_time,
-                            'dead',
-                            macd_high,
-                            macd_low
-                        )]
-                        return  # 유효한 크로스 쌍 발견 시 종료
+                    # 기존 MACD 크로스 히스토리 확인
+                    if not self.cross_history[symbol]['macd']:
+                        # 히스토리 없다면, 이전 25분간의 MACD 크로스 확인
+                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
+                        if macd_cross_time:
+                            self.cross_history[symbol]['macd'] = [(
+                                macd_cross_time,
+                                'dead',
+                                macd_high,
+                                macd_low
+                            )]
+                            return  # 유효한 크로스 쌍 발견 시 종료
                         
                 else:
                     self.signal_logger.info(
@@ -809,18 +809,18 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                # 기존 EMA 크로스 히스토리 확인
-                if not self.cross_history[symbol]['ema']:    
-                    # 히스토리 없다면, 이전 25분간의 EMA 크로스 확인
-                    ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
-                    if ema_cross_time:
-                        self.cross_history[symbol]['ema'] = [(
-                            ema_cross_time,
-                            'golden',
-                            ema_high,
-                            ema_low
-                        )]
-                        return  # 유효한 크로스 쌍 발견 시 종료
+                    # 기존 EMA 크로스 히스토리 확인
+                    if not self.cross_history[symbol]['ema']:    
+                        # 히스토리 없다면, 이전 25분간의 EMA 크로스 확인
+                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
+                        if ema_cross_time:
+                            self.cross_history[symbol]['ema'] = [(
+                                ema_cross_time,
+                                'golden',
+                                ema_high,
+                                ema_low
+                            )]
+                            return  # 유효한 크로스 쌍 발견 시 종료
                         
                 else:
                     self.signal_logger.info(
@@ -855,18 +855,18 @@ class TradingBot:
                         f"MA Color: {ma_color}"
                     )
                     
-                # 기존 EMA 크로스 히스토리 확인
-                if not self.cross_history[symbol]['ema']:
-                    # 히스토리 없다면, 이전 25분간의 EMA 크로스 확인
-                    ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
-                    if ema_cross_time:
-                        self.cross_history[symbol]['ema'] = [(
-                            ema_cross_time,
-                            'dead',
-                            ema_high,
-                            ema_low
-                        )]
-                        return  # 유효한 크로스 쌍 발견 시 종료
+                    # 기존 EMA 크로스 히스토리 확인
+                    if not self.cross_history[symbol]['ema']:
+                        # 히스토리 없다면, 이전 25분간의 EMA 크로스 확인
+                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
+                        if ema_cross_time:
+                            self.cross_history[symbol]['ema'] = [(
+                                ema_cross_time,
+                                'dead',
+                                ema_high,
+                                ema_low
+                            )]
+                            return  # 유효한 크로스 쌍 발견 시 종료
                         
                 else:
                     self.signal_logger.info(
