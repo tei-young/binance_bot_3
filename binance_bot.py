@@ -626,7 +626,16 @@ class TradingBot:
             MIN_SLOPE = 0.04
             THRESHOLD = 0.00005
             
-            # EMA 골든크로스 체크
+            # EMA 로깅
+            self.signal_logger.info(
+                f"\nEMA Cross Analysis at {current_time}:\n"
+                f"Last 3 candles EMA values:\n"
+                f"  T-2: EMA12={df['ema12'].iloc[current_idx-2]:.8f}, EMA26={df['ema26'].iloc[current_idx-2]:.8f}, Diff={df['ema12'].iloc[current_idx-2] - df['ema26'].iloc[current_idx-2]:.8f}\n"
+                f"  T-1: EMA12={df['ema12'].iloc[current_idx-1]:.8f}, EMA26={df['ema26'].iloc[current_idx-1]:.8f}, Diff={df['ema12'].iloc[current_idx-1] - df['ema26'].iloc[current_idx-1]:.8f}, Change={abs(df['ema12'].iloc[current_idx-1] - df['ema12'].iloc[current_idx-2]):.8f}\n"
+                f"   T0: EMA12={df['ema12'].iloc[current_idx]:.8f}, EMA26={df['ema26'].iloc[current_idx]:.8f}, Diff={df['ema12'].iloc[current_idx] - df['ema26'].iloc[current_idx]:.8f}, Change={abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]):.8f}"
+            )
+            
+            # EMA 크로스 체크
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
                     df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
                 (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
@@ -761,8 +770,8 @@ class TradingBot:
                 f"\nMACD Cross Analysis at {current_time}:\n"
                 f"Last 3 candles MACD values:\n"
                 f"  T-2: MACD={df['macd'].iloc[current_idx-2]:.8f}, Signal={df['macd_signal'].iloc[current_idx-2]:.8f}, Diff={df['macd'].iloc[current_idx-2] - df['macd_signal'].iloc[current_idx-2]:.8f}\n"
-                f"  T-1: MACD={df['macd'].iloc[current_idx-1]:.8f}, Signal={df['macd_signal'].iloc[current_idx-1]:.8f}, Diff={df['macd'].iloc[current_idx-1] - df['macd_signal'].iloc[current_idx-1]:.8f}\n"
-                f"   T0: MACD={df['macd'].iloc[current_idx]:.8f}, Signal={df['macd_signal'].iloc[current_idx]:.8f}, Diff={df['macd'].iloc[current_idx] - df['macd_signal'].iloc[current_idx]:.8f}"
+                f"  T-1: MACD={df['macd'].iloc[current_idx-1]:.8f}, Signal={df['macd_signal'].iloc[current_idx-1]:.8f}, Diff={df['macd'].iloc[current_idx-1] - df['macd_signal'].iloc[current_idx-1]:.8f}, Change={abs(df['macd'].iloc[current_idx-1] - df['macd'].iloc[current_idx-2]):.8f}\n"
+                f"   T0: MACD={df['macd'].iloc[current_idx]:.8f}, Signal={df['macd_signal'].iloc[current_idx]:.8f}, Diff={df['macd'].iloc[current_idx] - df['macd_signal'].iloc[current_idx]:.8f}, Change={abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]):.8f}"
             )
                                     
             # MACD 크로스 체크
