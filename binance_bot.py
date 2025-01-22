@@ -623,7 +623,7 @@ class TradingBot:
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.04
+            MIN_SLOPE = 0.03
             THRESHOLD = 0.00005
             
             # EMA 로깅
@@ -635,13 +635,15 @@ class TradingBot:
                 f"   T0: EMA12={df['ema12'].iloc[current_idx]:.8f}, EMA26={df['ema26'].iloc[current_idx]:.8f}, Diff={df['ema12'].iloc[current_idx] - df['ema26'].iloc[current_idx]:.8f}, Change={abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]):.8f}"
             )
             
-            # EMA 크로스 체크
+            # EMA 골든 크로스 체크 - t-1, t-0 / t-2, t-1(신규추가) 크로스 모두 확인 
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
-                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
+                (df['ema12'].iloc[current_idx-2] < df['ema26'].iloc[current_idx-2] and 
+                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1]) or
                 (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
-                    df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
-                
+                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
+                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
+                            
                 # EMA 크로스 데이터 준비
                 pre_cross = {
                     'ema_distances': [],
@@ -699,11 +701,14 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
                         
+            # EMA 데드 크로스 체크 - t-1, t-0 / t-2, t-1(신규추가) 크로스 모두 확인             
             elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
-                    (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
-                    df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
+                (df['ema12'].iloc[current_idx-2] > df['ema26'].iloc[current_idx-2] and 
+                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1]) or
+                (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
+                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
+                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
                 
                 # EMA 크로스 데이터 준비
                 pre_cross = {
@@ -774,12 +779,14 @@ class TradingBot:
                 f"   T0: MACD={df['macd'].iloc[current_idx]:.8f}, Signal={df['macd_signal'].iloc[current_idx]:.8f}, Diff={df['macd'].iloc[current_idx] - df['macd_signal'].iloc[current_idx]:.8f}, Change={abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]):.8f}"
             )
                                     
-            # MACD 크로스 체크
+            # MACD 골든 크로스 체크 - t-1, t-0 / t-2, t-1(신규추가) 크로스 모두 확인 
             if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
-                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
+                (df['macd'].iloc[current_idx-2] < df['macd_signal'].iloc[current_idx-2] and 
+                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1]) or
                 (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
-                    df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
+                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
+                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
                 
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
@@ -815,13 +822,16 @@ class TradingBot:
                         f"MA Color: {ma_color}\n"
                         f"Cross Slope: {cross_slope}%"
                     )
-                        
+                    
+            # MACD 데드 크로스 체크 - t-1, t-0 / t-2, t-1(신규추가) 크로스 모두 확인             
             elif ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
-                    (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
-                    df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
-                
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
+                (df['macd'].iloc[current_idx-2] > df['macd_signal'].iloc[current_idx-2] and 
+                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1]) or
+                (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
+                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
+                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
+                                
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
                 if ma_color == 'red' and cross_slope >= MIN_SLOPE:
@@ -887,7 +897,7 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            MIN_SLOPE = 0.04
+            MIN_SLOPE = 0.03
 
             self.signal_logger.info(
                 f"\nChecking Historical {target_indicator.upper()} Crosses\n"
@@ -1446,8 +1456,8 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0%
-                    new_stop_loss = entry_price * 1.003  # 1.015 -> 1.007 -> 1.003 로 수정
+                if profit_percent >= 1.2:  # 1.8% -> 1.0%
+                    new_stop_loss = entry_price * 1.002  # 1.015 -> 1.007 -> 1.002 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
@@ -1483,8 +1493,8 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0%
-                    new_stop_loss = entry_price * 0.997  # 0.985 -> 0.993 -> 0.997 로 수정
+                if profit_percent >= 1.2:  # 1.8% -> 1.2%
+                    new_stop_loss = entry_price * 0.998  # 0.985 -> 0.993 -> 0.998 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
