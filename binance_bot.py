@@ -706,7 +706,7 @@ class TradingBot:
                         
             # EMA 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
             cross_time = None  # 초기화 추가           
-            elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
+            if ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
                     df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx])):
                 cross_time = current_time
             elif (df['ema12'].iloc[current_idx-2] > df['ema26'].iloc[current_idx-2] and 
@@ -834,7 +834,7 @@ class TradingBot:
                     
             # MACD 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
             cross_time = None  # 초기화 추가            
-            elif ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
+            if ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
                     df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx])):
                 cross_time = current_time
             elif (df['macd'].iloc[current_idx-2] > df['macd_signal'].iloc[current_idx-2] and 
