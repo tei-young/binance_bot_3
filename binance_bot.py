@@ -628,15 +628,15 @@ class TradingBot:
             MIN_SLOPE = 0.04
             THRESHOLD = 0.00005
             
-            # EMA 골든크로스 체크 - t-1, t-0 / t-2, t-1 비교 추가
+            # EMA 골든 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx]) or
-                (df['ema12'].iloc[current_idx-2] < df['ema26'].iloc[current_idx-2] and 
-                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1]) or
-                (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx] and 
-                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1])):
-                
+                    df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx])):
+                cross_time = current_time
+            elif (df['ema12'].iloc[current_idx-2] < df['ema26'].iloc[current_idx-2] and 
+                    df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1]):
+                cross_time = df.index[current_idx-1]
+            
+            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행     
                 # EMA 크로스 데이터 준비
                 pre_cross = {
                     'ema_distances': [],
@@ -663,13 +663,13 @@ class TradingBot:
                 
                 if above_sma200 and ma_color == 'green' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
-                        current_time,
+                        cross_time,
                         'golden',
                         period_high,
                         period_low
                     )]
                     self.signal_logger.info(
-                        f"NEW EMA Golden Cross at {current_time}\n"
+                        f"NEW EMA Golden Cross at {cross_time}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
@@ -698,15 +698,15 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
                         
-            # EMA 데드크로스 체크 - t-1, t-0 / t-2, t-1 비교 추가            
+            # EMA 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가           
             elif ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx]) or
-                (df['ema12'].iloc[current_idx-2] > df['ema26'].iloc[current_idx-2] and 
-                df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1]) or
-                (abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]) > THRESHOLD and
-                df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx] and 
-                df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1])):
-                
+                    df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx])):
+                cross_time = current_time
+            elif (df['ema12'].iloc[current_idx-2] > df['ema26'].iloc[current_idx-2] and 
+                    df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1]):
+                cross_time = df.index[current_idx-1]
+            
+            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행     
                 # EMA 크로스 데이터 준비
                 pre_cross = {
                     'ema_distances': [],
@@ -733,13 +733,13 @@ class TradingBot:
                 
                 if not above_sma200 and ma_color == 'red' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
-                        current_time,
+                        cross_time,
                         'dead',
                         period_high,
                         period_low
                     )]
                     self.signal_logger.info(
-                        f"NEW EMA Dead Cross at {current_time}\n"
+                        f"NEW EMA Dead Cross at {cross_time}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
@@ -771,26 +771,27 @@ class TradingBot:
             else:
                 self.signal_logger.info("No new EMA cross")
                         
-            # MACD 골든 크로스 체크 - t-1, t-0 / t-2, t-1 체크 추가
+
+            # MACD 골든 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
             if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx]) or
-                (df['macd'].iloc[current_idx-2] < df['macd_signal'].iloc[current_idx-2] and 
-                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1]) or
-                (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx] and 
-                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1])):
-                
+                    df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx])):
+                cross_time = current_time
+            elif (df['macd'].iloc[current_idx-2] < df['macd_signal'].iloc[current_idx-2] and 
+                    df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1]):
+                cross_time = df.index[current_idx-1]
+            
+            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
                 if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
-                        current_time,
+                        cross_time,
                         'golden',
                         period_high,
                         period_low
                     )]
                     self.signal_logger.info(
-                        f"NEW MACD Golden Cross at {current_time}\n"
+                        f"NEW MACD Golden Cross at {cross_time}\n"
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
@@ -819,26 +820,26 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%"
                     )
                         
-            # MACD 데드 크로스 체크 - t-1, t-0 / t-2, t-1 체크 추가
+            # MACD 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가            
             elif ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx]) or
-                (df['macd'].iloc[current_idx-2] > df['macd_signal'].iloc[current_idx-2] and 
-                df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1]) or
-                (abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]) > THRESHOLD and
-                df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx] and 
-                df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1])):
-                
+                    df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx])):
+                cross_time = current_time
+            elif (df['macd'].iloc[current_idx-2] > df['macd_signal'].iloc[current_idx-2] and 
+                    df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1]):
+                cross_time = df.index[current_idx-1]
+            
+            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행    
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
                 if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
-                        current_time,
+                        cross_time,
                         'dead',
                         period_high,
                         period_low
                     )]
                     self.signal_logger.info(
-                        f"NEW MACD Dead Cross at {current_time}\n"
+                        f"NEW MACD Dead Cross at {cross_time}\n"
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
