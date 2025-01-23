@@ -1328,6 +1328,13 @@ class TradingBot:
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Symbol not tradable")
                 return False
 
+            # cross_time 기준의 캔들 종가를 entry_price로 설정
+            candle_end = pd.to_datetime(cross_time).ceil('5min')
+            candle_start = candle_end - pd.Timedelta(minutes=5)
+            # 해당 캔들의 마지막 가격을 entry_price로
+            entry_idx = df.index.get_loc(candle_end - pd.Timedelta(minutes=1))
+            entry_price = df['close'].iloc[entry_idx]
+
             # 레버리지를 고려한 실제 포지션 크기 계산
             total_position_size = MARGIN_AMOUNT * LEVERAGE
             position_size = total_position_size / entry_price
