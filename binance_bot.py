@@ -1493,7 +1493,7 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 2.5:  # 1.8% -> 2.5
+                if profit_percent >= 3:  # 1.8% -> 2.5
                     new_stop_loss = entry_price * 1.01  # 1.015 -> 1.007 -> 1.005 -> 1.01 로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
@@ -1530,7 +1530,7 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 2.5:  # 1.8% -> 2.5
+                if profit_percent >= 3:  # 1.8% -> 2.5 -> 3
                     new_stop_loss = entry_price * 0.99  # 0.985 -> 0.993 -> 0.995 -> 0.99로 수정
                     
                     # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
@@ -1728,91 +1728,91 @@ class TradingBot:
         except Exception as e:
             self.execution_logger.error(f"Error in check_order_status: {e}")
 
-def run(self):
-    last_time_sync = 0
-    sync_interval = 300  # 5분마다 시간 동기화
+    def run(self):
+        last_time_sync = 0
+        sync_interval = 300  # 5분마다 시간 동기화
 
-    self.trading_logger.info(f"Bot started running\n"
-                        f"Leverage: {LEVERAGE}x\n"
-                        f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
-                        f"Max Daily Loss: {MAX_DAILY_LOSS} USDT\n"
-                        f"Trading Symbols: {TRADING_SYMBOLS}")
-    
-    while True:
-        try:
-            current_time = time.time()
-            
-            # 주기적 시간 동기화
-            if current_time - last_time_sync >= sync_interval:
-                try:
-                    server_time = self.exchange.fetch_time()
-                    time_diff = server_time - int(current_time * 1000)
-                    if abs(time_diff) > 1000:
-                        self.exchange.options['timeDiff'] = time_diff
-                        self.trading_logger.info(f"Time synchronized. Offset: {time_diff}ms")
-                    last_time_sync = current_time
-                except Exception as e:
-                    self.trading_logger.error(f"Error syncing time: {e}")
-                    
-            # 로거 날짜 체크 및 업데이트
-            self.check_and_update_loggers()
-            
-            # 일일 손실 한도 체크
-            if not self.check_daily_pnl():
-                sys.exit("Bot shutdown due to max daily loss exceeded")
-            
-            for symbol in TRADING_SYMBOLS:
-                try:
-                    # 주문 상태 확인
-                    self.check_order_status(symbol)
-                    
-                    # 기존 포지션 확인을 먼저 수행
-                    if self.check_existing_position(symbol):
-                        # 크로스 히스토리 초기화 추가
-                        self.cross_history[symbol] = {
-                            'ema': [],
-                            'macd': []
-                        }
-                        continue  # 포지션이 있으면 다음 심볼로 넘어감
-                    
-                    df = self.get_historical_data(symbol)
-                    if df is None:
-                        continue
-
-                    current_time = df.index[-1].floor('5min')
-                    
-                    # 같은 시간대에 이미 체크했다면 스킵
-                    if (self.last_signal_check[symbol] is not None and 
-                        self.last_signal_check[symbol] == current_time):
-                        continue
-
-                    position_type, crosses = self.check_entry_conditions(df, symbol)
-                    
-                    if position_type and crosses:
-                        # 실시간 시장 가격으로 진입가 설정 
-                        current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    
-                        # 크로스 기준으로 손절가 계산
-                        stop_loss = self.determine_stop_loss(df, crosses, position_type, current_price)
-                        if stop_loss:
-                            # 손절가 기준으로 목표가 계산
-                            take_profit = self.calculate_take_profit(current_price, stop_loss, position_type)
-                            if take_profit:
-                                # 실시간 가격 기준으로 지정가 주문 실행
-                                success = self.execute_trade(symbol, position_type, current_price, stop_loss, take_profit)
-
-                    # 체크 시간 업데이트
-                    self.last_signal_check[symbol] = current_time
+        self.trading_logger.info(f"Bot started running\n"
+                            f"Leverage: {LEVERAGE}x\n"
+                            f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
+                            f"Max Daily Loss: {MAX_DAILY_LOSS} USDT\n"
+                            f"Trading Symbols: {TRADING_SYMBOLS}")
+        
+        while True:
+            try:
+                current_time = time.time()
+                
+                # 주기적 시간 동기화
+                if current_time - last_time_sync >= sync_interval:
+                    try:
+                        server_time = self.exchange.fetch_time()
+                        time_diff = server_time - int(current_time * 1000)
+                        if abs(time_diff) > 1000:
+                            self.exchange.options['timeDiff'] = time_diff
+                            self.trading_logger.info(f"Time synchronized. Offset: {time_diff}ms")
+                        last_time_sync = current_time
+                    except Exception as e:
+                        self.trading_logger.error(f"Error syncing time: {e}")
                         
-                except Exception as e:
-                    self.trading_logger.error(f"Error processing {symbol}: {e}")
-                    continue
+                # 로거 날짜 체크 및 업데이트
+                self.check_and_update_loggers()
+                
+                # 일일 손실 한도 체크
+                if not self.check_daily_pnl():
+                    sys.exit("Bot shutdown due to max daily loss exceeded")
+                
+                for symbol in TRADING_SYMBOLS:
+                    try:
+                        # 주문 상태 확인
+                        self.check_order_status(symbol)
+                        
+                        # 기존 포지션 확인을 먼저 수행
+                        if self.check_existing_position(symbol):
+                            # 크로스 히스토리 초기화 추가
+                            self.cross_history[symbol] = {
+                                'ema': [],
+                                'macd': []
+                            }
+                            continue  # 포지션이 있으면 다음 심볼로 넘어감
+                        
+                        df = self.get_historical_data(symbol)
+                        if df is None:
+                            continue
 
-            time.sleep(60)
-            
-        except Exception as e:
-            self.trading_logger.error(f"Critical error in main loop: {e}")
-            time.sleep(60)
+                        current_time = df.index[-1].floor('5min')
+                        
+                        # 같은 시간대에 이미 체크했다면 스킵
+                        if (self.last_signal_check[symbol] is not None and 
+                            self.last_signal_check[symbol] == current_time):
+                            continue
+
+                        position_type, crosses = self.check_entry_conditions(df, symbol)
+                        
+                        if position_type and crosses:
+                            # 실시간 시장 가격으로 진입가 설정 
+                            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        
+                            # 크로스 기준으로 손절가 계산
+                            stop_loss = self.determine_stop_loss(df, crosses, position_type, current_price)
+                            if stop_loss:
+                                # 손절가 기준으로 목표가 계산
+                                take_profit = self.calculate_take_profit(current_price, stop_loss, position_type)
+                                if take_profit:
+                                    # 실시간 가격 기준으로 지정가 주문 실행
+                                    success = self.execute_trade(symbol, position_type, current_price, stop_loss, take_profit)
+
+                        # 체크 시간 업데이트
+                        self.last_signal_check[symbol] = current_time
+                            
+                    except Exception as e:
+                        self.trading_logger.error(f"Error processing {symbol}: {e}")
+                        continue
+
+                time.sleep(60)
+                
+            except Exception as e:
+                self.trading_logger.error(f"Critical error in main loop: {e}")
+                time.sleep(60)
            
 if __name__ == "__main__":
     API_KEY = "vf7WGUJSNjVUjsqH8H6BKj0eKpmIecotvP5S1NQlLy041py9LuuFsiK2rksaSomq"
