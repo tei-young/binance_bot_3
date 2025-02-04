@@ -434,6 +434,93 @@ class TradingBot:
         except Exception as e:
             self.signal_logger.error(f"Error checking opposite signal: {e}")
             return False
+        
+    def close_and_convert_position(self, symbol, position_info):
+        """대형 손실 방지 로직 3- 포지션 청산 후 반대 포지션으로 전환"""
+        try:
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            current_position = position_info['position_type']
+            entry_price = float(position_info['entry_price'])
+            
+            # 현재 포지션 정보 로깅
+            self.execution_logger.info(
+                f"Converting Position Started for {symbol}:\n"
+                f"Current Position: {current_position}\n"
+                f"Entry Price: {entry_price}\n"
+                f"Current Price: {current_price}"
+            )
+            
+            # 1. 기존 SL/TP 주문 취소
+            if position_info['sl_order']:
+                try:
+                    self.exchange.cancel_order(position_info['sl_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling SL order: {e}")
+                    
+            if position_info['tp_order']:
+                try:
+                    self.exchange.cancel_order(position_info['tp_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling TP order: {e}")
+                    
+            # 2. 현재 포지션 청산 (시장가 기준 지정가)
+            positions = self.exchange.fetch_positions([symbol])
+            if positions and float(positions[0]['contracts']) != 0:
+                contract_amount = float(positions[0]['contracts'])
+                
+                close_order = self.exchange.create_order(
+                    symbol=symbol,
+                    type='limit',
+                    side='sell' if current_position == 'long' else 'buy',
+                    amount=contract_amount,
+                    price=current_price
+                )
+                
+                # 청산 확인 로깅
+                loss_amount = MARGIN_AMOUNT * (
+                    (entry_price - current_price) / entry_price if current_position == 'long'
+                    else (current_price - entry_price) / entry_price
+                )
+                
+                self.execution_logger.info(
+                    f"Position Closed for Conversion:\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position Type: {current_position}\n"
+                    f"Close Price: {current_price}\n"
+                    f"Loss Amount: {loss_amount:.2f} USDT"
+                )
+                
+                # 3. 반대 포지션 진입
+                new_position_type = 'short' if current_position == 'long' else 'long'
+                
+                # cross_history에서 반대 크로스 정보 확인
+                crosses = self.cross_history[symbol]
+                
+                # 새로운 SL 계산
+                stop_loss = self.determine_stop_loss(df, crosses, new_position_type, current_price)
+                if stop_loss:
+                    # 새로운 TP 계산
+                    take_profit = self.calculate_take_profit(current_price, stop_loss, new_position_type)
+                    if take_profit:
+                        # 반대 포지션 진입
+                        success = self.execute_trade(symbol, new_position_type, current_price, stop_loss, take_profit)
+                        
+                        if success:
+                            self.execution_logger.info(
+                                f"Position Converted Successfully:\n"
+                                f"Symbol: {symbol}\n"
+                                f"New Position: {new_position_type}\n"
+                                f"Entry Price: {current_price}\n"
+                                f"Stop Loss: {stop_loss}\n"
+                                f"Take Profit: {take_profit}"
+                            )
+                        return success
+                        
+            return False
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error in close_and_convert_position: {e}")
+            return False
     
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
