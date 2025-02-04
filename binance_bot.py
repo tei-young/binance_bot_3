@@ -442,10 +442,10 @@ class TradingBot:
     def close_and_convert_position(self, df, symbol, position_info):
         """대형 손실 방지 로직 3- 포지션 청산 후 반대 포지션으로 전환"""
         try:
-            # df 체크 추가
             if df is None:
                 self.execution_logger.error(f"DataFrame is None for {symbol}")
                 return False
+                
             current_price = float(self.exchange.fetch_ticker(symbol)['last'])
             current_position = position_info['position_type']
             entry_price = float(position_info['entry_price'])
@@ -483,6 +483,22 @@ class TradingBot:
                     amount=contract_amount,
                     price=current_price
                 )
+                
+                # 청산 확인 대기
+                max_wait = 10  # 최대 10초 대기
+                wait_start = time.time()
+                position_closed = False
+                
+                while time.time() - wait_start < max_wait:
+                    positions = self.exchange.fetch_positions([symbol])
+                    if not positions or float(positions[0]['contracts']) == 0:
+                        position_closed = True
+                        break
+                    time.sleep(1)
+                
+                if not position_closed:
+                    self.execution_logger.error(f"Position close timeout for {symbol}")
+                    return False
                 
                 # 청산 확인 로깅
                 loss_amount = MARGIN_AMOUNT * (
