@@ -398,6 +398,43 @@ class TradingBot:
             self.execution_logger.error(f"Error checking position loss: {e}")
             return False
     
+    def check_opposite_signal(self, df, symbol, current_position):
+        """대형 손실 방지 로직 2- 현재 포지션과 반대되는 유효한 크로스 시그널 체크"""
+        try:
+            current_idx = len(df) - 1
+            ma_color = df['mangles_jd_color'].iloc[current_idx]
+            
+            # 현재 롱 포지션이면 데드 크로스 체크
+            if current_position == 'long':
+                if ma_color == 'red':  # MA angles 조건 체크
+                    # 크로스 유효성 체크 (기존 check_cross_validity와 동일한 검증)
+                    if self.check_cross_validity(symbol, 'short'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: LONG\n"
+                            f"Signal Type: DEAD Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+                        
+            # 현재 숏 포지션이면 골든 크로스 체크
+            elif current_position == 'short':
+                if ma_color == 'green':  # MA angles 조건 체크
+                    if self.check_cross_validity(symbol, 'long'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: SHORT\n"
+                            f"Signal Type: GOLDEN Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+            
+            return False
+            
+        except Exception as e:
+            self.signal_logger.error(f"Error checking opposite signal: {e}")
+            return False
+    
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
         try:
