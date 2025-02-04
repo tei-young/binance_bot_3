@@ -1786,6 +1786,33 @@ class TradingBot:
 
             # 포지션이 있었는데 없어진 경우 확인 (5분 시간 조건 추가)
             positions = self.exchange.fetch_positions([symbol])
+
+            # 활성 포지션 체크
+            if positions and float(positions[0]['contracts']) != 0:
+                # -50% 이상 손실 체크
+                if self.check_position_loss(symbol, position_info):
+                    df = self.get_historical_data(symbol)
+                    if df is not None:
+                        # 반대 시그널 체크
+                        if self.check_opposite_signal(df, symbol, position_info['position_type']):
+                            # 포지션 전환 실행
+                            self.close_and_convert_position(symbol, position_info, df)
+                            return
+
+                # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
+                if position_info['entry_price']:
+                    try:
+                        current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        self.update_trailing_stop(
+                            symbol,
+                            position_info['entry_price'],
+                            current_price,
+                            'buy' if position_info['position_type'] == 'long' else 'sell',
+                            float(positions[0]['contracts'])
+                        )
+                    except Exception as e:
+                        self.execution_logger.error(f"Error updating trailing stop: {e}")
+
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0) and time_elapsed > 5:
                 self.execution_logger.info(f"Position closed or order timeout after {time_elapsed:.1f} minutes for {symbol}, cleaning up orders...")
                 
@@ -1892,20 +1919,6 @@ class TradingBot:
                     'entry_price': None
                 }
                 return
-
-            # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
-            if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
-                try:
-                    current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    self.update_trailing_stop(
-                        symbol,
-                        position_info['entry_price'],
-                        current_price,
-                        'buy' if position_info['position_type'] == 'long' else 'sell',
-                        float(positions[0]['contracts'])
-                    )
-                except Exception as e:
-                    self.execution_logger.error(f"Error updating trailing stop: {e}")
 
         except Exception as e:
             self.execution_logger.error(f"Error in check_order_status: {e}")
