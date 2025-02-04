@@ -364,6 +364,40 @@ class TradingBot:
             self.execution_logger.error(f"Error updating PnL: {e}")
             self.profit_logger.error(f"Error updating PnL: {e}")
     
+    def check_position_loss(self, symbol, position_info):
+        """대형 손실 방지 로직 1- 현재 포지션의 손실이 -50% 이상인지 체크"""
+        try:
+            if not position_info['entry_price']:
+                return False
+                
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            entry_price = float(position_info['entry_price'])
+            position_type = position_info['position_type']
+            
+            LOSS_THRESHOLD = 0.5
+            
+            if position_type == 'long':
+                loss_percent = (entry_price - current_price) / entry_price
+            else:  # short
+                loss_percent = (current_price - entry_price) / entry_price
+                
+            is_severe_loss = loss_percent > LOSS_THRESHOLD
+                
+            if is_severe_loss:
+                self.execution_logger.info(
+                    f"Severe Loss Detected for {symbol}:\n"
+                    f"Position Type: {position_type}\n"
+                    f"Entry Price: {entry_price}\n"
+                    f"Current Price: {current_price}\n"
+                    f"Loss Percent: {loss_percent * 100:.2f}%"
+                )
+            
+            return is_severe_loss
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error checking position loss: {e}")
+            return False
+    
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
         try:
