@@ -401,6 +401,10 @@ class TradingBot:
     def check_opposite_signal(self, df, symbol, current_position):
         """대형 손실 방지 로직 2- 현재 포지션과 반대되는 유효한 크로스 시그널 체크"""
         try:
+            # df None 체크 추가
+            if df is None:
+                self.signal_logger.error(f"DataFrame is None for {symbol}")
+                return False
             current_idx = len(df) - 1
             ma_color = df['mangles_jd_color'].iloc[current_idx]
             
@@ -435,9 +439,13 @@ class TradingBot:
             self.signal_logger.error(f"Error checking opposite signal: {e}")
             return False
         
-    def close_and_convert_position(self, symbol, position_info):
+    def close_and_convert_position(self, df, symbol, position_info):
         """대형 손실 방지 로직 3- 포지션 청산 후 반대 포지션으로 전환"""
         try:
+            # df 체크 추가
+            if df is None:
+                self.execution_logger.error(f"DataFrame is None for {symbol}")
+                return False
             current_price = float(self.exchange.fetch_ticker(symbol)['last'])
             current_position = position_info['position_type']
             entry_price = float(position_info['entry_price'])
