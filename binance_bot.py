@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 # 거래 설정
 TIMEFRAME = '5m'      # '1m' 또는 '5m'
 LEVERAGE = 10         # 레버리지 설정
-MARGIN_AMOUNT = 20    # 실제 사용할 증거금 (USDT)
+MARGIN_AMOUNT = 10    # 실제 사용할 증거금 (USDT)
 MAX_DAILY_LOSS = 10   # 일일 최대 손실 제한 (USDT)
 SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
