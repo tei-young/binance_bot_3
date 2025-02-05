@@ -364,6 +364,188 @@ class TradingBot:
             self.execution_logger.error(f"Error updating PnL: {e}")
             self.profit_logger.error(f"Error updating PnL: {e}")
     
+    def check_position_loss(self, symbol, position_info):
+        """대형 손실 방지 로직 1- 현재 포지션의 손실이 -50% 이상인지 체크"""
+        try:
+            if not position_info['entry_price']:
+                return False
+                
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            entry_price = float(position_info['entry_price'])
+            position_type = position_info['position_type']
+            
+            LOSS_THRESHOLD = 0.5
+            
+            if position_type == 'long':
+                loss_percent = (entry_price - current_price) / entry_price
+            else:  # short
+                loss_percent = (current_price - entry_price) / entry_price
+                
+            is_severe_loss = loss_percent > LOSS_THRESHOLD
+                
+            if is_severe_loss:
+                self.execution_logger.info(
+                    f"Severe Loss Detected for {symbol}:\n"
+                    f"Position Type: {position_type}\n"
+                    f"Entry Price: {entry_price}\n"
+                    f"Current Price: {current_price}\n"
+                    f"Loss Percent: {loss_percent * 100:.2f}%"
+                )
+            
+            return is_severe_loss
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error checking position loss: {e}")
+            return False
+    
+    def check_opposite_signal(self, df, symbol, current_position):
+        """대형 손실 방지 로직 2- 현재 포지션과 반대되는 유효한 크로스 시그널 체크"""
+        try:
+            # df None 체크 추가
+            if df is None:
+                self.signal_logger.error(f"DataFrame is None for {symbol}")
+                return False
+            current_idx = len(df) - 1
+            ma_color = df['mangles_jd_color'].iloc[current_idx]
+            
+            # 현재 롱 포지션이면 데드 크로스 체크
+            if current_position == 'long':
+                if ma_color == 'red':  # MA angles 조건 체크
+                    # 크로스 유효성 체크 (기존 check_cross_validity와 동일한 검증)
+                    if self.check_cross_validity(symbol, 'short'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: LONG\n"
+                            f"Signal Type: DEAD Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+                        
+            # 현재 숏 포지션이면 골든 크로스 체크
+            elif current_position == 'short':
+                if ma_color == 'green':  # MA angles 조건 체크
+                    if self.check_cross_validity(symbol, 'long'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: SHORT\n"
+                            f"Signal Type: GOLDEN Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+            
+            return False
+            
+        except Exception as e:
+            self.signal_logger.error(f"Error checking opposite signal: {e}")
+            return False
+        
+    def close_and_convert_position(self, df, symbol, position_info):
+        """대형 손실 방지 로직 3- 포지션 청산 후 반대 포지션으로 전환"""
+        try:
+            if df is None:
+                self.execution_logger.error(f"DataFrame is None for {symbol}")
+                return False
+                
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            current_position = position_info['position_type']
+            entry_price = float(position_info['entry_price'])
+            
+            # 현재 포지션 정보 로깅
+            self.execution_logger.info(
+                f"Converting Position Started for {symbol}:\n"
+                f"Current Position: {current_position}\n"
+                f"Entry Price: {entry_price}\n"
+                f"Current Price: {current_price}"
+            )
+            
+            # 1. 기존 SL/TP 주문 취소
+            if position_info['sl_order']:
+                try:
+                    self.exchange.cancel_order(position_info['sl_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling SL order: {e}")
+                    
+            if position_info['tp_order']:
+                try:
+                    self.exchange.cancel_order(position_info['tp_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling TP order: {e}")
+                    
+            # 2. 현재 포지션 청산 (시장가 기준 지정가)
+            positions = self.exchange.fetch_positions([symbol])
+            if positions and float(positions[0]['contracts']) != 0:
+                contract_amount = float(positions[0]['contracts'])
+                
+                close_order = self.exchange.create_order(
+                    symbol=symbol,
+                    type='limit',
+                    side='sell' if current_position == 'long' else 'buy',
+                    amount=contract_amount,
+                    price=current_price
+                )
+                
+                # 청산 확인 대기
+                max_wait = 10  # 최대 10초 대기
+                wait_start = time.time()
+                position_closed = False
+                
+                while time.time() - wait_start < max_wait:
+                    positions = self.exchange.fetch_positions([symbol])
+                    if not positions or float(positions[0]['contracts']) == 0:
+                        position_closed = True
+                        break
+                    time.sleep(1)
+                
+                if not position_closed:
+                    self.execution_logger.error(f"Position close timeout for {symbol}")
+                    return False
+                
+                # 청산 확인 로깅
+                loss_amount = MARGIN_AMOUNT * (
+                    (entry_price - current_price) / entry_price if current_position == 'long'
+                    else (current_price - entry_price) / entry_price
+                )
+                
+                self.execution_logger.info(
+                    f"Position Closed for Conversion:\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position Type: {current_position}\n"
+                    f"Close Price: {current_price}\n"
+                    f"Loss Amount: {loss_amount:.2f} USDT"
+                )
+                
+                # 3. 반대 포지션 진입
+                new_position_type = 'short' if current_position == 'long' else 'long'
+                
+                # cross_history에서 반대 크로스 정보 확인
+                crosses = self.cross_history[symbol]
+                
+                # 새로운 SL 계산
+                stop_loss = self.determine_stop_loss(df, crosses, new_position_type, current_price)
+                if stop_loss:
+                    # 새로운 TP 계산
+                    take_profit = self.calculate_take_profit(current_price, stop_loss, new_position_type)
+                    if take_profit:
+                        # 반대 포지션 진입
+                        success = self.execute_trade(symbol, new_position_type, current_price, stop_loss, take_profit)
+                        
+                        if success:
+                            self.execution_logger.info(
+                                f"Position Converted Successfully:\n"
+                                f"Symbol: {symbol}\n"
+                                f"New Position: {new_position_type}\n"
+                                f"Entry Price: {current_price}\n"
+                                f"Stop Loss: {stop_loss}\n"
+                                f"Take Profit: {take_profit}"
+                            )
+                        return success
+                        
+            return False
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error in close_and_convert_position: {e}")
+            return False
+    
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
         try:
@@ -1604,6 +1786,33 @@ class TradingBot:
 
             # 포지션이 있었는데 없어진 경우 확인 (5분 시간 조건 추가)
             positions = self.exchange.fetch_positions([symbol])
+
+            # 활성 포지션 체크
+            if positions and float(positions[0]['contracts']) != 0:
+                # -50% 이상 손실 체크
+                if self.check_position_loss(symbol, position_info):
+                    df = self.get_historical_data(symbol)
+                    if df is not None:
+                        # 반대 시그널 체크
+                        if self.check_opposite_signal(df, symbol, position_info['position_type']):
+                            # 포지션 전환 실행
+                            self.close_and_convert_position(symbol, position_info, df)
+                            return
+
+                # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
+                if position_info['entry_price']:
+                    try:
+                        current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        self.update_trailing_stop(
+                            symbol,
+                            position_info['entry_price'],
+                            current_price,
+                            'buy' if position_info['position_type'] == 'long' else 'sell',
+                            float(positions[0]['contracts'])
+                        )
+                    except Exception as e:
+                        self.execution_logger.error(f"Error updating trailing stop: {e}")
+
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0) and time_elapsed > 5:
                 self.execution_logger.info(f"Position closed or order timeout after {time_elapsed:.1f} minutes for {symbol}, cleaning up orders...")
                 
@@ -1710,20 +1919,6 @@ class TradingBot:
                     'entry_price': None
                 }
                 return
-
-            # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
-            if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
-                try:
-                    current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    self.update_trailing_stop(
-                        symbol,
-                        position_info['entry_price'],
-                        current_price,
-                        'buy' if position_info['position_type'] == 'long' else 'sell',
-                        float(positions[0]['contracts'])
-                    )
-                except Exception as e:
-                    self.execution_logger.error(f"Error updating trailing stop: {e}")
 
         except Exception as e:
             self.execution_logger.error(f"Error in check_order_status: {e}")
