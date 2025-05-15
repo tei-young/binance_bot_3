@@ -16,6 +16,13 @@ MAX_DAILY_LOSS = 10   # 일일 최대 손실 제한 (USDT)
 SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
+# 트레일링 스탑 
+TRAILING_STOP_TRIGGER = 1.5  # 1.0에서 1.5로 변경
+TRAILING_STOP_DISTANCE = 0.7  # 0.3에서 0.7로 변경
+
+#TP 비율 설정
+TP_RATIO = 2.0
+
 # 거래 심볼 목록
 TRADING_SYMBOLS = [ #'BTC/USDT',
                  'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
@@ -276,12 +283,12 @@ class TradingBot:
         try:
             # 1. EMA Distance 체크
             max_distance = max(float(d) for d in ema_distances)
-            if max_distance < 0.2:  # 0.2% 미만이면 약한 크로스
+            if max_distance < 0.3:  # 0.2에서 0.3으로 변경
                 return False
                 
             # 2. EMA12의 변화 체크
             max_change = max(abs(float(c)) for c in ema12_changes)
-            if max_change < 0.2:  # 0.2% 미만이면 약한 크로스
+            if max_change < 0.3:  # 0.2에서 0.3으로 변경
                 return False
                 
             # 3. 방향의 일관성과 평균 변화율 체크
@@ -293,7 +300,7 @@ class TradingBot:
                 
             # 4. 평균 변화율 체크
             avg_change = sum(changes) / len(changes)
-            if abs(avg_change) < 0.1:  # 평균 변화율이 너무 작으면 reject
+            if abs(avg_change) < 0.15:  # 평균 변화율이 너무 작으면 reject
                 return False
                 
             return True
@@ -1414,7 +1421,7 @@ class TradingBot:
             stop_loss = period_low if position_type == 'long' else period_high
             
             sl_distance = abs(stop_loss - entry_price)
-            min_sl_distance = entry_price * 0.003
+            min_sl_distance = entry_price * 0.005
             
             if sl_distance < min_sl_distance:
                 self.execution_logger.warning(
@@ -1442,13 +1449,14 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 1.75) if position_type == 'long' else entry_price - (stop_loss_distance * 1.75)
+            take_profit = entry_price + (stop_loss_distance * TP_RATIO) if position_type == 'long' else entry_price - (stop_loss_distance * TP_RATIO)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
                 f"Entry: {entry_price}\n"
                 f"Stop Loss: {stop_loss}\n"
                 f"SL Distance: {stop_loss_distance}\n"
+                f"TP Ratio: {TP_RATIO}\n"
                 f"Take Profit: {take_profit}"
             )
             return take_profit
@@ -1685,10 +1693,9 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= TRAILING_STOP_TRIGGER:  # 1.5% 사용
-                    new_stop_loss = entry_price * (1 + TRAILING_STOP_DISTANCE / 100)  # 0.7% 사용
+                if profit_percent >= TRAILING_STOP_TRIGGER:  # 기존 1.0 -> TRAILING_STOP_TRIGGER 상수 사용
+                    new_stop_loss = entry_price * (1 + TRAILING_STOP_DISTANCE / 100)  # 기존 0.003 -> TRAILING_STOP_DISTANCE 사용
                     
-                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
                         trailing_sl_order = self.exchange.create_order(
                             symbol,
@@ -1699,7 +1706,6 @@ class TradingBot:
                             {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
                         )
                         
-                        # trailing_sl_order 정보 추가
                         self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
                         self.positions[symbol]['trailing_stop_applied'] = True
                         
@@ -1709,10 +1715,10 @@ class TradingBot:
                             f"Time: {datetime.now()}\n"
                             f"Entry: {entry_price}\n"
                             f"Current Price: {current_price}\n"
-                            f"Original SL: Maintained\n"
                             f"Trailing SL: {new_stop_loss}\n"
                             f"Profit %: {profit_percent:.2f}%\n"
-                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                            f"Trigger: {TRAILING_STOP_TRIGGER}%\n"  # 트리거 값 표시
+                            f"Distance: {TRAILING_STOP_DISTANCE}%"   # 거리 값 표시
                         )
                         return True
                         
@@ -1722,10 +1728,9 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= TRAILING_STOP_TRIGGER:  # 1.5% 사용
-                    new_stop_loss = entry_price * (1 - TRAILING_STOP_DISTANCE / 100)  # 0.7% 사용
+                if profit_percent >= TRAILING_STOP_TRIGGER:  # 기존 1.0 -> TRAILING_STOP_TRIGGER 상수 사용
+                    new_stop_loss = entry_price * (1 - TRAILING_STOP_DISTANCE / 100)  # 기존 0.003 -> TRAILING_STOP_DISTANCE 사용
                     
-                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
                         trailing_sl_order = self.exchange.create_order(
                             symbol,
@@ -1736,7 +1741,6 @@ class TradingBot:
                             {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
                         )
                         
-                        # trailing_sl_order 정보 추가
                         self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
                         self.positions[symbol]['trailing_stop_applied'] = True
                         
@@ -1746,10 +1750,10 @@ class TradingBot:
                             f"Time: {datetime.now()}\n"
                             f"Entry: {entry_price}\n"
                             f"Current Price: {current_price}\n"
-                            f"Original SL: Maintained\n"
                             f"Trailing SL: {new_stop_loss}\n"
                             f"Profit %: {profit_percent:.2f}%\n"
-                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                            f"Trigger: {TRAILING_STOP_TRIGGER}%\n"  # 트리거 값 표시
+                            f"Distance: {TRAILING_STOP_DISTANCE}%"   # 거리 값 표시
                         )
                         return True
                         
