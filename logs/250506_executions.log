@@ -1,0 +1,736 @@
+2025-05-06 06:21:01,495 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 06:21:01
+Cross Pairs: [('2025-05-06 06:20', '2025-05-06 06:05')]
+==================================================
+2025-05-06 06:21:01,513 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 06:21:01
+Price: 0.03891
+==================================================
+2025-05-06 06:21:01,554 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 06:20:00+09:00
+MACD Cross Time: 2025-05-06 06:05:00+09:00
+SL Range: 2025-05-06 06:00:00+09:00 to 2025-05-06 06:05:00+09:00
+2025-05-06 06:21:01,555 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 06:00:00+09:00 to 2025-05-06 06:05:00+09:00
+Stop loss price: 0.0379
+Distance from entry: 0.001009999999999997 (2.596%)
+2025-05-06 06:21:01,555 - INFO - Take Profit calculation:
+Entry: 0.03891
+Stop Loss: 0.0379
+SL Distance: 0.001009999999999997
+Take Profit: 0.04067749999999999
+2025-05-06 06:21:02,273 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.03891
+Stop Loss: 0.0379
+Take Profit: 0.04067749999999999
+Position Size: 2570.0334104343356
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2646251347, SL=2646251405, TP=2646251412
+2025-05-06 06:25:43,816 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 06:25:43
+Cross Pairs: [('2025-05-06 06:20', '2025-05-06 06:10')]
+==================================================
+2025-05-06 06:25:43,816 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 06:25:43
+Price: 0.011047
+==================================================
+2025-05-06 06:25:43,857 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 06:20:00+09:00
+MACD Cross Time: 2025-05-06 06:10:00+09:00
+SL Range: 2025-05-06 06:05:00+09:00 to 2025-05-06 06:10:00+09:00
+2025-05-06 06:25:43,857 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 06:05:00+09:00 to 2025-05-06 06:10:00+09:00
+Stop loss price: 0.010775
+Distance from entry: 0.0002859999999999998 (2.586%)
+2025-05-06 06:25:43,858 - INFO - Take Profit calculation:
+Entry: 0.011061
+Stop Loss: 0.010775
+SL Distance: 0.0002859999999999998
+Take Profit: 0.011561499999999999
+2025-05-06 06:25:44,593 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: long
+Entry: 0.011061
+Stop Loss: 0.010775
+Take Profit: 0.011561499999999999
+Position Size: 9040.773890245006
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2457200093, SL=2457200102, TP=2457200108
+2025-05-06 07:18:57,343 - INFO - Position closed or order timeout after 593.2 minutes for PENGU/USDT, cleaning up orders...
+2025-05-06 07:18:57,528 - INFO - Found 1 open orders to cancel for PENGU/USDT
+2025-05-06 07:18:57,593 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2457200108
+Type: take_profit
+Side: sell
+2025-05-06 07:18:57,594 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-06 07:18:57.594457
+Position Type: long
+
+2025-05-06 07:50:09,048 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 07:50:09
+Cross Pairs: [('2025-05-06 07:50', '2025-05-06 07:45')]
+==================================================
+2025-05-06 07:50:09,049 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 07:50:09
+Price: 0.011006
+==================================================
+2025-05-06 07:50:09,092 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 07:50:00+09:00
+MACD Cross Time: 2025-05-06 07:45:00+09:00
+SL Range: 2025-05-06 07:40:00+09:00 to 2025-05-06 07:45:00+09:00
+2025-05-06 07:50:09,092 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 07:40:00+09:00 to 2025-05-06 07:45:00+09:00
+Stop loss price: 0.010818
+Distance from entry: 0.0002009999999999998 (1.824%)
+2025-05-06 07:50:09,093 - INFO - Take Profit calculation:
+Entry: 0.011019
+Stop Loss: 0.010818
+SL Distance: 0.0002009999999999998
+Take Profit: 0.011370749999999999
+2025-05-06 07:50:09,823 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: long
+Entry: 0.011019
+Stop Loss: 0.010818
+Take Profit: 0.011370749999999999
+Position Size: 9075.233687267448
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2458071003, SL=2458071170, TP=2458071280
+2025-05-06 09:12:17,636 - INFO - Position closed or order timeout after 622.1 minutes for PENGU/USDT, cleaning up orders...
+2025-05-06 09:12:17,823 - INFO - Found 1 open orders to cancel for PENGU/USDT
+2025-05-06 09:12:17,993 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2458071280
+Type: take_profit
+Side: sell
+2025-05-06 09:12:17,994 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-06 09:12:17.994784
+Position Type: long
+
+2025-05-06 10:11:11,419 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 10:11:11
+Cross Pairs: [('2025-05-06 10:10', '2025-05-06 09:55')]
+==================================================
+2025-05-06 10:11:11,420 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-06 10:11:11
+Price: 0.011045
+==================================================
+2025-05-06 10:11:11,461 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 10:10:00+09:00
+MACD Cross Time: 2025-05-06 09:55:00+09:00
+SL Range: 2025-05-06 09:50:00+09:00 to 2025-05-06 09:55:00+09:00
+2025-05-06 10:11:11,461 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 09:50:00+09:00 to 2025-05-06 09:55:00+09:00
+Stop loss price: 0.010733
+Distance from entry: 0.0003010000000000009 (2.728%)
+2025-05-06 10:11:11,461 - INFO - Take Profit calculation:
+Entry: 0.011034
+Stop Loss: 0.010733
+SL Distance: 0.0003010000000000009
+Take Profit: 0.011560750000000002
+2025-05-06 10:11:12,201 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: long
+Entry: 0.011034
+Stop Loss: 0.010733
+Take Profit: 0.011560750000000002
+Position Size: 9062.89650172195
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2460111985, SL=2460111996, TP=2460112010
+2025-05-06 10:15:44,017 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-06 10:15:44
+Cross Pairs: [('2025-05-06 10:15', '2025-05-06 10:00')]
+==================================================
+2025-05-06 10:15:44,017 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-06 10:15:44
+Price: 0.002567
+==================================================
+2025-05-06 10:15:44,061 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 10:15:00+09:00
+MACD Cross Time: 2025-05-06 10:00:00+09:00
+SL Range: 2025-05-06 09:55:00+09:00 to 2025-05-06 10:00:00+09:00
+2025-05-06 10:15:44,061 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 09:55:00+09:00 to 2025-05-06 10:00:00+09:00
+Stop loss price: 0.002489
+Distance from entry: 8.099999999999991e-05 (3.152%)
+2025-05-06 10:15:44,062 - INFO - Take Profit calculation:
+Entry: 0.00257
+Stop Loss: 0.002489
+SL Distance: 8.099999999999991e-05
+Take Profit: 0.0027117499999999998
+2025-05-06 10:15:44,779 - INFO - ===== Trade Successfully Executed =====
+Symbol: HIPPO/USDT
+Type: long
+Entry: 0.00257
+Stop Loss: 0.002489
+Take Profit: 0.0027117499999999998
+Position Size: 38910.50583657588
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=856843781, SL=856843913, TP=856843935
+2025-05-06 10:20:29,164 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 10:20:29
+Cross Pairs: [('2025-05-06 10:20', '2025-05-06 10:05')]
+==================================================
+2025-05-06 10:20:29,164 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 10:20:29
+Price: 0.17391
+==================================================
+2025-05-06 10:20:29,206 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 10:20:00+09:00
+MACD Cross Time: 2025-05-06 10:05:00+09:00
+SL Range: 2025-05-06 10:00:00+09:00 to 2025-05-06 10:05:00+09:00
+2025-05-06 10:20:29,206 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 10:00:00+09:00 to 2025-05-06 10:05:00+09:00
+Stop loss price: 0.16982
+Distance from entry: 0.003959999999999991 (2.279%)
+2025-05-06 10:20:29,207 - INFO - Take Profit calculation:
+Entry: 0.17378
+Stop Loss: 0.16982
+SL Distance: 0.003959999999999991
+Take Profit: 0.18070999999999998
+2025-05-06 10:20:30,018 - INFO - ===== Trade Successfully Executed =====
+Symbol: AIXBT/USDT
+Type: long
+Entry: 0.17378
+Stop Loss: 0.16982
+Take Profit: 0.18070999999999998
+Position Size: 575.440211761998
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2357661861, SL=2357661938, TP=2357662102
+2025-05-06 10:21:39,624 - INFO - Position closed or order timeout after 541.2 minutes for AIXBT/USDT, cleaning up orders...
+2025-05-06 10:21:39,807 - INFO - Found 3 open orders to cancel for AIXBT/USDT
+2025-05-06 10:21:39,868 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2357661861
+Type: limit
+Side: buy
+2025-05-06 10:21:39,929 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2357661938
+Type: stop
+Side: sell
+2025-05-06 10:21:39,992 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2357662102
+Type: take_profit
+Side: sell
+2025-05-06 10:21:39,993 - INFO - Position Closed - Manual
+Symbol: AIXBT/USDT
+Time: 2025-05-06 10:21:39.993977
+Position Type: long
+
+2025-05-06 10:25:09,089 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: LONG
+Time: 2025-05-06 10:25:09
+Cross Pairs: [('2025-05-06 10:20', '2025-05-06 10:10')]
+==================================================
+2025-05-06 10:25:09,089 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: LONG
+Time: 2025-05-06 10:25:09
+Price: 0.1685
+==================================================
+2025-05-06 10:25:09,132 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 10:20:00+09:00
+MACD Cross Time: 2025-05-06 10:10:00+09:00
+SL Range: 2025-05-06 10:05:00+09:00 to 2025-05-06 10:10:00+09:00
+2025-05-06 10:25:09,132 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 10:05:00+09:00 to 2025-05-06 10:10:00+09:00
+Stop loss price: 0.1637
+Distance from entry: 0.004699999999999982 (2.791%)
+2025-05-06 10:25:09,132 - INFO - Take Profit calculation:
+Entry: 0.1684
+Stop Loss: 0.1637
+SL Distance: 0.004699999999999982
+Take Profit: 0.17662499999999998
+2025-05-06 10:25:09,852 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOVE/USDT
+Type: long
+Entry: 0.1684
+Stop Loss: 0.1637
+Take Profit: 0.17662499999999998
+Position Size: 593.8242280285036
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=1705483879, SL=1705483896, TP=1705483911
+2025-05-06 10:32:08,102 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOVE/USDT
+Time: 2025-05-06 10:32:08.102105
+Entry: 0.1684
+Current Price: 0.1735
+Original SL: Maintained
+Trailing SL: 0.17008399999999999
+Profit %: 3.03%
+Trailing Order ID: 1705603183
+2025-05-06 10:49:31,921 - INFO - Position closed or order timeout after 564.4 minutes for MOVE/USDT, cleaning up orders...
+2025-05-06 10:49:32,104 - INFO - Found 2 open orders to cancel for MOVE/USDT
+2025-05-06 10:49:32,168 - INFO - Successfully cancelled order:
+Symbol: MOVE/USDT
+Order ID: 1705483896
+Type: stop
+Side: sell
+2025-05-06 10:49:32,227 - INFO - Successfully cancelled order:
+Symbol: MOVE/USDT
+Order ID: 1705603183
+Type: stop
+Side: sell
+2025-05-06 10:49:32,228 - INFO - Position Closed - Manual
+Symbol: MOVE/USDT
+Time: 2025-05-06 10:49:32.228933
+Position Type: long
+
+2025-05-06 10:55:14,263 - INFO - Position closed or order timeout after 579.5 minutes for HIPPO/USDT, cleaning up orders...
+2025-05-06 10:55:14,440 - INFO - Found 1 open orders to cancel for HIPPO/USDT
+2025-05-06 10:55:14,504 - INFO - Successfully cancelled order:
+Symbol: HIPPO/USDT
+Order ID: 856843935
+Type: take_profit
+Side: sell
+2025-05-06 10:55:14,505 - INFO - Position Closed - Manual
+Symbol: HIPPO/USDT
+Time: 2025-05-06 10:55:14.505065
+Position Type: long
+
+2025-05-06 11:11:28,275 - INFO - Position closed or order timeout after 830.4 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-06 11:11:28,461 - INFO - Found 1 open orders to cancel for MOODENG/USDT
+2025-05-06 11:11:28,522 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2646251412
+Type: take_profit
+Side: sell
+2025-05-06 11:11:28,522 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-06 11:11:28.522125
+Position Type: long
+
+2025-05-06 11:25:22,951 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-06 11:25:22
+Cross Pairs: [('2025-05-06 11:20', '2025-05-06 11:05')]
+==================================================
+2025-05-06 11:25:22,952 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-06 11:25:22
+Price: 0.16949
+==================================================
+2025-05-06 11:25:22,995 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 11:20:00+09:00
+MACD Cross Time: 2025-05-06 11:05:00+09:00
+SL Range: 2025-05-06 11:00:00+09:00 to 2025-05-06 11:05:00+09:00
+2025-05-06 11:25:22,995 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-06 11:00:00+09:00 to 2025-05-06 11:05:00+09:00
+Stop loss price: 0.17414
+Distance from entry: 0.004559999999999981 (2.689%)
+2025-05-06 11:25:22,996 - INFO - Take Profit calculation:
+Entry: 0.16958
+Stop Loss: 0.17414
+SL Distance: 0.004559999999999981
+Take Profit: 0.16160000000000005
+2025-05-06 11:25:23,730 - INFO - ===== Trade Successfully Executed =====
+Symbol: AIXBT/USDT
+Type: short
+Entry: 0.16958
+Stop Loss: 0.17414
+Take Profit: 0.16160000000000005
+Position Size: 589.6921806816841
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2358649029, SL=2358649244, TP=2358649422
+2025-05-06 11:50:44,955 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 11:50:44
+Cross Pairs: [('2025-05-06 11:50', '2025-05-06 11:40')]
+==================================================
+2025-05-06 11:50:44,955 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 11:50:44
+Price: 0.03874
+==================================================
+2025-05-06 11:50:44,998 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 11:50:00+09:00
+MACD Cross Time: 2025-05-06 11:40:00+09:00
+SL Range: 2025-05-06 11:35:00+09:00 to 2025-05-06 11:40:00+09:00
+2025-05-06 11:50:44,998 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 11:35:00+09:00 to 2025-05-06 11:40:00+09:00
+Stop loss price: 0.038
+Distance from entry: 0.0007399999999999976 (1.910%)
+2025-05-06 11:50:44,999 - INFO - Take Profit calculation:
+Entry: 0.03874
+Stop Loss: 0.038
+SL Distance: 0.0007399999999999976
+Take Profit: 0.040034999999999994
+2025-05-06 11:50:45,730 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.03874
+Stop Loss: 0.038
+Take Profit: 0.040034999999999994
+Position Size: 2581.311306143521
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2646892324, SL=2646892365, TP=2646892426
+2025-05-06 11:50:50,089 - INFO - Position closed or order timeout after 565.4 minutes for AIXBT/USDT, cleaning up orders...
+2025-05-06 11:50:50,273 - INFO - Found 1 open orders to cancel for AIXBT/USDT
+2025-05-06 11:50:50,336 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2358649422
+Type: take_profit
+Side: buy
+2025-05-06 11:50:50,337 - INFO - Position Closed - Manual
+Symbol: AIXBT/USDT
+Time: 2025-05-06 11:50:50.336777
+Position Type: short
+
+2025-05-06 11:55:22,164 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-06 11:55:22
+Cross Pairs: [('2025-05-06 11:50', '2025-05-06 11:35')]
+==================================================
+2025-05-06 11:55:22,165 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-06 11:55:22
+Price: 0.002545
+==================================================
+2025-05-06 11:55:22,207 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 11:50:00+09:00
+MACD Cross Time: 2025-05-06 11:35:00+09:00
+SL Range: 2025-05-06 11:30:00+09:00 to 2025-05-06 11:35:00+09:00
+2025-05-06 11:55:22,207 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 11:30:00+09:00 to 2025-05-06 11:35:00+09:00
+Stop loss price: 0.002435
+Distance from entry: 0.00010999999999999985 (4.322%)
+2025-05-06 11:55:22,207 - INFO - Take Profit calculation:
+Entry: 0.002545
+Stop Loss: 0.002435
+SL Distance: 0.00010999999999999985
+Take Profit: 0.0027374999999999995
+2025-05-06 11:55:22,927 - INFO - ===== Trade Successfully Executed =====
+Symbol: HIPPO/USDT
+Type: long
+Entry: 0.002545
+Stop Loss: 0.002435
+Take Profit: 0.0027374999999999995
+Position Size: 39292.73084479371
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=857238780, SL=857238830, TP=857238834
+2025-05-06 12:09:21,942 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: PENGU/USDT
+Time: 2025-05-06 12:09:21.942683
+Entry: 0.011034
+Current Price: 0.011411
+Original SL: Maintained
+Trailing SL: 0.01114434
+Profit %: 3.42%
+Trailing Order ID: 2462046129
+2025-05-06 12:34:50,501 - INFO - Position closed or order timeout after 683.6 minutes for PENGU/USDT, cleaning up orders...
+2025-05-06 12:34:50,690 - INFO - Found 2 open orders to cancel for PENGU/USDT
+2025-05-06 12:34:50,753 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2460111996
+Type: stop
+Side: sell
+2025-05-06 12:34:50,816 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2462046129
+Type: stop
+Side: sell
+2025-05-06 12:34:50,816 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-06 12:34:50.816196
+Position Type: long
+
+2025-05-06 12:45:17,091 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 12:45:17
+Cross Pairs: [('2025-05-06 12:40', '2025-05-06 12:25')]
+==================================================
+2025-05-06 12:45:17,091 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 12:45:17
+Price: 0.17538
+==================================================
+2025-05-06 12:45:17,134 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 12:40:00+09:00
+MACD Cross Time: 2025-05-06 12:25:00+09:00
+SL Range: 2025-05-06 12:20:00+09:00 to 2025-05-06 12:25:00+09:00
+2025-05-06 12:45:17,134 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 12:20:00+09:00 to 2025-05-06 12:25:00+09:00
+Stop loss price: 0.17097
+Distance from entry: 0.004379999999999995 (2.498%)
+2025-05-06 12:45:17,135 - INFO - Take Profit calculation:
+Entry: 0.17535
+Stop Loss: 0.17097
+SL Distance: 0.004379999999999995
+Take Profit: 0.18301499999999998
+2025-05-06 12:45:17,854 - INFO - ===== Trade Successfully Executed =====
+Symbol: AIXBT/USDT
+Type: long
+Entry: 0.17535
+Stop Loss: 0.17097
+Take Profit: 0.18301499999999998
+Position Size: 570.287995437696
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2359826564, SL=2359826609, TP=2359826615
+2025-05-06 12:46:27,411 - INFO - Position closed or order timeout after 541.2 minutes for AIXBT/USDT, cleaning up orders...
+2025-05-06 12:46:27,598 - INFO - Found 3 open orders to cancel for AIXBT/USDT
+2025-05-06 12:46:27,655 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2359826564
+Type: limit
+Side: buy
+2025-05-06 12:46:27,717 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2359826609
+Type: stop
+Side: sell
+2025-05-06 12:46:27,779 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2359826615
+Type: take_profit
+Side: sell
+2025-05-06 12:46:27,780 - INFO - Position Closed - Manual
+Symbol: AIXBT/USDT
+Time: 2025-05-06 12:46:27.780795
+Position Type: long
+
+2025-05-06 16:01:51,799 - INFO - Position closed or order timeout after 791.1 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-06 16:01:51,985 - INFO - Found 1 open orders to cancel for MOODENG/USDT
+2025-05-06 16:01:52,049 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2646892365
+Type: stop
+Side: sell
+2025-05-06 16:01:52,049 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-06 16:01:52.049920
+Position Type: long
+
+2025-05-06 16:05:23,508 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 16:05:23
+Cross Pairs: [('2025-05-06 16:00', '2025-05-06 15:55')]
+==================================================
+2025-05-06 16:05:23,508 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: LONG
+Time: 2025-05-06 16:05:23
+Price: 0.1804
+==================================================
+2025-05-06 16:05:23,553 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 16:00:00+09:00
+MACD Cross Time: 2025-05-06 15:55:00+09:00
+SL Range: 2025-05-06 15:50:00+09:00 to 2025-05-06 15:55:00+09:00
+2025-05-06 16:05:23,554 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 15:50:00+09:00 to 2025-05-06 15:55:00+09:00
+Stop loss price: 0.17603
+Distance from entry: 0.004370000000000013 (2.422%)
+2025-05-06 16:05:23,554 - INFO - Take Profit calculation:
+Entry: 0.1804
+Stop Loss: 0.17603
+SL Distance: 0.004370000000000013
+Take Profit: 0.18804750000000003
+2025-05-06 16:05:24,288 - INFO - ===== Trade Successfully Executed =====
+Symbol: AIXBT/USDT
+Type: long
+Entry: 0.1804
+Stop Loss: 0.17603
+Take Profit: 0.18804750000000003
+Position Size: 554.3237250554323
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2363515484, SL=2363515592, TP=2363515630
+2025-05-06 16:48:11,220 - INFO - Position closed or order timeout after 582.8 minutes for AIXBT/USDT, cleaning up orders...
+2025-05-06 16:48:11,401 - INFO - Found 1 open orders to cancel for AIXBT/USDT
+2025-05-06 16:48:11,464 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2363515630
+Type: take_profit
+Side: sell
+2025-05-06 16:48:11,464 - INFO - Position Closed - Manual
+Symbol: AIXBT/USDT
+Time: 2025-05-06 16:48:11.464769
+Position Type: long
+
+2025-05-06 16:50:30,855 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-06 16:50:30
+Cross Pairs: [('2025-05-06 16:50', '2025-05-06 16:35')]
+==================================================
+2025-05-06 16:50:30,855 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-06 16:50:30
+Price: 0.17532
+==================================================
+2025-05-06 16:50:30,895 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 16:50:00+09:00
+MACD Cross Time: 2025-05-06 16:35:00+09:00
+SL Range: 2025-05-06 16:30:00+09:00 to 2025-05-06 16:35:00+09:00
+2025-05-06 16:50:30,896 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-06 16:30:00+09:00 to 2025-05-06 16:35:00+09:00
+Stop loss price: 0.17999
+Distance from entry: 0.004650000000000015 (2.652%)
+2025-05-06 16:50:30,896 - INFO - Take Profit calculation:
+Entry: 0.17534
+Stop Loss: 0.17999
+SL Distance: 0.004650000000000015
+Take Profit: 0.16720249999999998
+2025-05-06 16:50:31,661 - INFO - ===== Trade Successfully Executed =====
+Symbol: AIXBT/USDT
+Type: short
+Entry: 0.17534
+Stop Loss: 0.17999
+Take Profit: 0.16720249999999998
+Position Size: 570.3205201323144
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2364376651, SL=2364376677, TP=2364376820
+2025-05-06 17:04:18,093 - INFO - Position closed or order timeout after 848.9 minutes for HIPPO/USDT, cleaning up orders...
+2025-05-06 17:04:18,280 - INFO - Found 1 open orders to cancel for HIPPO/USDT
+2025-05-06 17:04:18,342 - INFO - Successfully cancelled order:
+Symbol: HIPPO/USDT
+Order ID: 857238834
+Type: take_profit
+Side: sell
+2025-05-06 17:04:18,342 - INFO - Position Closed - Manual
+Symbol: HIPPO/USDT
+Time: 2025-05-06 17:04:18.342289
+Position Type: long
+
+2025-05-06 17:18:14,282 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: AIXBT/USDT
+Time: 2025-05-06 17:18:14.282152
+Entry: 0.17534
+Current Price: 0.16972
+Original SL: Maintained
+Trailing SL: 0.1735866
+Profit %: 3.21%
+Trailing Order ID: 2364892212
+2025-05-06 17:33:12,814 - INFO - Position closed or order timeout after 582.7 minutes for AIXBT/USDT, cleaning up orders...
+2025-05-06 17:33:12,999 - INFO - Found 2 open orders to cancel for AIXBT/USDT
+2025-05-06 17:33:13,063 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2364376677
+Type: stop
+Side: buy
+2025-05-06 17:33:13,123 - INFO - Successfully cancelled order:
+Symbol: AIXBT/USDT
+Order ID: 2364376820
+Type: take_profit
+Side: buy
+2025-05-06 17:33:13,123 - INFO - Position Closed - Manual
+Symbol: AIXBT/USDT
+Time: 2025-05-06 17:33:13.123691
+Position Type: short
+
+2025-05-06 23:25:43,336 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 23:25:43
+Cross Pairs: [('2025-05-06 23:25', '2025-05-06 23:05')]
+==================================================
+2025-05-06 23:25:43,336 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-06 23:25:43
+Price: 0.03785
+==================================================
+2025-05-06 23:25:43,377 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-06 23:25:00+09:00
+MACD Cross Time: 2025-05-06 23:05:00+09:00
+SL Range: 2025-05-06 23:00:00+09:00 to 2025-05-06 23:05:00+09:00
+2025-05-06 23:25:43,378 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-06 23:00:00+09:00 to 2025-05-06 23:05:00+09:00
+Stop loss price: 0.03674
+Distance from entry: 0.0011099999999999999 (2.933%)
+2025-05-06 23:25:43,378 - INFO - Take Profit calculation:
+Entry: 0.03785
+Stop Loss: 0.03674
+SL Distance: 0.0011099999999999999
+Take Profit: 0.0397925
+2025-05-06 23:25:44,122 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.03785
+Stop Loss: 0.03674
+Take Profit: 0.0397925
+Position Size: 2642.007926023778
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2648992137, SL=2648992165, TP=2648992167

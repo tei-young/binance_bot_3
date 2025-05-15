@@ -89,6 +89,15 @@ class TradingBot:
                 self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
             except Exception as e:
                 self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
+                
+        # 백테스트 결과 로드
+        self.backtest_results = self.load_backtest_results()
+        self.optimal_params = self.backtest_results['optimal_params']
+        
+    def check_entry_conditions(self, df, symbol):
+        # 백테스트에서 찾은 최적 파라미터 사용
+        ema_fast = self.optimal_params.get('ema_fast', 12)
+        ema_slow = self.optimal_params.get('ema_slow', 26)
 
     def setup_logging(self, new_date=None):
         """로깅 설정"""
@@ -1433,7 +1442,7 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2.25) if position_type == 'long' else entry_price - (stop_loss_distance * 2.25)
+            take_profit = entry_price + (stop_loss_distance * 1.75) if position_type == 'long' else entry_price - (stop_loss_distance * 1.75)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
@@ -1607,6 +1616,7 @@ class TradingBot:
                     params={
                         'stopPrice': take_profit,
                         'type': 'future',
+                        
                         'reduceOnly': 'true'
                     }
                 )

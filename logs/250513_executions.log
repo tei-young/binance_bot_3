@@ -1,0 +1,1201 @@
+2025-05-13 02:26:06,717 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:26:06
+Cross Pairs: [('2025-05-13 02:25', '2025-05-13 02:15')]
+==================================================
+2025-05-13 02:26:06,718 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:26:06
+Price: 0.22008
+==================================================
+2025-05-13 02:26:06,759 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:25:00+09:00
+MACD Cross Time: 2025-05-13 02:15:00+09:00
+SL Range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+2025-05-13 02:26:06,759 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+Stop loss price: 0.22379
+Distance from entry: 0.003589999999999982 (1.630%)
+2025-05-13 02:26:06,760 - INFO - Take Profit calculation:
+Entry: 0.2202
+Stop Loss: 0.22379
+SL Distance: 0.003589999999999982
+Take Profit: 0.21391750000000004
+2025-05-13 02:26:06,818 - ERROR - ===== Insufficient Balance =====
+Symbol: AIXBT/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:26:06,818 - ERROR - Failed to enter position for AIXBT/USDT: Insufficient balance
+2025-05-13 02:30:45,390 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:30:45
+Cross Pairs: [('2025-05-13 02:25', '2025-05-13 02:15')]
+==================================================
+2025-05-13 02:30:45,390 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:30:45
+Price: 0.22035
+==================================================
+2025-05-13 02:30:45,432 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:25:00+09:00
+MACD Cross Time: 2025-05-13 02:15:00+09:00
+SL Range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+2025-05-13 02:30:45,432 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+Stop loss price: 0.22379
+Distance from entry: 0.0034399999999999986 (1.561%)
+2025-05-13 02:30:45,432 - INFO - Take Profit calculation:
+Entry: 0.22035
+Stop Loss: 0.22379
+SL Distance: 0.0034399999999999986
+Take Profit: 0.21433
+2025-05-13 02:30:45,492 - ERROR - ===== Insufficient Balance =====
+Symbol: AIXBT/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:30:45,492 - ERROR - Failed to enter position for AIXBT/USDT: Insufficient balance
+2025-05-13 02:35:23,463 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:35:23
+Cross Pairs: [('2025-05-13 02:25', '2025-05-13 02:15')]
+==================================================
+2025-05-13 02:35:23,463 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: AIXBT/USDT
+Position: SHORT
+Time: 2025-05-13 02:35:23
+Price: 0.2203
+==================================================
+2025-05-13 02:35:23,505 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:25:00+09:00
+MACD Cross Time: 2025-05-13 02:15:00+09:00
+SL Range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+2025-05-13 02:35:23,505 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:10:00+09:00 to 2025-05-13 02:15:00+09:00
+Stop loss price: 0.22379
+Distance from entry: 0.0034099999999999964 (1.547%)
+2025-05-13 02:35:23,506 - INFO - Take Profit calculation:
+Entry: 0.22038
+Stop Loss: 0.22379
+SL Distance: 0.0034099999999999964
+Take Profit: 0.2144125
+2025-05-13 02:35:23,567 - ERROR - ===== Insufficient Balance =====
+Symbol: AIXBT/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:35:23,567 - ERROR - Failed to enter position for AIXBT/USDT: Insufficient balance
+2025-05-13 02:50:18,829 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:18
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:50:18,829 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:18
+Price: 3.1283
+==================================================
+2025-05-13 02:50:18,870 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:50:18,871 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 3.204
+Distance from entry: 0.07430000000000003 (2.374%)
+2025-05-13 02:50:18,871 - INFO - Take Profit calculation:
+Entry: 3.1297
+Stop Loss: 3.204
+SL Distance: 0.07430000000000003
+Take Profit: 2.999675
+2025-05-13 02:50:18,933 - ERROR - ===== Insufficient Balance =====
+Symbol: TIA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:50:18,933 - ERROR - Failed to enter position for TIA/USDT: Insufficient balance
+2025-05-13 02:50:22,226 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:22
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:50:22,227 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:22
+Price: 0.23377
+==================================================
+2025-05-13 02:50:22,267 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:50:22,268 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.24325
+Distance from entry: 0.009770000000000001 (4.185%)
+2025-05-13 02:50:22,268 - INFO - Take Profit calculation:
+Entry: 0.23348
+Stop Loss: 0.24325
+SL Distance: 0.009770000000000001
+Take Profit: 0.21638249999999998
+2025-05-13 02:50:22,330 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:50:22,330 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-13 02:50:22,789 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:22
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:45')]
+==================================================
+2025-05-13 02:50:22,790 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:22
+Price: 0.13868
+==================================================
+2025-05-13 02:50:22,831 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 02:50:22,831 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 0.14094
+Distance from entry: 0.002260000000000012 (1.630%)
+2025-05-13 02:50:22,831 - INFO - Take Profit calculation:
+Entry: 0.13868
+Stop Loss: 0.14094
+SL Distance: 0.002260000000000012
+Take Profit: 0.13472499999999998
+2025-05-13 02:50:22,889 - ERROR - ===== Insufficient Balance =====
+Symbol: PHA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:50:22,889 - ERROR - Failed to enter position for PHA/USDT: Insufficient balance
+2025-05-13 02:50:24,745 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:24
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:45')]
+==================================================
+2025-05-13 02:50:24,745 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:24
+Price: 2.9134
+==================================================
+2025-05-13 02:50:24,785 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 02:50:24,786 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 2.9729
+Distance from entry: 0.06000000000000005 (2.060%)
+2025-05-13 02:50:24,786 - INFO - Take Profit calculation:
+Entry: 2.9129
+Stop Loss: 2.9729
+SL Distance: 0.06000000000000005
+Take Profit: 2.8079
+2025-05-13 02:50:24,844 - ERROR - ===== Insufficient Balance =====
+Symbol: ZRO/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:50:24,845 - ERROR - Failed to enter position for ZRO/USDT: Insufficient balance
+2025-05-13 02:50:28,087 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:28
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:50:28,088 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 02:50:28
+Price: 0.2203
+==================================================
+2025-05-13 02:50:28,129 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:50:28,129 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.2263
+Distance from entry: 0.005899999999999989 (2.677%)
+2025-05-13 02:50:28,129 - INFO - Take Profit calculation:
+Entry: 0.2204
+Stop Loss: 0.2263
+SL Distance: 0.005899999999999989
+Take Profit: 0.21007500000000004
+2025-05-13 02:50:28,189 - ERROR - ===== Insufficient Balance =====
+Symbol: MOVE/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:50:28,190 - ERROR - Failed to enter position for MOVE/USDT: Insufficient balance
+2025-05-13 02:55:04,474 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 02:55:04
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:55:04,474 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 02:55:04
+Price: 0.2206
+==================================================
+2025-05-13 02:55:04,513 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:55:04,514 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.2263
+Distance from entry: 0.005700000000000011 (2.584%)
+2025-05-13 02:55:04,514 - INFO - Take Profit calculation:
+Entry: 0.2206
+Stop Loss: 0.2263
+SL Distance: 0.005700000000000011
+Take Profit: 0.21062499999999998
+2025-05-13 02:55:04,576 - ERROR - ===== Insufficient Balance =====
+Symbol: MOVE/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:55:04,577 - ERROR - Failed to enter position for MOVE/USDT: Insufficient balance
+2025-05-13 02:56:07,102 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:07
+Cross Pairs: [('2025-05-13 02:55', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:56:07,102 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:07
+Price: 3.1553
+==================================================
+2025-05-13 02:56:07,145 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:55:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:56:07,145 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 3.204
+Distance from entry: 0.0488000000000004 (1.547%)
+2025-05-13 02:56:07,146 - INFO - Take Profit calculation:
+Entry: 3.1552
+Stop Loss: 3.204
+SL Distance: 0.0488000000000004
+Take Profit: 3.069799999999999
+2025-05-13 02:56:07,205 - ERROR - ===== Insufficient Balance =====
+Symbol: TIA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:56:07,205 - ERROR - Failed to enter position for TIA/USDT: Insufficient balance
+2025-05-13 02:56:10,455 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:10
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:56:10,455 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:10
+Price: 0.23624
+==================================================
+2025-05-13 02:56:10,498 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:56:10,498 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.24325
+Distance from entry: 0.007220000000000004 (3.059%)
+2025-05-13 02:56:10,498 - INFO - Take Profit calculation:
+Entry: 0.23603
+Stop Loss: 0.24325
+SL Distance: 0.007220000000000004
+Take Profit: 0.22339499999999998
+2025-05-13 02:56:10,553 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:56:10,553 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-13 02:56:11,010 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:11
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:45')]
+==================================================
+2025-05-13 02:56:11,010 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:11
+Price: 0.13932
+==================================================
+2025-05-13 02:56:11,052 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 02:56:11,052 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 0.14094
+Distance from entry: 0.0016200000000000103 (1.163%)
+2025-05-13 02:56:11,052 - INFO - Take Profit calculation:
+Entry: 0.13932
+Stop Loss: 0.14094
+SL Distance: 0.0016200000000000103
+Take Profit: 0.13648499999999997
+2025-05-13 02:56:11,114 - ERROR - ===== Insufficient Balance =====
+Symbol: PHA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:56:11,114 - ERROR - Failed to enter position for PHA/USDT: Insufficient balance
+2025-05-13 02:56:12,531 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:12
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 02:56:12,531 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:12
+Price: 1.6154
+==================================================
+2025-05-13 02:56:12,571 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 02:56:12,571 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 1.654
+Distance from entry: 0.03859999999999997 (2.390%)
+2025-05-13 02:56:12,572 - INFO - Take Profit calculation:
+Entry: 1.6154
+Stop Loss: 1.654
+SL Distance: 0.03859999999999997
+Take Profit: 1.54785
+2025-05-13 02:56:12,635 - ERROR - ===== Insufficient Balance =====
+Symbol: GRASS/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:56:12,635 - ERROR - Failed to enter position for GRASS/USDT: Insufficient balance
+2025-05-13 02:56:13,087 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:13
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:45')]
+==================================================
+2025-05-13 02:56:13,088 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 02:56:13
+Price: 2.9319
+==================================================
+2025-05-13 02:56:13,127 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 02:56:13,128 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 2.9729
+Distance from entry: 0.04039999999999999 (1.378%)
+2025-05-13 02:56:13,128 - INFO - Take Profit calculation:
+Entry: 2.9325
+Stop Loss: 2.9729
+SL Distance: 0.04039999999999999
+Take Profit: 2.8618
+2025-05-13 02:56:13,192 - ERROR - ===== Insufficient Balance =====
+Symbol: ZRO/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 02:56:13,193 - ERROR - Failed to enter position for ZRO/USDT: Insufficient balance
+2025-05-13 03:00:44,765 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:44
+Cross Pairs: [('2025-05-13 02:55', '2025-05-13 02:40')]
+==================================================
+2025-05-13 03:00:44,765 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: TIA/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:44
+Price: 3.1571
+==================================================
+2025-05-13 03:00:44,806 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:55:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 03:00:44,806 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 3.204
+Distance from entry: 0.0484 (1.534%)
+2025-05-13 03:00:44,806 - INFO - Take Profit calculation:
+Entry: 3.1556
+Stop Loss: 3.204
+SL Distance: 0.0484
+Take Profit: 3.0709
+2025-05-13 03:00:44,864 - ERROR - ===== Insufficient Balance =====
+Symbol: TIA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:44,865 - ERROR - Failed to enter position for TIA/USDT: Insufficient balance
+2025-05-13 03:00:48,158 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:48
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 03:00:48,158 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:48
+Price: 0.23728
+==================================================
+2025-05-13 03:00:48,199 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 03:00:48,199 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.24325
+Distance from entry: 0.005929999999999991 (2.499%)
+2025-05-13 03:00:48,200 - INFO - Take Profit calculation:
+Entry: 0.23732
+Stop Loss: 0.24325
+SL Distance: 0.005929999999999991
+Take Profit: 0.22694250000000002
+2025-05-13 03:00:48,252 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:48,252 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-13 03:00:48,707 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:48
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:45')]
+==================================================
+2025-05-13 03:00:48,708 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:48
+Price: 0.13897
+==================================================
+2025-05-13 03:00:48,749 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 03:00:48,749 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 0.14094
+Distance from entry: 0.0019900000000000195 (1.432%)
+2025-05-13 03:00:48,749 - INFO - Take Profit calculation:
+Entry: 0.13895
+Stop Loss: 0.14094
+SL Distance: 0.0019900000000000195
+Take Profit: 0.13546749999999996
+2025-05-13 03:00:48,812 - ERROR - ===== Insufficient Balance =====
+Symbol: PHA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:48,813 - ERROR - Failed to enter position for PHA/USDT: Insufficient balance
+2025-05-13 03:00:50,224 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:50
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:40')]
+==================================================
+2025-05-13 03:00:50,225 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:50
+Price: 1.6122
+==================================================
+2025-05-13 03:00:50,265 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 03:00:50,266 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 1.654
+Distance from entry: 0.04149999999999987 (2.574%)
+2025-05-13 03:00:50,266 - INFO - Take Profit calculation:
+Entry: 1.6125
+Stop Loss: 1.654
+SL Distance: 0.04149999999999987
+Take Profit: 1.5398750000000003
+2025-05-13 03:00:50,327 - ERROR - ===== Insufficient Balance =====
+Symbol: GRASS/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:50,327 - ERROR - Failed to enter position for GRASS/USDT: Insufficient balance
+2025-05-13 03:00:50,783 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:50
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:45')]
+==================================================
+2025-05-13 03:00:50,783 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:50
+Price: 2.934
+==================================================
+2025-05-13 03:00:50,822 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 03:00:50,822 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 2.9729
+Distance from entry: 0.038899999999999935 (1.326%)
+2025-05-13 03:00:50,823 - INFO - Take Profit calculation:
+Entry: 2.934
+Stop Loss: 2.9729
+SL Distance: 0.038899999999999935
+Take Profit: 2.8659250000000003
+2025-05-13 03:00:50,881 - ERROR - ===== Insufficient Balance =====
+Symbol: ZRO/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:50,881 - ERROR - Failed to enter position for ZRO/USDT: Insufficient balance
+2025-05-13 03:00:54,131 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:54
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:40')]
+==================================================
+2025-05-13 03:00:54,131 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOVE/USDT
+Position: SHORT
+Time: 2025-05-13 03:00:54
+Price: 0.2211
+==================================================
+2025-05-13 03:00:54,170 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:40:00+09:00
+SL Range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+2025-05-13 03:00:54,171 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:35:00+09:00 to 2025-05-13 02:40:00+09:00
+Stop loss price: 0.2263
+Distance from entry: 0.005099999999999993 (2.306%)
+2025-05-13 03:00:54,171 - INFO - Take Profit calculation:
+Entry: 0.2212
+Stop Loss: 0.2263
+SL Distance: 0.005099999999999993
+Take Profit: 0.21227500000000002
+2025-05-13 03:00:54,233 - ERROR - ===== Insufficient Balance =====
+Symbol: MOVE/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:00:54,233 - ERROR - Failed to enter position for MOVE/USDT: Insufficient balance
+2025-05-13 03:05:27,111 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 03:05:27
+Cross Pairs: [('2025-05-13 02:50', '2025-05-13 02:45')]
+==================================================
+2025-05-13 03:05:27,111 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PHA/USDT
+Position: SHORT
+Time: 2025-05-13 03:05:27
+Price: 0.13926
+==================================================
+2025-05-13 03:05:27,151 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:50:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 03:05:27,151 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 0.14094
+Distance from entry: 0.0016800000000000148 (1.206%)
+2025-05-13 03:05:27,151 - INFO - Take Profit calculation:
+Entry: 0.13926
+Stop Loss: 0.14094
+SL Distance: 0.0016800000000000148
+Take Profit: 0.13631999999999997
+2025-05-13 03:05:27,212 - ERROR - ===== Insufficient Balance =====
+Symbol: PHA/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:05:27,212 - ERROR - Failed to enter position for PHA/USDT: Insufficient balance
+2025-05-13 03:05:29,071 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 03:05:29
+Cross Pairs: [('2025-05-13 02:45', '2025-05-13 02:45')]
+==================================================
+2025-05-13 03:05:29,071 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ZRO/USDT
+Position: SHORT
+Time: 2025-05-13 03:05:29
+Price: 2.9359
+==================================================
+2025-05-13 03:05:29,113 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 02:45:00+09:00
+MACD Cross Time: 2025-05-13 02:45:00+09:00
+SL Range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+2025-05-13 03:05:29,113 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 02:40:00+09:00 to 2025-05-13 02:45:00+09:00
+Stop loss price: 2.9729
+Distance from entry: 0.03469999999999995 (1.181%)
+2025-05-13 03:05:29,114 - INFO - Take Profit calculation:
+Entry: 2.9382
+Stop Loss: 2.9729
+SL Distance: 0.03469999999999995
+Take Profit: 2.8774750000000004
+2025-05-13 03:05:29,174 - ERROR - ===== Insufficient Balance =====
+Symbol: ZRO/USDT
+Required: 10 USDT
+Available: 1.15460478 USDT
+2025-05-13 03:05:29,175 - ERROR - Failed to enter position for ZRO/USDT: Insufficient balance
+2025-05-13 03:07:51,987 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: ONDOUSDT
+Time: 2025-05-13 03:07:51.987457
+Entry: 1.0439
+Current Price: 1.0118
+Original SL: Maintained
+Trailing SL: 1.033461
+Profit %: 3.08%
+Trailing Order ID: 5559440245
+2025-05-13 03:48:18,809 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: GALA/USDT
+Time: 2025-05-13 03:48:18.809415
+Entry: 0.0221
+Current Price: 0.02135
+Original SL: Maintained
+Trailing SL: 0.021879000000000003
+Profit %: 3.39%
+Trailing Order ID: 19196703612
+2025-05-13 03:49:31,764 - INFO - Position closed or order timeout after 799.4 minutes for ONDOUSDT, cleaning up orders...
+2025-05-13 03:49:31,950 - INFO - Found 2 open orders to cancel for ONDOUSDT
+2025-05-13 03:49:32,656 - INFO - Successfully cancelled order:
+Symbol: ONDOUSDT
+Order ID: 5554966011
+Type: stop
+Side: buy
+2025-05-13 03:49:33,442 - INFO - Successfully cancelled order:
+Symbol: ONDOUSDT
+Order ID: 5559440245
+Type: stop
+Side: buy
+2025-05-13 03:49:33,442 - INFO - Position Closed - Manual
+Symbol: ONDOUSDT
+Time: 2025-05-13 03:49:33.442836
+Position Type: short
+
+2025-05-13 04:10:17,533 - INFO - Position closed or order timeout after 819.0 minutes for GALA/USDT, cleaning up orders...
+2025-05-13 04:10:17,707 - INFO - Found 2 open orders to cancel for GALA/USDT
+2025-05-13 04:10:17,763 - INFO - Successfully cancelled order:
+Symbol: GALA/USDT
+Order ID: 19194346326
+Type: stop
+Side: buy
+2025-05-13 04:10:17,822 - INFO - Successfully cancelled order:
+Symbol: GALA/USDT
+Order ID: 19194346413
+Type: take_profit
+Side: buy
+2025-05-13 04:10:17,823 - INFO - Position Closed - Manual
+Symbol: GALA/USDT
+Time: 2025-05-13 04:10:17.823864
+Position Type: short
+
+2025-05-13 04:16:02,341 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-13 04:16:02
+Cross Pairs: [('2025-05-13 04:15', '2025-05-13 03:55')]
+==================================================
+2025-05-13 04:16:02,341 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-13 04:16:02
+Price: 0.24122
+==================================================
+2025-05-13 04:16:02,383 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 04:15:00+09:00
+MACD Cross Time: 2025-05-13 03:55:00+09:00
+SL Range: 2025-05-13 03:50:00+09:00 to 2025-05-13 03:55:00+09:00
+2025-05-13 04:16:02,383 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 03:50:00+09:00 to 2025-05-13 03:55:00+09:00
+Stop loss price: 0.22628
+Distance from entry: 0.014999999999999986 (6.217%)
+2025-05-13 04:16:02,384 - INFO - Take Profit calculation:
+Entry: 0.24128
+Stop Loss: 0.22628
+SL Distance: 0.014999999999999986
+Take Profit: 0.26753
+2025-05-13 04:16:03,139 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.24128
+Stop Loss: 0.22628
+Take Profit: 0.26753
+Position Size: 414.45623342175065
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2933671533, SL=2933671606, TP=2933671743
+2025-05-13 04:25:16,545 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: FXS/USDT
+Position: LONG
+Time: 2025-05-13 04:25:16
+Cross Pairs: [('2025-05-13 04:25', '2025-05-13 04:05')]
+==================================================
+2025-05-13 04:25:16,545 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: FXS/USDT
+Position: LONG
+Time: 2025-05-13 04:25:16
+Price: 2.6923
+==================================================
+2025-05-13 04:25:16,586 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 04:25:00+09:00
+MACD Cross Time: 2025-05-13 04:05:00+09:00
+SL Range: 2025-05-13 04:00:00+09:00 to 2025-05-13 04:05:00+09:00
+2025-05-13 04:25:16,587 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 04:00:00+09:00 to 2025-05-13 04:05:00+09:00
+Stop loss price: 2.64
+Distance from entry: 0.05229999999999979 (1.943%)
+2025-05-13 04:25:16,587 - INFO - Take Profit calculation:
+Entry: 2.6923
+Stop Loss: 2.64
+SL Distance: 0.05229999999999979
+Take Profit: 2.7838249999999993
+2025-05-13 04:25:17,336 - INFO - ===== Trade Successfully Executed =====
+Symbol: FXS/USDT
+Type: long
+Entry: 2.6923
+Stop Loss: 2.64
+Take Profit: 2.7838249999999993
+Position Size: 37.14296326560933
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2679131652, SL=2679131659, TP=2679131661
+2025-05-13 06:16:32,733 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOODENG/USDT
+Time: 2025-05-13 06:16:32.733745
+Entry: 0.24128
+Current Price: 0.25336
+Original SL: Maintained
+Trailing SL: 0.2436928
+Profit %: 5.01%
+Trailing Order ID: 2937821960
+2025-05-13 07:37:31,795 - INFO - Position closed or order timeout after 741.5 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-13 07:37:31,980 - INFO - Found 2 open orders to cancel for MOODENG/USDT
+2025-05-13 07:37:32,105 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2933671606
+Type: stop
+Side: sell
+2025-05-13 07:37:32,196 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2937821960
+Type: stop
+Side: sell
+2025-05-13 07:37:32,197 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-13 07:37:32.197726
+Position Type: long
+
+2025-05-13 11:20:26,736 - INFO - Position closed or order timeout after 955.1 minutes for FXS/USDT, cleaning up orders...
+2025-05-13 11:20:26,924 - INFO - Found 1 open orders to cancel for FXS/USDT
+2025-05-13 11:20:26,994 - INFO - Successfully cancelled order:
+Symbol: FXS/USDT
+Order ID: 2679131661
+Type: take_profit
+Side: sell
+2025-05-13 11:20:26,994 - INFO - Position Closed - Manual
+Symbol: FXS/USDT
+Time: 2025-05-13 11:20:26.994348
+Position Type: long
+
+2025-05-13 14:41:01,216 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: SHORT
+Time: 2025-05-13 14:41:01
+Cross Pairs: [('2025-05-13 14:40', '2025-05-13 14:30')]
+==================================================
+2025-05-13 14:41:01,216 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: SHORT
+Time: 2025-05-13 14:41:01
+Price: 0.013708
+==================================================
+2025-05-13 14:41:01,261 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 14:40:00+09:00
+MACD Cross Time: 2025-05-13 14:30:00+09:00
+SL Range: 2025-05-13 14:25:00+09:00 to 2025-05-13 14:30:00+09:00
+2025-05-13 14:41:01,261 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 14:25:00+09:00 to 2025-05-13 14:30:00+09:00
+Stop loss price: 0.013943
+Distance from entry: 0.00024799999999999996 (1.811%)
+2025-05-13 14:41:01,261 - INFO - Take Profit calculation:
+Entry: 0.013695
+Stop Loss: 0.013943
+SL Distance: 0.00024799999999999996
+Take Profit: 0.013261
+2025-05-13 14:41:01,990 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: short
+Entry: 0.013695
+Stop Loss: 0.013943
+Take Profit: 0.013261
+Position Size: 7301.935012778386
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2680918367, SL=2680918578, TP=2680918710
+2025-05-13 15:12:11,291 - INFO - Position closed or order timeout after 571.1 minutes for PENGU/USDT, cleaning up orders...
+2025-05-13 15:12:11,476 - INFO - Found 1 open orders to cancel for PENGU/USDT
+2025-05-13 15:12:11,537 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2680918710
+Type: take_profit
+Side: buy
+2025-05-13 15:12:11,537 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-13 15:12:11.537186
+Position Type: short
+
+2025-05-13 16:25:54,070 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-13 16:25:54
+Cross Pairs: [('2025-05-13 16:20', '2025-05-13 16:10')]
+==================================================
+2025-05-13 16:25:54,070 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-13 16:25:54
+Price: 0.24064
+==================================================
+2025-05-13 16:25:54,112 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 16:20:00+09:00
+MACD Cross Time: 2025-05-13 16:10:00+09:00
+SL Range: 2025-05-13 16:05:00+09:00 to 2025-05-13 16:10:00+09:00
+2025-05-13 16:25:54,113 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 16:05:00+09:00 to 2025-05-13 16:10:00+09:00
+Stop loss price: 0.233
+Distance from entry: 0.007589999999999986 (3.155%)
+2025-05-13 16:25:54,113 - INFO - Take Profit calculation:
+Entry: 0.24059
+Stop Loss: 0.233
+SL Distance: 0.007589999999999986
+Take Profit: 0.25387249999999995
+2025-05-13 16:25:54,851 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.24059
+Stop Loss: 0.233
+Take Profit: 0.25387249999999995
+Position Size: 415.6448730204913
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2960503953, SL=2960503971, TP=2960503996
+2025-05-13 17:02:52,451 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOODENG/USDT
+Time: 2025-05-13 17:02:52.451899
+Entry: 0.24059
+Current Price: 0.2489
+Original SL: Maintained
+Trailing SL: 0.2429959
+Profit %: 3.45%
+Trailing Order ID: 2961873732
+2025-05-13 17:50:13,261 - INFO - Position closed or order timeout after 624.3 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-13 17:50:13,439 - INFO - Found 2 open orders to cancel for MOODENG/USDT
+2025-05-13 17:50:13,504 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2960503971
+Type: stop
+Side: sell
+2025-05-13 17:50:13,567 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 2960503996
+Type: take_profit
+Side: sell
+2025-05-13 17:50:13,567 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-13 17:50:13.567411
+Position Type: long
+
+2025-05-13 21:40:58,809 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:40:58
+Cross Pairs: [('2025-05-13 21:35', '2025-05-13 21:30')]
+==================================================
+2025-05-13 21:40:58,809 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:40:58
+Price: 0.06736
+==================================================
+2025-05-13 21:40:58,903 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 21:35:00+09:00
+MACD Cross Time: 2025-05-13 21:30:00+09:00
+SL Range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+2025-05-13 21:40:58,903 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+Stop loss price: 0.06599
+Distance from entry: 0.0013300000000000117 (1.976%)
+2025-05-13 21:40:58,903 - INFO - Take Profit calculation:
+Entry: 0.06732
+Stop Loss: 0.06599
+SL Distance: 0.0013300000000000117
+Take Profit: 0.06964750000000003
+2025-05-13 21:40:59,208 - ERROR - Order execution error for BAN/USDT: binance {"code":-2027,"msg":"Exceeded the maximum allowable position at current leverage."}
+2025-05-13 21:45:38,124 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:45:38
+Cross Pairs: [('2025-05-13 21:35', '2025-05-13 21:30')]
+==================================================
+2025-05-13 21:45:38,124 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:45:38
+Price: 0.06716
+==================================================
+2025-05-13 21:45:38,286 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 21:35:00+09:00
+MACD Cross Time: 2025-05-13 21:30:00+09:00
+SL Range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+2025-05-13 21:45:38,286 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+Stop loss price: 0.06599
+Distance from entry: 0.0011700000000000044 (1.742%)
+2025-05-13 21:45:38,287 - INFO - Take Profit calculation:
+Entry: 0.06716
+Stop Loss: 0.06599
+SL Distance: 0.0011700000000000044
+Take Profit: 0.0692075
+2025-05-13 21:45:38,594 - ERROR - Order execution error for BAN/USDT: binance {"code":-2027,"msg":"Exceeded the maximum allowable position at current leverage."}
+2025-05-13 21:50:18,778 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:50:18
+Cross Pairs: [('2025-05-13 21:35', '2025-05-13 21:30')]
+==================================================
+2025-05-13 21:50:18,778 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BAN/USDT
+Position: LONG
+Time: 2025-05-13 21:50:18
+Price: 0.06718
+==================================================
+2025-05-13 21:50:18,826 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 21:35:00+09:00
+MACD Cross Time: 2025-05-13 21:30:00+09:00
+SL Range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+2025-05-13 21:50:18,826 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-13 21:25:00+09:00 to 2025-05-13 21:30:00+09:00
+Stop loss price: 0.06599
+Distance from entry: 0.0011900000000000105 (1.771%)
+2025-05-13 21:50:18,826 - INFO - Take Profit calculation:
+Entry: 0.06718
+Stop Loss: 0.06599
+SL Distance: 0.0011900000000000105
+Take Profit: 0.06926250000000002
+2025-05-13 21:50:19,171 - ERROR - Order execution error for BAN/USDT: binance {"code":-2027,"msg":"Exceeded the maximum allowable position at current leverage."}
+2025-05-13 22:50:33,369 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: SHORT
+Time: 2025-05-13 22:50:33
+Cross Pairs: [('2025-05-13 22:45', '2025-05-13 22:40')]
+==================================================
+2025-05-13 22:50:33,369 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: SHORT
+Time: 2025-05-13 22:50:33
+Price: 0.014027
+==================================================
+2025-05-13 22:50:33,409 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 22:45:00+09:00
+MACD Cross Time: 2025-05-13 22:40:00+09:00
+SL Range: 2025-05-13 22:35:00+09:00 to 2025-05-13 22:40:00+09:00
+2025-05-13 22:50:33,410 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 22:35:00+09:00 to 2025-05-13 22:40:00+09:00
+Stop loss price: 0.01435
+Distance from entry: 0.00033299999999999996 (2.376%)
+2025-05-13 22:50:33,410 - INFO - Take Profit calculation:
+Entry: 0.014017
+Stop Loss: 0.01435
+SL Distance: 0.00033299999999999996
+Take Profit: 0.01343425
+2025-05-13 22:50:34,140 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: short
+Entry: 0.014017
+Stop Loss: 0.01435
+Take Profit: 0.01343425
+Position Size: 7134.194192765927
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2691054362, SL=2691054428, TP=2691054466
+2025-05-13 23:05:33,572 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 23:05:33
+Cross Pairs: [('2025-05-13 23:05', '2025-05-13 22:45')]
+==================================================
+2025-05-13 23:05:33,572 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-13 23:05:33
+Price: 1.6057
+==================================================
+2025-05-13 23:05:33,613 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 23:05:00+09:00
+MACD Cross Time: 2025-05-13 22:45:00+09:00
+SL Range: 2025-05-13 22:40:00+09:00 to 2025-05-13 22:45:00+09:00
+2025-05-13 23:05:33,613 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 22:40:00+09:00 to 2025-05-13 22:45:00+09:00
+Stop loss price: 1.6492
+Distance from entry: 0.043500000000000094 (2.709%)
+2025-05-13 23:05:33,613 - INFO - Take Profit calculation:
+Entry: 1.6057
+Stop Loss: 1.6492
+SL Distance: 0.043500000000000094
+Take Profit: 1.5295749999999997
+2025-05-13 23:05:34,387 - INFO - ===== Trade Successfully Executed =====
+Symbol: GRASS/USDT
+Type: short
+Entry: 1.6057
+Stop Loss: 1.6492
+Take Profit: 1.5295749999999997
+Position Size: 62.27813414710096
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=1258755086, SL=1258755087, TP=1258755090
+2025-05-13 23:16:01,680 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: PENGU/USDT
+Time: 2025-05-13 23:16:01.680159
+Entry: 0.014017
+Current Price: 0.01356
+Original SL: Maintained
+Trailing SL: 0.01387683
+Profit %: 3.26%
+Trailing Order ID: 2691615338
+2025-05-13 23:16:04,118 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ONDOUSDT
+Position: SHORT
+Time: 2025-05-13 23:16:04
+Cross Pairs: [('2025-05-13 23:15', '2025-05-13 22:55')]
+==================================================
+2025-05-13 23:16:04,118 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ONDOUSDT
+Position: SHORT
+Time: 2025-05-13 23:16:04
+Price: 1.0074
+==================================================
+2025-05-13 23:16:04,158 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-13 23:15:00+09:00
+MACD Cross Time: 2025-05-13 22:55:00+09:00
+SL Range: 2025-05-13 22:50:00+09:00 to 2025-05-13 22:55:00+09:00
+2025-05-13 23:16:04,158 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-13 22:50:00+09:00 to 2025-05-13 22:55:00+09:00
+Stop loss price: 1.0326
+Distance from entry: 0.025700000000000056 (2.552%)
+2025-05-13 23:16:04,158 - INFO - Take Profit calculation:
+Entry: 1.0069
+Stop Loss: 1.0326
+SL Distance: 0.025700000000000056
+Take Profit: 0.9619249999999998
+2025-05-13 23:16:04,934 - INFO - ===== Trade Successfully Executed =====
+Symbol: ONDOUSDT
+Type: short
+Entry: 1.0069
+Stop Loss: 1.0326
+Take Profit: 0.9619249999999998
+Position Size: 99.3147283742179
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=5576678025, SL=5576678087, TP=5576678187
+2025-05-13 23:24:08,289 - INFO - Position closed or order timeout after 573.6 minutes for PENGU/USDT, cleaning up orders...
+2025-05-13 23:24:08,469 - INFO - Found 2 open orders to cancel for PENGU/USDT
+2025-05-13 23:24:08,530 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2691054428
+Type: stop
+Side: buy
+2025-05-13 23:24:08,589 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2691054466
+Type: take_profit
+Side: buy
+2025-05-13 23:24:08,589 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-13 23:24:08.589807
+Position Type: short
+
