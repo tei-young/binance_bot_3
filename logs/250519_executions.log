@@ -1,0 +1,542 @@
+2025-05-19 01:35:58,052 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 01:35:58
+Cross Pairs: [('2025-05-19 01:35', '2025-05-19 01:20')]
+==================================================
+2025-05-19 01:35:58,053 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 01:35:58
+Price: 0.26151
+==================================================
+2025-05-19 01:35:58,095 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 01:35:00+09:00
+MACD Cross Time: 2025-05-19 01:20:00+09:00
+SL Range: 2025-05-19 01:15:00+09:00 to 2025-05-19 01:20:00+09:00
+2025-05-19 01:35:58,096 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 01:15:00+09:00 to 2025-05-19 01:20:00+09:00
+Stop loss price: 0.27516
+Distance from entry: 0.013429999999999997 (5.131%)
+2025-05-19 01:35:58,096 - INFO - Take Profit calculation:
+Entry: 0.26173
+Stop Loss: 0.27516
+SL Distance: 0.013429999999999997
+TP Ratio: 2.0
+Take Profit: 0.23487000000000002
+2025-05-19 01:35:58,824 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: short
+Entry: 0.26173
+Stop Loss: 0.27516
+Take Profit: 0.23487000000000002
+Position Size: 382.0731287968517
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=3249366872, SL=3249367062, TP=3249367128
+2025-05-19 01:38:18,125 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOODENG/USDT
+Time: 2025-05-19 01:38:18.125040
+Entry: 0.26173
+Current Price: 0.25536
+Trailing SL: 0.25989789
+Profit %: 2.43%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 01:49:50,433 - INFO - Position closed or order timeout after 553.9 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-19 01:49:50,617 - INFO - Found 2 open orders to cancel for MOODENG/USDT
+2025-05-19 01:49:50,678 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3249367062
+Type: stop
+Side: buy
+2025-05-19 01:49:50,738 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3249367128
+Type: take_profit
+Side: buy
+2025-05-19 01:49:50,739 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-19 01:49:50.739732
+Position Type: short
+
+2025-05-19 09:30:05,666 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-19 09:30:05
+Cross Pairs: [('2025-05-19 09:30', '2025-05-19 09:20')]
+==================================================
+2025-05-19 09:30:05,667 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: GRASS/USDT
+Position: SHORT
+Time: 2025-05-19 09:30:05
+Price: 2.0924
+==================================================
+2025-05-19 09:30:05,708 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 09:30:00+09:00
+MACD Cross Time: 2025-05-19 09:20:00+09:00
+SL Range: 2025-05-19 09:15:00+09:00 to 2025-05-19 09:20:00+09:00
+2025-05-19 09:30:05,708 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 09:15:00+09:00 to 2025-05-19 09:20:00+09:00
+Stop loss price: 2.1627
+Distance from entry: 0.07069999999999999 (3.380%)
+2025-05-19 09:30:05,708 - INFO - Take Profit calculation:
+Entry: 2.092
+Stop Loss: 2.1627
+SL Distance: 0.07069999999999999
+TP Ratio: 2.0
+Take Profit: 1.9506000000000001
+2025-05-19 09:30:06,446 - INFO - ===== Trade Successfully Executed =====
+Symbol: GRASS/USDT
+Type: short
+Entry: 2.092
+Stop Loss: 2.1627
+Take Profit: 1.9506000000000001
+Position Size: 47.801147227533455
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=1323146484, SL=1323146499, TP=1323146509
+2025-05-19 09:45:07,733 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ORDI/USDT
+Position: SHORT
+Time: 2025-05-19 09:45:07
+Cross Pairs: [('2025-05-19 09:45', '2025-05-19 09:25')]
+==================================================
+2025-05-19 09:45:07,733 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ORDI/USDT
+Position: SHORT
+Time: 2025-05-19 09:45:07
+Price: 9.825
+==================================================
+2025-05-19 09:45:07,773 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 09:45:00+09:00
+MACD Cross Time: 2025-05-19 09:25:00+09:00
+SL Range: 2025-05-19 09:20:00+09:00 to 2025-05-19 09:25:00+09:00
+2025-05-19 09:45:07,774 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 09:20:00+09:00 to 2025-05-19 09:25:00+09:00
+Stop loss price: 10.213
+Distance from entry: 0.3849999999999998 (3.917%)
+2025-05-19 09:45:07,774 - INFO - Take Profit calculation:
+Entry: 9.828
+Stop Loss: 10.213
+SL Distance: 0.3849999999999998
+TP Ratio: 2.0
+Take Profit: 9.058
+2025-05-19 09:45:08,523 - INFO - ===== Trade Successfully Executed =====
+Symbol: ORDI/USDT
+Type: short
+Entry: 9.828
+Stop Loss: 10.213
+Take Profit: 9.058
+Position Size: 10.175010175010176
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=16194535590, SL=16194535685, TP=16194535798
+2025-05-19 09:46:18,935 - INFO - Position closed or order timeout after 541.2 minutes for ORDI/USDT, cleaning up orders...
+2025-05-19 09:46:19,121 - INFO - Found 3 open orders to cancel for ORDI/USDT
+2025-05-19 09:46:19,182 - INFO - Successfully cancelled order:
+Symbol: ORDI/USDT
+Order ID: 16194535590
+Type: limit
+Side: sell
+2025-05-19 09:46:19,246 - INFO - Successfully cancelled order:
+Symbol: ORDI/USDT
+Order ID: 16194535685
+Type: stop
+Side: buy
+2025-05-19 09:46:19,304 - INFO - Successfully cancelled order:
+Symbol: ORDI/USDT
+Order ID: 16194535798
+Type: take_profit
+Side: buy
+2025-05-19 09:46:19,304 - INFO - Position Closed - Manual
+Symbol: ORDI/USDT
+Time: 2025-05-19 09:46:19.304312
+Position Type: short
+
+2025-05-19 09:50:55,779 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ORDI/USDT
+Position: SHORT
+Time: 2025-05-19 09:50:55
+Cross Pairs: [('2025-05-19 09:45', '2025-05-19 09:25')]
+==================================================
+2025-05-19 09:50:55,779 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: ORDI/USDT
+Position: SHORT
+Time: 2025-05-19 09:50:55
+Price: 9.834
+==================================================
+2025-05-19 09:50:55,821 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 09:45:00+09:00
+MACD Cross Time: 2025-05-19 09:25:00+09:00
+SL Range: 2025-05-19 09:20:00+09:00 to 2025-05-19 09:25:00+09:00
+2025-05-19 09:50:55,822 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 09:20:00+09:00 to 2025-05-19 09:25:00+09:00
+Stop loss price: 10.213
+Distance from entry: 0.3869999999999987 (3.939%)
+2025-05-19 09:50:55,822 - INFO - Take Profit calculation:
+Entry: 9.826
+Stop Loss: 10.213
+SL Distance: 0.3869999999999987
+TP Ratio: 2.0
+Take Profit: 9.052000000000003
+2025-05-19 09:50:56,543 - INFO - ===== Trade Successfully Executed =====
+Symbol: ORDI/USDT
+Type: short
+Entry: 9.826
+Stop Loss: 10.213
+Take Profit: 9.052000000000003
+Position Size: 10.17708121310808
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=16194673792, SL=16194673886, TP=16194673902
+2025-05-19 10:09:29,380 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: GRASS/USDT
+Time: 2025-05-19 10:09:29.380167
+Entry: 2.092
+Current Price: 2.0583
+Trailing SL: 2.077356
+Profit %: 1.61%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 10:34:56,734 - INFO - Position closed or order timeout after 604.8 minutes for GRASS/USDT, cleaning up orders...
+2025-05-19 10:34:56,928 - INFO - Found 2 open orders to cancel for GRASS/USDT
+2025-05-19 10:34:56,984 - INFO - Successfully cancelled order:
+Symbol: GRASS/USDT
+Order ID: 1323146499
+Type: stop
+Side: buy
+2025-05-19 10:34:57,048 - INFO - Successfully cancelled order:
+Symbol: GRASS/USDT
+Order ID: 1323146509
+Type: take_profit
+Side: buy
+2025-05-19 10:34:57,048 - INFO - Position Closed - Manual
+Symbol: GRASS/USDT
+Time: 2025-05-19 10:34:57.048232
+Position Type: short
+
+2025-05-19 10:38:25,252 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: ORDI/USDT
+Time: 2025-05-19 10:38:25.252364
+Entry: 9.826
+Current Price: 9.674
+Trailing SL: 9.757218
+Profit %: 1.55%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 11:21:09,306 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 11:21:09
+Cross Pairs: [('2025-05-19 11:15', '2025-05-19 11:10')]
+==================================================
+2025-05-19 11:21:09,307 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 11:21:09
+Price: 0.25139
+==================================================
+2025-05-19 11:21:09,347 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 11:15:00+09:00
+MACD Cross Time: 2025-05-19 11:10:00+09:00
+SL Range: 2025-05-19 11:05:00+09:00 to 2025-05-19 11:10:00+09:00
+2025-05-19 11:21:09,348 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 11:05:00+09:00 to 2025-05-19 11:10:00+09:00
+Stop loss price: 0.2625
+Distance from entry: 0.011550000000000005 (4.603%)
+2025-05-19 11:21:09,348 - INFO - Take Profit calculation:
+Entry: 0.25095
+Stop Loss: 0.2625
+SL Distance: 0.011550000000000005
+TP Ratio: 2.0
+Take Profit: 0.22785
+2025-05-19 11:21:10,083 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: short
+Entry: 0.25095
+Stop Loss: 0.2625
+Take Profit: 0.22785
+Position Size: 398.48575413428966
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=3278793629, SL=3278793764, TP=3278793972
+2025-05-19 11:46:38,149 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOODENG/USDT
+Time: 2025-05-19 11:46:38.149375
+Entry: 0.25095
+Current Price: 0.24716
+Trailing SL: 0.24919335
+Profit %: 1.51%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 12:03:58,316 - INFO - Position closed or order timeout after 582.8 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-19 12:03:58,501 - INFO - Found 2 open orders to cancel for MOODENG/USDT
+2025-05-19 12:03:58,565 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3278793764
+Type: stop
+Side: buy
+2025-05-19 12:03:58,626 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3278793972
+Type: take_profit
+Side: buy
+2025-05-19 12:03:58,627 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-19 12:03:58.627878
+Position Type: short
+
+2025-05-19 16:30:48,940 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-19 16:30:48
+Cross Pairs: [('2025-05-19 16:30', '2025-05-19 16:10')]
+==================================================
+2025-05-19 16:30:48,940 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: LONG
+Time: 2025-05-19 16:30:48
+Price: 0.003011
+==================================================
+2025-05-19 16:30:48,983 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 16:30:00+09:00
+MACD Cross Time: 2025-05-19 16:10:00+09:00
+SL Range: 2025-05-19 16:05:00+09:00 to 2025-05-19 16:10:00+09:00
+2025-05-19 16:30:48,983 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-19 16:05:00+09:00 to 2025-05-19 16:10:00+09:00
+Stop loss price: 0.002892
+Distance from entry: 0.00011899999999999975 (3.952%)
+2025-05-19 16:30:48,983 - INFO - Take Profit calculation:
+Entry: 0.003011
+Stop Loss: 0.002892
+SL Distance: 0.00011899999999999975
+TP Ratio: 2.0
+Take Profit: 0.0032489999999999993
+2025-05-19 16:30:49,716 - INFO - ===== Trade Successfully Executed =====
+Symbol: HIPPO/USDT
+Type: long
+Entry: 0.003011
+Stop Loss: 0.002892
+Take Profit: 0.0032489999999999993
+Position Size: 33211.557622052474
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=961364145, SL=961364147, TP=961364179
+2025-05-19 17:05:34,827 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 17:05:34
+Cross Pairs: [('2025-05-19 17:00', '2025-05-19 16:55')]
+==================================================
+2025-05-19 17:05:34,827 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-19 17:05:34
+Price: 0.23512
+==================================================
+2025-05-19 17:05:34,870 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 17:00:00+09:00
+MACD Cross Time: 2025-05-19 16:55:00+09:00
+SL Range: 2025-05-19 16:50:00+09:00 to 2025-05-19 16:55:00+09:00
+2025-05-19 17:05:34,870 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-19 16:50:00+09:00 to 2025-05-19 16:55:00+09:00
+Stop loss price: 0.24267
+Distance from entry: 0.00767000000000001 (3.264%)
+2025-05-19 17:05:34,870 - INFO - Take Profit calculation:
+Entry: 0.235
+Stop Loss: 0.24267
+SL Distance: 0.00767000000000001
+TP Ratio: 2.0
+Take Profit: 0.21965999999999997
+2025-05-19 17:05:35,604 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: short
+Entry: 0.235
+Stop Loss: 0.24267
+Take Profit: 0.21965999999999997
+Position Size: 425.53191489361706
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=3293496082, SL=3293496611, TP=3293496792
+2025-05-19 17:35:44,703 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: MOODENG/USDT
+Time: 2025-05-19 17:35:44.703210
+Entry: 0.235
+Current Price: 0.23008
+Trailing SL: 0.23335499999999998
+Profit %: 2.09%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 17:48:30,269 - INFO - Position closed or order timeout after 582.9 minutes for MOODENG/USDT, cleaning up orders...
+2025-05-19 17:48:30,452 - INFO - Found 2 open orders to cancel for MOODENG/USDT
+2025-05-19 17:48:30,526 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3293496611
+Type: stop
+Side: buy
+2025-05-19 17:48:30,569 - INFO - Successfully cancelled order:
+Symbol: MOODENG/USDT
+Order ID: 3293496792
+Type: take_profit
+Side: buy
+2025-05-19 17:48:30,569 - INFO - Position Closed - Manual
+Symbol: MOODENG/USDT
+Time: 2025-05-19 17:48:30.569841
+Position Type: short
+
+2025-05-19 19:52:21,561 - INFO - Trailing Stop Added (Original SL maintained)
+Symbol: HIPPO/USDT
+Time: 2025-05-19 19:52:21.561137
+Entry: 0.003011
+Current Price: 0.003057
+Trailing SL: 0.0030320769999999993
+Profit %: 1.53%
+Trigger: 1.5%
+Distance: 0.7%
+2025-05-19 19:55:48,332 - INFO - Position closed or order timeout after 745.0 minutes for HIPPO/USDT, cleaning up orders...
+2025-05-19 19:55:48,519 - INFO - Found 2 open orders to cancel for HIPPO/USDT
+2025-05-19 19:55:48,579 - INFO - Successfully cancelled order:
+Symbol: HIPPO/USDT
+Order ID: 961364147
+Type: stop
+Side: sell
+2025-05-19 19:55:48,642 - INFO - Successfully cancelled order:
+Symbol: HIPPO/USDT
+Order ID: 961364179
+Type: take_profit
+Side: sell
+2025-05-19 19:55:48,642 - INFO - Position Closed - Manual
+Symbol: HIPPO/USDT
+Time: 2025-05-19 19:55:48.642505
+Position Type: long
+
+2025-05-19 20:45:31,326 - INFO - Position closed or order timeout after 1194.6 minutes for ORDI/USDT, cleaning up orders...
+2025-05-19 20:45:31,511 - INFO - Found 2 open orders to cancel for ORDI/USDT
+2025-05-19 20:45:31,575 - INFO - Successfully cancelled order:
+Symbol: ORDI/USDT
+Order ID: 16194673886
+Type: stop
+Side: buy
+2025-05-19 20:45:31,634 - INFO - Successfully cancelled order:
+Symbol: ORDI/USDT
+Order ID: 16194673902
+Type: take_profit
+Side: buy
+2025-05-19 20:45:31,634 - INFO - Position Closed - Manual
+Symbol: ORDI/USDT
+Time: 2025-05-19 20:45:31.634376
+Position Type: short
+
+2025-05-19 22:40:58,474 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BRETT/USDT
+Position: LONG
+Time: 2025-05-19 22:40:58
+Cross Pairs: [('2025-05-19 22:35', '2025-05-19 22:25')]
+==================================================
+2025-05-19 22:40:58,474 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: BRETT/USDT
+Position: LONG
+Time: 2025-05-19 22:40:58
+Price: 0.06738
+==================================================
+2025-05-19 22:40:58,514 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 22:35:00+09:00
+MACD Cross Time: 2025-05-19 22:25:00+09:00
+SL Range: 2025-05-19 22:20:00+09:00 to 2025-05-19 22:25:00+09:00
+2025-05-19 22:40:58,514 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-19 22:20:00+09:00 to 2025-05-19 22:25:00+09:00
+Stop loss price: 0.06531
+Distance from entry: 0.0020699999999999885 (3.072%)
+2025-05-19 22:40:58,515 - INFO - Take Profit calculation:
+Entry: 0.06738
+Stop Loss: 0.06531
+SL Distance: 0.0020699999999999885
+TP Ratio: 2.0
+Take Profit: 0.07151999999999997
+2025-05-19 22:40:59,263 - INFO - ===== Trade Successfully Executed =====
+Symbol: BRETT/USDT
+Type: long
+Entry: 0.06738
+Stop Loss: 0.06531
+Take Profit: 0.07151999999999997
+Position Size: 1484.1199168892847
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=1145319457, SL=1145319459, TP=1145319461
+2025-05-19 22:42:07,833 - INFO - Position closed or order timeout after 541.1 minutes for BRETT/USDT, cleaning up orders...
+2025-05-19 22:42:08,017 - INFO - Found 3 open orders to cancel for BRETT/USDT
+2025-05-19 22:42:08,075 - INFO - Successfully cancelled order:
+Symbol: BRETT/USDT
+Order ID: 1145319457
+Type: limit
+Side: buy
+2025-05-19 22:42:08,146 - INFO - Successfully cancelled order:
+Symbol: BRETT/USDT
+Order ID: 1145319459
+Type: stop
+Side: sell
+2025-05-19 22:42:08,189 - INFO - Successfully cancelled order:
+Symbol: BRETT/USDT
+Order ID: 1145319461
+Type: take_profit
+Side: sell
+2025-05-19 22:42:08,190 - INFO - Position Closed - Manual
+Symbol: BRETT/USDT
+Time: 2025-05-19 22:42:08.189170
+Position Type: long
+
+2025-05-19 22:45:29,720 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-19 22:45:29
+Cross Pairs: [('2025-05-19 22:40', '2025-05-19 22:35')]
+==================================================
+2025-05-19 22:45:29,720 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: LONG
+Time: 2025-05-19 22:45:29
+Price: 0.25072
+==================================================
+2025-05-19 22:45:29,762 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-19 22:40:00+09:00
+MACD Cross Time: 2025-05-19 22:35:00+09:00
+SL Range: 2025-05-19 22:30:00+09:00 to 2025-05-19 22:35:00+09:00
+2025-05-19 22:45:29,762 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-19 22:30:00+09:00 to 2025-05-19 22:35:00+09:00
+Stop loss price: 0.23445
+Distance from entry: 0.01606000000000002 (6.411%)
+2025-05-19 22:45:29,763 - INFO - Take Profit calculation:
+Entry: 0.25051
+Stop Loss: 0.23445
+SL Distance: 0.01606000000000002
+TP Ratio: 2.0
+Take Profit: 0.28263000000000005
+2025-05-19 22:45:30,527 - INFO - ===== Trade Successfully Executed =====
+Symbol: MOODENG/USDT
+Type: long
+Entry: 0.25051
+Stop Loss: 0.23445
+Take Profit: 0.28263000000000005
+Position Size: 399.18566125104786
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=3305560088, SL=3305561074, TP=3305561535

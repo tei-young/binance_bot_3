@@ -1,0 +1,215 @@
+2025-05-16 04:45:17,079 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-16 04:45:17
+Cross Pairs: [('2025-05-16 04:45', '2025-05-16 04:35')]
+==================================================
+2025-05-16 04:45:17,079 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: PENGU/USDT
+Position: LONG
+Time: 2025-05-16 04:45:17
+Price: 0.014122
+==================================================
+2025-05-16 04:45:17,119 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 04:45:00+09:00
+MACD Cross Time: 2025-05-16 04:35:00+09:00
+SL Range: 2025-05-16 04:30:00+09:00 to 2025-05-16 04:35:00+09:00
+2025-05-16 04:45:17,120 - INFO - Stop Loss calculation for long:
+Data range: 2025-05-16 04:30:00+09:00 to 2025-05-16 04:35:00+09:00
+Stop loss price: 0.013692
+Distance from entry: 0.00041500000000000044 (2.942%)
+2025-05-16 04:45:17,126 - INFO - Take Profit calculation:
+Entry: 0.014107
+Stop Loss: 0.013692
+SL Distance: 0.00041500000000000044
+TP Ratio: 2.0
+Take Profit: 0.014937
+2025-05-16 04:45:17,860 - INFO - ===== Trade Successfully Executed =====
+Symbol: PENGU/USDT
+Type: long
+Entry: 0.014107
+Stop Loss: 0.013692
+Take Profit: 0.014937
+Position Size: 7088.679379031687
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=2766154550, SL=2766154601, TP=2766154663
+2025-05-16 06:24:40,851 - INFO - Position closed or order timeout after 639.4 minutes for PENGU/USDT, cleaning up orders...
+2025-05-16 06:24:41,040 - INFO - Found 1 open orders to cancel for PENGU/USDT
+2025-05-16 06:24:41,096 - INFO - Successfully cancelled order:
+Symbol: PENGU/USDT
+Order ID: 2766154663
+Type: take_profit
+Side: sell
+2025-05-16 06:24:41,096 - INFO - Position Closed - Manual
+Symbol: PENGU/USDT
+Time: 2025-05-16 06:24:41.096349
+Position Type: long
+
+2025-05-16 11:00:12,275 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 11:00:12
+Cross Pairs: [('2025-05-16 11:00', '2025-05-16 10:45')]
+==================================================
+2025-05-16 11:00:12,275 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 11:00:12
+Price: 0.22093
+==================================================
+2025-05-16 11:00:12,318 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 11:00:00+09:00
+MACD Cross Time: 2025-05-16 10:45:00+09:00
+SL Range: 2025-05-16 10:40:00+09:00 to 2025-05-16 10:45:00+09:00
+2025-05-16 11:00:12,319 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-16 10:40:00+09:00 to 2025-05-16 10:45:00+09:00
+Stop loss price: 0.23154
+Distance from entry: 0.010830000000000006 (4.907%)
+2025-05-16 11:00:12,319 - INFO - Take Profit calculation:
+Entry: 0.22071
+Stop Loss: 0.23154
+SL Distance: 0.010830000000000006
+TP Ratio: 2.0
+Take Profit: 0.19904999999999998
+2025-05-16 11:00:12,373 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 8.16718506 USDT
+2025-05-16 11:00:12,374 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-16 11:05:57,769 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 11:05:57
+Cross Pairs: [('2025-05-16 11:00', '2025-05-16 10:45')]
+==================================================
+2025-05-16 11:05:57,769 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 11:05:57
+Price: 0.2225
+==================================================
+2025-05-16 11:05:57,810 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 11:00:00+09:00
+MACD Cross Time: 2025-05-16 10:45:00+09:00
+SL Range: 2025-05-16 10:40:00+09:00 to 2025-05-16 10:45:00+09:00
+2025-05-16 11:05:57,810 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-16 10:40:00+09:00 to 2025-05-16 10:45:00+09:00
+Stop loss price: 0.23154
+Distance from entry: 0.008379999999999999 (3.755%)
+2025-05-16 11:05:57,811 - INFO - Take Profit calculation:
+Entry: 0.22316
+Stop Loss: 0.23154
+SL Distance: 0.008379999999999999
+TP Ratio: 2.0
+Take Profit: 0.2064
+2025-05-16 11:05:57,869 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 8.16718506 USDT
+2025-05-16 11:05:57,869 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-16 16:05:45,704 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:05:45
+Cross Pairs: [('2025-05-16 16:00', '2025-05-16 15:55')]
+==================================================
+2025-05-16 16:05:45,704 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:05:45
+Price: 0.21322
+==================================================
+2025-05-16 16:05:45,748 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 16:00:00+09:00
+MACD Cross Time: 2025-05-16 15:55:00+09:00
+SL Range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+2025-05-16 16:05:45,749 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+Stop loss price: 0.22237
+Distance from entry: 0.009110000000000007 (4.272%)
+2025-05-16 16:05:45,749 - INFO - Take Profit calculation:
+Entry: 0.21326
+Stop Loss: 0.22237
+SL Distance: 0.009110000000000007
+TP Ratio: 2.0
+Take Profit: 0.19504
+2025-05-16 16:05:45,804 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 8.16718506 USDT
+2025-05-16 16:05:45,805 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-16 16:10:22,471 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:10:22
+Cross Pairs: [('2025-05-16 16:00', '2025-05-16 15:55')]
+==================================================
+2025-05-16 16:10:22,471 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:10:22
+Price: 0.2121
+==================================================
+2025-05-16 16:10:22,512 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 16:00:00+09:00
+MACD Cross Time: 2025-05-16 15:55:00+09:00
+SL Range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+2025-05-16 16:10:22,512 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+Stop loss price: 0.22237
+Distance from entry: 0.010310000000000014 (4.862%)
+2025-05-16 16:10:22,512 - INFO - Take Profit calculation:
+Entry: 0.21206
+Stop Loss: 0.22237
+SL Distance: 0.010310000000000014
+TP Ratio: 2.0
+Take Profit: 0.19143999999999997
+2025-05-16 16:10:22,575 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 8.16718506 USDT
+2025-05-16 16:10:22,575 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance
+2025-05-16 16:16:08,605 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:16:08
+Cross Pairs: [('2025-05-16 16:00', '2025-05-16 15:55')]
+==================================================
+2025-05-16 16:16:08,605 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: MOODENG/USDT
+Position: SHORT
+Time: 2025-05-16 16:16:08
+Price: 0.2145
+==================================================
+2025-05-16 16:16:08,646 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-16 16:00:00+09:00
+MACD Cross Time: 2025-05-16 15:55:00+09:00
+SL Range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+2025-05-16 16:16:08,646 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-16 15:50:00+09:00 to 2025-05-16 15:55:00+09:00
+Stop loss price: 0.22237
+Distance from entry: 0.007940000000000003 (3.703%)
+2025-05-16 16:16:08,647 - INFO - Take Profit calculation:
+Entry: 0.21443
+Stop Loss: 0.22237
+SL Distance: 0.007940000000000003
+TP Ratio: 2.0
+Take Profit: 0.19855
+2025-05-16 16:16:08,709 - ERROR - ===== Insufficient Balance =====
+Symbol: MOODENG/USDT
+Required: 10 USDT
+Available: 8.16718506 USDT
+2025-05-16 16:16:08,709 - ERROR - Failed to enter position for MOODENG/USDT: Insufficient balance

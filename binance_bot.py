@@ -17,8 +17,8 @@ SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
 # 트레일링 스탑 
-TRAILING_STOP_TRIGGER = 1.5  # 1.0에서 1.5로 변경
-TRAILING_STOP_DISTANCE = 0.7  # 0.3에서 0.7로 변경
+TRAILING_STOP_TRIGGER = 3.0
+TRAILING_STOP_DISTANCE = 1.5
 
 #TP 비율 설정
 TP_RATIO = 2.0
@@ -98,8 +98,8 @@ class TradingBot:
                 self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
                 
         # 백테스트 결과 로드
-        self.backtest_results = self.load_backtest_results()
-        self.optimal_params = self.backtest_results['optimal_params']
+        # self.backtest_results = self.load_backtest_results()
+        # self.optimal_params = self.backtest_results['optimal_params']
         
     def check_entry_conditions(self, df, symbol):
         # 백테스트에서 찾은 최적 파라미터 사용

@@ -1,0 +1,50 @@
+2025-05-17 18:25:21,126 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: SHORT
+Time: 2025-05-17 18:25:21
+Cross Pairs: [('2025-05-17 18:20', '2025-05-17 18:05')]
+==================================================
+2025-05-17 18:25:21,126 - INFO - 
+==================== ENTRY SIGNAL ====================
+Symbol: HIPPO/USDT
+Position: SHORT
+Time: 2025-05-17 18:25:21
+Price: 0.002763
+==================================================
+2025-05-17 18:25:21,167 - INFO - Stop Loss Range Calculation:
+EMA Cross Time: 2025-05-17 18:20:00+09:00
+MACD Cross Time: 2025-05-17 18:05:00+09:00
+SL Range: 2025-05-17 18:00:00+09:00 to 2025-05-17 18:05:00+09:00
+2025-05-17 18:25:21,168 - INFO - Stop Loss calculation for short:
+Data range: 2025-05-17 18:00:00+09:00 to 2025-05-17 18:05:00+09:00
+Stop loss price: 0.002846
+Distance from entry: 8.300000000000017e-05 (3.004%)
+2025-05-17 18:25:21,186 - INFO - Take Profit calculation:
+Entry: 0.002763
+Stop Loss: 0.002846
+SL Distance: 8.300000000000017e-05
+TP Ratio: 2.0
+Take Profit: 0.0025969999999999995
+2025-05-17 18:25:21,903 - INFO - ===== Trade Successfully Executed =====
+Symbol: HIPPO/USDT
+Type: short
+Entry: 0.002763
+Stop Loss: 0.002846
+Take Profit: 0.0025969999999999995
+Position Size: 36192.54433586681
+Margin Used: 10 USDT
+Total Position Value: 100 USDT
+Order IDs: Entry=939401319, SL=939401324, TP=939401335
+2025-05-17 19:11:42,308 - INFO - Position closed or order timeout after 586.3 minutes for HIPPO/USDT, cleaning up orders...
+2025-05-17 19:11:42,494 - INFO - Found 1 open orders to cancel for HIPPO/USDT
+2025-05-17 19:11:42,560 - INFO - Successfully cancelled order:
+Symbol: HIPPO/USDT
+Order ID: 939401335
+Type: take_profit
+Side: buy
+2025-05-17 19:11:42,560 - INFO - Position Closed - Manual
+Symbol: HIPPO/USDT
+Time: 2025-05-17 19:11:42.560319
+Position Type: short
+
