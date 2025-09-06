@@ -1951,16 +1951,9 @@ class TradingBot:
                 
                 # 주기적 시간 동기화
                 if current_time - last_time_sync >= sync_interval:
-                    try:
-                        server_time = self.exchange.fetch_time()
-                        time_diff = server_time - int(current_time * 1000)
-                        if abs(time_diff) > 1000:
-                            self.exchange.options['timeDiff'] = time_diff
-                            self.trading_logger.info(f"Time synchronized. Offset: {time_diff}ms")
+                    if self.sync_time():
                         last_time_sync = current_time
-                    except Exception as e:
-                        self.trading_logger.error(f"Error syncing time: {e}")
-                        
+                                        
                 # 로거 날짜 체크 및 업데이트
                 self.check_and_update_loggers()
                 
