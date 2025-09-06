@@ -25,7 +25,7 @@ TP_RATIO = 2.0
 
 # 거래 심볼 목록
 TRADING_SYMBOLS = [ #'BTC/USDT',
-                 'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
+                 'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
                 'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'GRASS/USDT',
@@ -38,7 +38,7 @@ class TradingBot:
     def __init__(self, api_key, api_secret):
         self.setup_logging()
         
-        self.exchange = ccxt.binance({
+        self.exchange = ccxt.binance({            
             'apiKey': api_key,
             'secret': api_secret,
             'enableRateLimit': True,
@@ -47,6 +47,9 @@ class TradingBot:
                 'adjustForTimeDifference': True
             }
         })
+        
+        # ✅ 추가: 즉시 시간 동기화
+        self.sync_time()
         
         # 크로스 히스토리 초기화
         self.cross_history = {
@@ -88,15 +91,10 @@ class TradingBot:
         self.daily_losses = 0  # 순수 손실 USDT
         self.daily_profits = 0  # 순수 이익 USDT
         self.last_pnl_reset = datetime.now().date()
-    
-        # 레버리지 설정
-        for symbol in TRADING_SYMBOLS:
-            try:
-                self.exchange.set_leverage(LEVERAGE, symbol)
-                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
-            except Exception as e:
-                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
-                
+
+        # ✅ 수정: 안전한 레버리지 설정
+        self.set_leverage_for_symbols()
+        
         # 백테스트 결과 로드
         # self.backtest_results = self.load_backtest_results()
         # self.optimal_params = self.backtest_results['optimal_params']
