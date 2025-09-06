@@ -99,6 +99,50 @@ class TradingBot:
         # self.backtest_results = self.load_backtest_results()
         # self.optimal_params = self.backtest_results['optimal_params']
         
+    def sync_time(self):
+        """시간 동기화 메서드"""
+        try:
+            server_time = self.exchange.fetch_time()
+            current_time = int(time.time() * 1000)
+            time_diff = server_time - current_time
+            
+            self.exchange.options['timeDiff'] = time_diff
+            
+            self.trading_logger.info(f"Time synchronized successfully. Offset: {time_diff}ms")
+            return True
+            
+        except Exception as e:
+            self.trading_logger.error(f"Error syncing time: {e}")
+            return False
+
+    def set_leverage_for_symbols(self):
+        """모든 심볼에 대해 레버리지 설정 (재시도 로직 포함)"""
+        max_retries = 3
+        
+        for symbol in TRADING_SYMBOLS:
+            success = False
+            
+            for attempt in range(max_retries):
+                try:
+                    self.exchange.set_leverage(LEVERAGE, symbol)
+                    self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+                    success = True
+                    break
+                    
+                except Exception as e:
+                    if "Timestamp for this request" in str(e) and attempt < max_retries - 1:
+                        self.trading_logger.warning(f"Timestamp error for {symbol} (attempt {attempt + 1}), retrying after time sync...")
+                        # 시간 재동기화
+                        if self.sync_time():
+                            time.sleep(1)  # 1초 대기 후 재시도
+                            continue
+                    
+                    if attempt == max_retries - 1:
+                        self.trading_logger.error(f"Failed to set leverage for {symbol} after {max_retries} attempts: {e}")
+                    else:
+                        self.trading_logger.warning(f"Leverage setting failed for {symbol} (attempt {attempt + 1}): {e}")
+                        time.sleep(2)  # 재시도 전 대기    
+        
     def check_entry_conditions(self, df, symbol):
         # 백테스트에서 찾은 최적 파라미터 사용
         ema_fast = self.optimal_params.get('ema_fast', 12)
