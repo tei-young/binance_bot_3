@@ -48,7 +48,7 @@ class TradingBot:
             }
         })
         
-        # ✅ 추가: 즉시 시간 동기화
+        # ✅ 추가: 즉시 시간 동기화 -> 개선: 초기 시간 동기화 필수화 (성공할 때까지 재시도)
         max_init_attempts = 5
         for attempt in range(max_init_attempts):
             if self.sync_time():
@@ -135,6 +135,29 @@ class TradingBot:
                     self.trading_logger.error("Time sync failed after all retries")
                     return False
         
+        return False
+
+    def handle_api_error(self, error, context="API call"):
+        """API 에러 처리 및 타임스탬프 에러 감지"""
+        error_str = str(error)
+        
+        # 타임스탬프 에러 감지
+        if "Timestamp" in error_str or "-1021" in error_str:
+            self.trading_logger.warning(
+                f"⚠️ Timestamp error detected in {context}: {error_str}"
+            )
+            self.trading_logger.info("Attempting immediate time resync...")
+            
+            # 즉시 시간 재동기화
+            if self.sync_time():
+                self.trading_logger.info("✅ Time resync successful")
+                return True  # 재시도 가능
+            else:
+                self.trading_logger.error("❌ Time resync failed")
+                return False
+        
+        # 다른 에러는 그냥 로깅
+        self.trading_logger.error(f"Error in {context}: {error_str}")
         return False
 
     def set_leverage_for_symbols(self):
