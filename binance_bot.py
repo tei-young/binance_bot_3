@@ -2033,7 +2033,8 @@ class TradingBot:
 
     def run(self):
         last_time_sync = 0
-        sync_interval = 300  # 5분마다 시간 동기화
+        sync_interval = 60  # ✅ 5분(300) → 1분(60)으로 단축
+        sync_failure_count = 0
 
         self.trading_logger.info(f"Bot started running\n"
                             f"Leverage: {LEVERAGE}x\n"
@@ -2049,6 +2050,24 @@ class TradingBot:
                 if current_time - last_time_sync >= sync_interval:
                     if self.sync_time():
                         last_time_sync = current_time
+                        sync_failure_count = 0  # 성공 시 카운트 리셋
+                    else:
+                        sync_failure_count += 1
+                        self.trading_logger.warning(
+                            f"Time sync failed {sync_failure_count} times in a row"
+                        )
+                        
+                        # ✅ 연속 3번 실패 시 더 적극적으로 재시도
+                        if sync_failure_count >= 3:
+                            self.trading_logger.error(
+                                "Multiple time sync failures detected. "
+                                "Attempting aggressive resync..."
+                            )
+                            for _ in range(5):
+                                if self.sync_time():
+                                    sync_failure_count = 0
+                                    break
+                                time.sleep(3)
                                         
                 # 로거 날짜 체크 및 업데이트
                 self.check_and_update_loggers()
