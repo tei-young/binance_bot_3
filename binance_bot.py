@@ -17,11 +17,11 @@ SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
 # 트레일링 스탑 
-TRAILING_STOP_TRIGGER = 3.0
-TRAILING_STOP_DISTANCE = 1.5
+TRAILING_STOP_TRIGGER = 2.0
+TRAILING_STOP_DISTANCE = 1.0
 
 #TP 비율 설정
-TP_RATIO = 2.0
+TP_RATIO = 1.5
 
 # 거래 심볼 목록
 TRADING_SYMBOLS = [ #'BTC/USDT',
@@ -99,21 +99,33 @@ class TradingBot:
         # self.backtest_results = self.load_backtest_results()
         # self.optimal_params = self.backtest_results['optimal_params']
         
-    def sync_time(self):
-        """시간 동기화 메서드"""
-        try:
-            server_time = self.exchange.fetch_time()
-            current_time = int(time.time() * 1000)
-            time_diff = server_time - current_time
-            
-            self.exchange.options['timeDiff'] = time_diff
-            
-            self.trading_logger.info(f"Time synchronized successfully. Offset: {time_diff}ms")
-            return True
-            
-        except Exception as e:
-            self.trading_logger.error(f"Error syncing time: {e}")
-            return False
+    def sync_time(self, max_retries=3):
+        """시간 동기화 메서드 (재시도 포함)"""
+        for attempt in range(max_retries):
+            try:
+                server_time = self.exchange.fetch_time()
+                current_time = int(time.time() * 1000)
+                time_diff = server_time - current_time
+                
+                self.exchange.options['timeDiff'] = time_diff
+                
+                self.trading_logger.info(
+                    f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
+                    f"Offset: {time_diff}ms"
+                )
+                return True
+                
+            except Exception as e:
+                self.trading_logger.warning(
+                    f"Time sync failed (attempt {attempt + 1}/{max_retries}): {e}"
+                )
+                if attempt < max_retries - 1:
+                    time.sleep(2)  # 2초 대기 후 재시도
+                else:
+                    self.trading_logger.error("Time sync failed after all retries")
+                    return False
+        
+        return False
 
     def set_leverage_for_symbols(self):
         """모든 심볼에 대해 레버리지 설정 (재시도 로직 포함)"""
@@ -128,6 +140,8 @@ class TradingBot:
                     self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
                     success = True
                     break
+                    
+                    
                     
                 except Exception as e:
                     if "Timestamp for this request" in str(e) and attempt < max_retries - 1:
