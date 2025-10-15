@@ -49,7 +49,17 @@ class TradingBot:
         })
         
         # ✅ 추가: 즉시 시간 동기화
-        self.sync_time()
+        max_init_attempts = 5
+        for attempt in range(max_init_attempts):
+            if self.sync_time():
+                break
+            self.trading_logger.warning(
+                f"Initial time sync failed (attempt {attempt + 1}/{max_init_attempts})"
+            )
+            if attempt < max_init_attempts - 1:
+                time.sleep(5)
+            else:
+                raise Exception("Failed to sync time during initialization")
         
         # 크로스 히스토리 초기화
         self.cross_history = {
