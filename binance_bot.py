@@ -1555,85 +1555,90 @@ class TradingBot:
             return None
 
     def check_existing_position(self, symbol):
-        """현재 보유 중인 포지션과 주문 상태 확인"""
-        try:           
-            # 심볼별 현재 포지션 확인
-            positions = self.exchange.fetch_positions([symbol])
-            position_info = self.positions.get(symbol)
-            
-            # 포지션이 있는 경우
-            if positions and float(positions[0]['contracts']) != 0:
-                position_size = float(positions[0]['contracts'])
-                position_side = 'long' if position_size > 0 else 'short'
+        """현재 보유 중인 포지션과 주문 상태 확인 (타임스탬프 에러 대응)"""
+        max_retries = 2
+        
+        for retry in range(max_retries):
+            try:           
+                # 심볼별 현재 포지션 확인
+                positions = self.exchange.fetch_positions([symbol])
+                position_info = self.positions.get(symbol)
                 
-                # 디버그 레벨로 변경하여 일반 로그에는 표시되지 않도록
-                self.trading_logger.debug(
-                    f"Active position exists for {symbol}:\n"
-                    f"Side: {position_side}\n"
-                    f"Size: {abs(position_size)}\n"
-                    f"Entry Price: {positions[0]['entryPrice']}"
-                )
-                
-                # 크로스 히스토리 초기화 추가
-                if position_info and not position_info['entry_order']:
-                    self.cross_history[symbol] = {
-                        'ema': [],
-                        'macd': []
-                    }
-                
-                return True
-
-            # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
-            if position_info and position_info['entry_order']:
-                try:
-                    # 진입 주문 상태 확인
-                    entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+                # 포지션이 있는 경우
+                if positions and float(positions[0]['contracts']) != 0:
+                    position_size = float(positions[0]['contracts'])
+                    position_side = 'long' if position_size > 0 else 'short'
                     
-                    # 진입 주문이 체결(filled)되었는데 현재 포지션이 없다면 청산된 상태
-                    if entry_order['status'] == 'filled':
-                        self.trading_logger.debug(f"Position was closed for {symbol}, cleaning up remaining orders")
-                        
-                        # 남은 SL/TP 주문 취소
-                        if position_info['sl_order']:
-                            try:
-                                self.exchange.cancel_order(position_info['sl_order'], symbol)
-                                self.trading_logger.debug(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
-                            except Exception as e:
-                                self.trading_logger.error(f"Error cancelling SL order: {e}")
-                                
-                        if position_info['tp_order']:
-                            try:
-                                self.exchange.cancel_order(position_info['tp_order'], symbol)
-                                self.trading_logger.debug(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
-                            except Exception as e:
-                                self.trading_logger.error(f"Error cancelling TP order: {e}")
-                        
-                        # 포지션 정보 초기화
-                        self.positions[symbol] = {
-                            'entry_order': None,
-                            'sl_order': None,
-                            'tp_order': None,
-                            'trailing_sl_order': None,    # 추가
-                            'position_type': None,
-                            'trailing_stop_applied': False,
-                            'entry_price': None,
-                            'last_trailing_price': None   # 추가
-                        }
-                        
-                        # 크로스 히스토리 초기화
+                    self.trading_logger.debug(
+                        f"Active position exists for {symbol}:\n"
+                        f"Side: {position_side}\n"
+                        f"Size: {abs(position_size)}\n"
+                        f"Entry Price: {positions[0]['entryPrice']}"
+                    )
+                    
+                    if position_info and not position_info['entry_order']:
                         self.cross_history[symbol] = {
                             'ema': [],
                             'macd': []
                         }
-                        
-                except Exception as e:
-                    self.trading_logger.error(f"Error checking entry order status: {e}")
+                    
+                    return True
 
-            return False
+                # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
+                if position_info and position_info['entry_order']:
+                    try:
+                        entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+                        
+                        if entry_order['status'] == 'filled':
+                            self.trading_logger.debug(f"Position was closed for {symbol}, cleaning up remaining orders")
+                            
+                            if position_info['sl_order']:
+                                try:
+                                    self.exchange.cancel_order(position_info['sl_order'], symbol)
+                                    self.trading_logger.debug(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
+                                except Exception as e:
+                                    self.trading_logger.error(f"Error cancelling SL order: {e}")
+                                    
+                            if position_info['tp_order']:
+                                try:
+                                    self.exchange.cancel_order(position_info['tp_order'], symbol)
+                                    self.trading_logger.debug(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
+                                except Exception as e:
+                                    self.trading_logger.error(f"Error cancelling TP order: {e}")
+                            
+                            # 포지션 정보 초기화
+                            self.positions[symbol] = {
+                                'entry_order': None,
+                                'sl_order': None,
+                                'tp_order': None,
+                                'trailing_sl_order': None,
+                                'position_type': None,
+                                'trailing_stop_applied': False,
+                                'entry_price': None,
+                                'last_trailing_price': None
+                            }
+                            
+                            # 크로스 히스토리 초기화
+                            self.cross_history[symbol] = {
+                                'ema': [],
+                                'macd': []
+                            }
+                            
+                    except Exception as e:
+                        self.trading_logger.error(f"Error checking entry order status: {e}")
+
+                return False
+                    
+            except Exception as e:
+                # 타임스탬프 에러면 재동기화 후 재시도
+                if self.handle_api_error(e, f"check_existing_position({symbol})"):
+                    if retry < max_retries - 1:
+                        self.trading_logger.info(f"Retrying after time resync... ({retry + 1}/{max_retries})")
+                        time.sleep(1)
+                        continue
                 
-        except Exception as e:
-            self.trading_logger.error(f"Error checking position for {symbol}: {e}")
-            return True  # 에러 시 안전하게 True 반환
+                self.trading_logger.error(f"Error checking position for {symbol}: {e}")
+                return True  # 에러 시 안전하게 True 반환
 
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
         try:
