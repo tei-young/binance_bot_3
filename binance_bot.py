@@ -165,7 +165,7 @@ class TradingBot:
         return False
 
     def set_leverage_for_symbols(self):
-        """모든 심볼에 대해 레버리지 설정 (재시도 로직 포함)"""
+        """모든 심볼에 대해 레버리지 설정 (타임스탬프 에러 대응 강화)"""
         max_retries = 3
         
         for symbol in TRADING_SYMBOLS:
@@ -178,21 +178,26 @@ class TradingBot:
                     success = True
                     break
                     
-                    
-                    
                 except Exception as e:
-                    if "Timestamp for this request" in str(e) and attempt < max_retries - 1:
-                        self.trading_logger.warning(f"Timestamp error for {symbol} (attempt {attempt + 1}), retrying after time sync...")
+                    if "Timestamp" in str(e) and attempt < max_retries - 1:
+                        self.trading_logger.warning(
+                            f"Timestamp error for {symbol} (attempt {attempt + 1}), "
+                            f"retrying after time sync..."
+                        )
                         # 시간 재동기화
                         if self.sync_time():
-                            time.sleep(1)  # 1초 대기 후 재시도
+                            time.sleep(3)  # ✅ 1초 → 3초로 증가 (보정 적용 대기)
                             continue
                     
                     if attempt == max_retries - 1:
-                        self.trading_logger.error(f"Failed to set leverage for {symbol} after {max_retries} attempts: {e}")
+                        self.trading_logger.error(
+                            f"Failed to set leverage for {symbol} after {max_retries} attempts: {e}"
+                        )
                     else:
-                        self.trading_logger.warning(f"Leverage setting failed for {symbol} (attempt {attempt + 1}): {e}")
-                        time.sleep(2)  # 재시도 전 대기    
+                        self.trading_logger.warning(
+                            f"Leverage setting failed for {symbol} (attempt {attempt + 1}): {e}"
+                        )
+                        time.sleep(2)
         
     def check_entry_conditions(self, df, symbol):
         # 백테스트에서 찾은 최적 파라미터 사용
