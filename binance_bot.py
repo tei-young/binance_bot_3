@@ -29,7 +29,7 @@ TRADING_SYMBOLS = [ #'BTC/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
                 'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'GRASS/USDT',
-                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 'EOS/USDT',
+                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT',
                 'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 'PENGU/USDT', 'AIXBT/USDT', 'ATA/USDT',
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
                 'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT', 'VANA/USDT', 'MELANIA/USDT']
@@ -110,18 +110,22 @@ class TradingBot:
         # self.optimal_params = self.backtest_results['optimal_params']
         
     def sync_time(self, max_retries=3):
-        """시간 동기화 메서드 (재시도 포함)"""
+        """시간 동기화 메서드 (재시도 + 안전 마진 포함)"""
         for attempt in range(max_retries):
             try:
                 server_time = self.exchange.fetch_time()
                 current_time = int(time.time() * 1000)
                 time_diff = server_time - current_time
                 
-                self.exchange.options['timeDiff'] = time_diff
+                # ✅ 안전 마진 추가: 3초 여유분
+                # 시스템 시간이 불안정해도 에러 방지
+                safe_diff = time_diff - 3000  # 3000ms = 3초
+                
+                self.exchange.options['timeDiff'] = safe_diff
                 
                 self.trading_logger.info(
                     f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
-                    f"Offset: {time_diff}ms"
+                    f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms"
                 )
                 return True
                 
@@ -130,7 +134,7 @@ class TradingBot:
                     f"Time sync failed (attempt {attempt + 1}/{max_retries}): {e}"
                 )
                 if attempt < max_retries - 1:
-                    time.sleep(2)  # 2초 대기 후 재시도
+                    time.sleep(2)
                 else:
                     self.trading_logger.error("Time sync failed after all retries")
                     return False
