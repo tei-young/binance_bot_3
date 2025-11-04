@@ -110,25 +110,40 @@ class TradingBot:
         # self.optimal_params = self.backtest_results['optimal_params']
         
     def sync_time(self, max_retries=3):
-        """시간 동기화 메서드 (재시도 + 안전 마진 포함)"""
+        """시간 동기화 메서드 (재시도 + 안전 마진 포함)
+
+        네트워크 지연을 고려하여 정확한 시간 오프셋을 계산합니다.
+        """
         for attempt in range(max_retries):
             try:
+                # ✅ 개선: 네트워크 지연을 고려한 정확한 측정
+                # API 호출 전/후의 로컬 시간을 측정하여 평균 사용
+                local_before = int(time.time() * 1000)
                 server_time = self.exchange.fetch_time()
-                current_time = int(time.time() * 1000)
-                time_diff = server_time - current_time
-                
-                # ✅ 안전 마진 추가: 3초 여유분
-                # 시스템 시간이 불안정해도 에러 방지
-                safe_diff = time_diff - 3000  # 3000ms = 3초
-                
+                local_after = int(time.time() * 1000)
+
+                # 평균 로컬 시간 계산 (네트워크 지연 중간 지점)
+                local_avg = (local_before + local_after) // 2
+                network_latency = local_after - local_before
+
+                # 시간 차이 계산: server_time - local_avg
+                time_diff = server_time - local_avg
+
+                # ✅ 안전 마진: 항상 서버보다 느리게 설정 (ahead 에러 방지)
+                # - 로컬이 빠르면: 더 많이 빼서 느리게
+                # - 로컬이 느리면: 조금만 빼서 안전하게
+                safety_margin = 3000  # 3초 안전 마진
+                safe_diff = time_diff - safety_margin
+
                 self.exchange.options['timeDiff'] = safe_diff
-                
+
                 self.trading_logger.info(
                     f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
-                    f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms"
+                    f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms, "
+                    f"Network latency: {network_latency}ms"
                 )
                 return True
-                
+            
             except Exception as e:
                 self.trading_logger.warning(
                     f"Time sync failed (attempt {attempt + 1}/{max_retries}): {e}"
@@ -138,7 +153,7 @@ class TradingBot:
                 else:
                     self.trading_logger.error("Time sync failed after all retries")
                     return False
-        
+
         return False
 
     def handle_api_error(self, error, context="API call"):
