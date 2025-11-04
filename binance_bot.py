@@ -44,8 +44,8 @@ class TradingBot:
             'enableRateLimit': True,
             'options': {
                 'defaultType': 'future',
-                'adjustForTimeDifference': False,  # ✅ 수동 시간 동기화 사용
-                'recvWindow': 10000  # ✅ 수신 윈도우 증가 (기본 5000ms -> 10000ms)
+                'adjustForTimeDifference': True,  # ✅ timeDifference 적용 활성화
+                'recvWindow': 60000  # ✅ 수신 윈도우 대폭 증가 (60초)
             }
         })
         
@@ -133,16 +133,21 @@ class TradingBot:
                 # ✅ 안전 마진: 항상 서버보다 느리게 설정 (ahead 에러 방지)
                 # - 로컬이 빠르면: 더 많이 빼서 느리게
                 # - 로컬이 느리면: 조금만 빼서 안전하게
-                safety_margin = 3000  # 3초 안전 마진
+                # recvWindow가 60초이므로 5초 마진으로 충분히 안전
+                safety_margin = 5000  # 5초 안전 마진 (3초 -> 5초 증가)
                 safe_diff = time_diff - safety_margin
 
                 # ✅ 중요: ccxt는 'timeDifference' 키를 사용합니다 ('timeDiff' 아님)
                 self.exchange.options['timeDifference'] = safe_diff
 
+                # ✅ 디버깅: 설정 확인
+                actual_value = self.exchange.options.get('timeDifference', 'NOT SET')
+
                 self.trading_logger.info(
                     f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
                     f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms, "
-                    f"Network latency: {network_latency}ms"
+                    f"Network latency: {network_latency}ms, "
+                    f"Applied timeDifference: {actual_value}ms"
                 )
                 return True
             
