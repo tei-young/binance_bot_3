@@ -52,7 +52,11 @@ class TradingBot:
 
         # ✅ 봇 시작 시간 기록 (자동 재시작용)
         self.bot_start_time = time.time()
-        
+
+        # ✅ ccxt가 자동으로 시간 동기화할 시간 제공 (초기 API 호출)
+        self.trading_logger.info("Waiting for initial time synchronization...")
+        time.sleep(3)  # 3초 대기
+
         # 크로스 히스토리 초기화
         self.cross_history = {
             symbol: {
@@ -102,13 +106,20 @@ class TradingBot:
         # self.optimal_params = self.backtest_results['optimal_params']
         
     def set_leverage_for_symbols(self):
-        """모든 심볼에 대해 레버리지 설정"""
+        """모든 심볼에 대해 레버리지 설정 (간단한 재시도 포함)"""
         for symbol in TRADING_SYMBOLS:
-            try:
-                self.exchange.set_leverage(LEVERAGE, symbol)
-                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
-            except Exception as e:
-                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
+            # 최대 2번 재시도
+            for attempt in range(2):
+                try:
+                    self.exchange.set_leverage(LEVERAGE, symbol)
+                    self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+                    break  # 성공 시 루프 종료
+                except Exception as e:
+                    if attempt == 0:  # 첫 시도 실패 시 재시도
+                        time.sleep(2)
+                        continue
+                    # 최종 실패
+                    self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
         
     def check_entry_conditions(self, df, symbol):
         # 백테스트에서 찾은 최적 파라미터 사용
@@ -1550,14 +1561,10 @@ class TradingBot:
                 return False
                     
             except Exception as e:
-                # 타임스탬프 에러면 재동기화 후 재시도
-                if self.handle_api_error(e, f"check_existing_position({symbol})"):
-                    if retry < max_retries - 1:
-                        self.trading_logger.info(f"Retrying after time resync... ({retry + 1}/{max_retries})")
-                        time.sleep(1)
-                        continue
-                
                 self.trading_logger.error(f"Error checking position for {symbol}: {e}")
+                if retry < max_retries - 1:
+                    time.sleep(1)
+                    continue
                 return True  # 에러 시 안전하게 True 반환
 
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
