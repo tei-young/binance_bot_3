@@ -2,6 +2,7 @@ import ccxt
 import pandas as pd
 import numpy as np
 import time
+import sys
 from datetime import datetime
 import ta
 import logging
@@ -44,23 +45,13 @@ class TradingBot:
             'enableRateLimit': True,
             'options': {
                 'defaultType': 'future',
-                'adjustForTimeDifference': True,  # ✅ timeDifference 적용 활성화
-                'recvWindow': 60000  # ✅ 수신 윈도우 대폭 증가 (60초)
+                'adjustForTimeDifference': True,  # ✅ ccxt 자동 시간 동기화 사용
+                'recvWindow': 60000  # ✅ 수신 윈도우 증가 (기본 5초 -> 60초)
             }
         })
-        
-        # ✅ 추가: 즉시 시간 동기화 -> 개선: 초기 시간 동기화 필수화 (성공할 때까지 재시도)
-        max_init_attempts = 5
-        for attempt in range(max_init_attempts):
-            if self.sync_time():
-                break
-            self.trading_logger.warning(
-                f"Initial time sync failed (attempt {attempt + 1}/{max_init_attempts})"
-            )
-            if attempt < max_init_attempts - 1:
-                time.sleep(5)
-            else:
-                raise Exception("Failed to sync time during initialization")
+
+        # ✅ 봇 시작 시간 기록 (자동 재시작용)
+        self.bot_start_time = time.time()
         
         # 크로스 히스토리 초기화
         self.cross_history = {
@@ -110,116 +101,14 @@ class TradingBot:
         # self.backtest_results = self.load_backtest_results()
         # self.optimal_params = self.backtest_results['optimal_params']
         
-    def sync_time(self, max_retries=3):
-        """시간 동기화 메서드 (재시도 + 안전 마진 포함)
-
-        네트워크 지연을 고려하여 정확한 시간 오프셋을 계산합니다.
-        """
-        for attempt in range(max_retries):
-            try:
-                # ✅ 개선: 네트워크 지연을 고려한 정확한 측정
-                # API 호출 전/후의 로컬 시간을 측정하여 평균 사용
-                local_before = int(time.time() * 1000)
-                server_time = self.exchange.fetch_time()
-                local_after = int(time.time() * 1000)
-
-                # 평균 로컬 시간 계산 (네트워크 지연 중간 지점)
-                local_avg = (local_before + local_after) // 2
-                network_latency = local_after - local_before
-
-                # 시간 차이 계산: server_time - local_avg
-                time_diff = server_time - local_avg
-
-                # ✅ 안전 마진: 항상 서버보다 느리게 설정 (ahead 에러 방지)
-                # - 로컬이 빠르면: 더 많이 빼서 느리게
-                # - 로컬이 느리면: 조금만 빼서 안전하게
-                # recvWindow가 60초이므로 5초 마진으로 충분히 안전
-                safety_margin = 5000  # 5초 안전 마진 (3초 -> 5초 증가)
-                safe_diff = time_diff - safety_margin
-
-                # ✅ 중요: ccxt는 'timeDifference' 키를 사용합니다 ('timeDiff' 아님)
-                self.exchange.options['timeDifference'] = safe_diff
-
-                # ✅ 디버깅: 설정 확인
-                actual_value = self.exchange.options.get('timeDifference', 'NOT SET')
-
-                self.trading_logger.info(
-                    f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
-                    f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms, "
-                    f"Network latency: {network_latency}ms, "
-                    f"Applied timeDifference: {actual_value}ms"
-                )
-                return True
-            
-            except Exception as e:
-                self.trading_logger.warning(
-                    f"Time sync failed (attempt {attempt + 1}/{max_retries}): {e}"
-                )
-                if attempt < max_retries - 1:
-                    time.sleep(2)
-                else:
-                    self.trading_logger.error("Time sync failed after all retries")
-                    return False
-
-        return False
-
-    def handle_api_error(self, error, context="API call"):
-        """API 에러 처리 및 타임스탬프 에러 감지"""
-        error_str = str(error)
-        
-        # 타임스탬프 에러 감지
-        if "Timestamp" in error_str or "-1021" in error_str:
-            self.trading_logger.warning(
-                f"⚠️ Timestamp error detected in {context}: {error_str}"
-            )
-            self.trading_logger.info("Attempting immediate time resync...")
-            
-            # 즉시 시간 재동기화
-            if self.sync_time():
-                self.trading_logger.info("✅ Time resync successful")
-                return True  # 재시도 가능
-            else:
-                self.trading_logger.error("❌ Time resync failed")
-                return False
-        
-        # 다른 에러는 그냥 로깅
-        self.trading_logger.error(f"Error in {context}: {error_str}")
-        return False
-
     def set_leverage_for_symbols(self):
-        """모든 심볼에 대해 레버리지 설정 (타임스탬프 에러 대응 강화)"""
-        max_retries = 3
-        
+        """모든 심볼에 대해 레버리지 설정"""
         for symbol in TRADING_SYMBOLS:
-            success = False
-            
-            for attempt in range(max_retries):
-                try:
-                    self.exchange.set_leverage(LEVERAGE, symbol)
-                    self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
-                    success = True
-                    break
-                    
-                except Exception as e:
-                    if "Timestamp" in str(e) and attempt < max_retries - 1:
-                        self.trading_logger.warning(
-                            f"Timestamp error for {symbol} (attempt {attempt + 1}), "
-                            f"retrying after time sync..."
-                        )
-                        # 시간 재동기화
-                        if self.sync_time():
-                            time.sleep(3)  # ✅ 1초 → 3초로 증가 (보정 적용 대기)
-                            continue
-                    
-                    if attempt == max_retries - 1:
-                        self.trading_logger.error(
-                            f"Failed to set leverage for {symbol} after {max_retries} attempts: {e}"
-                        )
-                    else:
-                        self.trading_logger.warning(
-                            f"Leverage setting failed for {symbol} (attempt {attempt + 1}): {e}"
-                        )
-                        time.sleep(2)
+            try:
+                self.exchange.set_leverage(LEVERAGE, symbol)
+                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+            except Exception as e:
+                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
         
     def check_entry_conditions(self, df, symbol):
         # 백테스트에서 찾은 최적 파라미터 사용
@@ -2063,43 +1952,29 @@ class TradingBot:
             self.execution_logger.error(f"Error in check_order_status: {e}")
 
     def run(self):
-        last_time_sync = 0
-        sync_interval = 60  # ✅ 5분(300) → 1분(60)으로 단축
-        sync_failure_count = 0
+        # ✅ 자동 재시작 설정: 48시간(2일)마다 봇 재시작
+        AUTO_RESTART_INTERVAL = 48 * 60 * 60  # 48시간 (초 단위)
 
         self.trading_logger.info(f"Bot started running\n"
                             f"Leverage: {LEVERAGE}x\n"
                             f"Margin Amount: {MARGIN_AMOUNT} USDT\n"
                             f"Max Daily Loss: {MAX_DAILY_LOSS} USDT\n"
+                            f"Auto-restart interval: {AUTO_RESTART_INTERVAL / 3600} hours\n"
                             f"Trading Symbols: {TRADING_SYMBOLS}")
-        
+
         while True:
             try:
                 current_time = time.time()
-                
-                # 주기적 시간 동기화
-                if current_time - last_time_sync >= sync_interval:
-                    if self.sync_time():
-                        last_time_sync = current_time
-                        sync_failure_count = 0  # 성공 시 카운트 리셋
-                    else:
-                        sync_failure_count += 1
-                        self.trading_logger.warning(
-                            f"Time sync failed {sync_failure_count} times in a row"
-                        )
-                        
-                        # ✅ 연속 3번 실패 시 더 적극적으로 재시도
-                        if sync_failure_count >= 3:
-                            self.trading_logger.error(
-                                "Multiple time sync failures detected. "
-                                "Attempting aggressive resync..."
-                            )
-                            for _ in range(5):
-                                if self.sync_time():
-                                    sync_failure_count = 0
-                                    break
-                                time.sleep(3)
-                                        
+
+                # ✅ 자동 재시작: 48시간 경과 시 봇 종료 (시스템 재시작 트리거)
+                uptime = current_time - self.bot_start_time
+                if uptime >= AUTO_RESTART_INTERVAL:
+                    self.trading_logger.info(
+                        f"Auto-restart triggered after {uptime / 3600:.1f} hours. "
+                        f"Shutting down for restart..."
+                    )
+                    sys.exit(0)  # 정상 종료 코드로 재시작 트리거
+
                 # 로거 날짜 체크 및 업데이트
                 self.check_and_update_loggers()
                 
