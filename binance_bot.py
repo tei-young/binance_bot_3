@@ -11,27 +11,34 @@ from logging.handlers import RotatingFileHandler
 # 거래 설정
 TIMEFRAME = '5m'      # '1m' 또는 '5m'
 LEVERAGE = 10         # 레버리지 설정
-MARGIN_AMOUNT = 20    # 실제 사용할 증거금 (USDT)
+MARGIN_AMOUNT = 10    # 실제 사용할 증거금 (USDT)
 MAX_DAILY_LOSS = 10   # 일일 최대 손실 제한 (USDT)
 SLOPE_PERIOD = 10     # Slope 계산을 위한 기간
 THRESHOLD = 4         # MA angles JD threshold
 
+# 트레일링 스탑 
+TRAILING_STOP_TRIGGER = 2.0
+TRAILING_STOP_DISTANCE = 1.0
+
+#TP 비율 설정
+TP_RATIO = 1.5
+
 # 거래 심볼 목록
 TRADING_SYMBOLS = [ #'BTC/USDT',
-                 'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT', 'AMB/USDT',
+                 'TIA/USDT', 'DOGS/USDT', 'BAN/USDT', 'BOME/USDT', 'ORCA/USDT',
                  'BOND/USDT', 'NEAR/USDT', 'HIPPO/USDT', 'BAKE/USDT', 'FXS/USDT', '1000PEPE/USDT',
                 'ACX/USDT', 'LINK/USDT', 'POL/USDT', 'MOODENG/USDT', 'ATOM/USDT', 'PHA/USDT',
-                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 
-                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT', 'EOS/USDT',
+                'ORDI/USDT', 'DOGE/USDT', 'XLM/USDT', 'GALA/USDT', 'TNSR/USDT', 'GRASS/USDT',
+                'DOT/USDT', 'ZRO/USDT', 'BNB/USDT', 'THETA/USDT', 'ARPA/USDT',
                 'XRP/USDT', 'ADA/USDT', 'WLD/USDT', 'RENDER/USDT', 'PENGU/USDT', 'AIXBT/USDT', 'ATA/USDT',
                 'NEAR/USDT', 'SUI/USDT', 'AVAX/USDT', 'MOVE/USDT', 'GOAT/USDT', 'HIVE/USDT', 'COW/USDT',
-                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT']
+                'ZEN/USDT', 'ONDOUSDT', 'USUAL/USDT', 'BRETT/USDT', '1000PEPE/USDT', 'VANA/USDT', 'MELANIA/USDT']
 
 class TradingBot:
     def __init__(self, api_key, api_secret):
         self.setup_logging()
         
-        self.exchange = ccxt.binance({
+        self.exchange = ccxt.binance({            
             'apiKey': api_key,
             'secret': api_secret,
             'enableRateLimit': True,
@@ -40,6 +47,19 @@ class TradingBot:
                 'adjustForTimeDifference': True
             }
         })
+        
+        # ✅ 추가: 즉시 시간 동기화 -> 개선: 초기 시간 동기화 필수화 (성공할 때까지 재시도)
+        max_init_attempts = 5
+        for attempt in range(max_init_attempts):
+            if self.sync_time():
+                break
+            self.trading_logger.warning(
+                f"Initial time sync failed (attempt {attempt + 1}/{max_init_attempts})"
+            )
+            if attempt < max_init_attempts - 1:
+                time.sleep(5)
+            else:
+                raise Exception("Failed to sync time during initialization")
         
         # 크로스 히스토리 초기화
         self.cross_history = {
@@ -81,14 +101,123 @@ class TradingBot:
         self.daily_losses = 0  # 순수 손실 USDT
         self.daily_profits = 0  # 순수 이익 USDT
         self.last_pnl_reset = datetime.now().date()
-    
-        # 레버리지 설정
-        for symbol in TRADING_SYMBOLS:
+
+        # ✅ 수정: 안전한 레버리지 설정
+        self.set_leverage_for_symbols()
+        
+        # 백테스트 결과 로드
+        # self.backtest_results = self.load_backtest_results()
+        # self.optimal_params = self.backtest_results['optimal_params']
+        
+    def sync_time(self, max_retries=3):
+        """시간 동기화 메서드 (재시도 + 안전 마진 포함)
+
+        네트워크 지연을 고려하여 정확한 시간 오프셋을 계산합니다.
+        """
+        for attempt in range(max_retries):
             try:
-                self.exchange.set_leverage(LEVERAGE, symbol)
-                self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+                # ✅ 개선: 네트워크 지연을 고려한 정확한 측정
+                # API 호출 전/후의 로컬 시간을 측정하여 평균 사용
+                local_before = int(time.time() * 1000)
+                server_time = self.exchange.fetch_time()
+                local_after = int(time.time() * 1000)
+
+                # 평균 로컬 시간 계산 (네트워크 지연 중간 지점)
+                local_avg = (local_before + local_after) // 2
+                network_latency = local_after - local_before
+
+                # 시간 차이 계산: server_time - local_avg
+                time_diff = server_time - local_avg
+
+                # ✅ 안전 마진: 항상 서버보다 느리게 설정 (ahead 에러 방지)
+                # - 로컬이 빠르면: 더 많이 빼서 느리게
+                # - 로컬이 느리면: 조금만 빼서 안전하게
+                safety_margin = 3000  # 3초 안전 마진
+                safe_diff = time_diff - safety_margin
+
+                self.exchange.options['timeDiff'] = safe_diff
+
+                self.trading_logger.info(
+                    f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
+                    f"Raw offset: {time_diff}ms, Safe offset: {safe_diff}ms, "
+                    f"Network latency: {network_latency}ms"
+                )
+                return True
+
             except Exception as e:
-                self.trading_logger.error(f"Error setting leverage for {symbol}: {e}")
+                self.trading_logger.warning(
+                    f"Time sync failed (attempt {attempt + 1}/{max_retries}): {e}"
+                )
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                else:
+                    self.trading_logger.error("Time sync failed after all retries")
+                    return False
+
+        return False
+
+    def handle_api_error(self, error, context="API call"):
+        """API 에러 처리 및 타임스탬프 에러 감지"""
+        error_str = str(error)
+        
+        # 타임스탬프 에러 감지
+        if "Timestamp" in error_str or "-1021" in error_str:
+            self.trading_logger.warning(
+                f"⚠️ Timestamp error detected in {context}: {error_str}"
+            )
+            self.trading_logger.info("Attempting immediate time resync...")
+            
+            # 즉시 시간 재동기화
+            if self.sync_time():
+                self.trading_logger.info("✅ Time resync successful")
+                return True  # 재시도 가능
+            else:
+                self.trading_logger.error("❌ Time resync failed")
+                return False
+        
+        # 다른 에러는 그냥 로깅
+        self.trading_logger.error(f"Error in {context}: {error_str}")
+        return False
+
+    def set_leverage_for_symbols(self):
+        """모든 심볼에 대해 레버리지 설정 (타임스탬프 에러 대응 강화)"""
+        max_retries = 3
+        
+        for symbol in TRADING_SYMBOLS:
+            success = False
+            
+            for attempt in range(max_retries):
+                try:
+                    self.exchange.set_leverage(LEVERAGE, symbol)
+                    self.trading_logger.info(f"Leverage set for {symbol}: {LEVERAGE}x")
+                    success = True
+                    break
+                    
+                except Exception as e:
+                    if "Timestamp" in str(e) and attempt < max_retries - 1:
+                        self.trading_logger.warning(
+                            f"Timestamp error for {symbol} (attempt {attempt + 1}), "
+                            f"retrying after time sync..."
+                        )
+                        # 시간 재동기화
+                        if self.sync_time():
+                            time.sleep(3)  # ✅ 1초 → 3초로 증가 (보정 적용 대기)
+                            continue
+                    
+                    if attempt == max_retries - 1:
+                        self.trading_logger.error(
+                            f"Failed to set leverage for {symbol} after {max_retries} attempts: {e}"
+                        )
+                    else:
+                        self.trading_logger.warning(
+                            f"Leverage setting failed for {symbol} (attempt {attempt + 1}): {e}"
+                        )
+                        time.sleep(2)
+        
+    def check_entry_conditions(self, df, symbol):
+        # 백테스트에서 찾은 최적 파라미터 사용
+        ema_fast = self.optimal_params.get('ema_fast', 12)
+        ema_slow = self.optimal_params.get('ema_slow', 26)
 
     def setup_logging(self, new_date=None):
         """로깅 설정"""
@@ -267,12 +396,12 @@ class TradingBot:
         try:
             # 1. EMA Distance 체크
             max_distance = max(float(d) for d in ema_distances)
-            if max_distance < 0.2:  # 0.2% 미만이면 약한 크로스
+            if max_distance < 0.3:  # 0.2에서 0.3으로 변경
                 return False
                 
             # 2. EMA12의 변화 체크
             max_change = max(abs(float(c)) for c in ema12_changes)
-            if max_change < 0.2:  # 0.2% 미만이면 약한 크로스
+            if max_change < 0.3:  # 0.2에서 0.3으로 변경
                 return False
                 
             # 3. 방향의 일관성과 평균 변화율 체크
@@ -284,7 +413,7 @@ class TradingBot:
                 
             # 4. 평균 변화율 체크
             avg_change = sum(changes) / len(changes)
-            if abs(avg_change) < 0.1:  # 평균 변화율이 너무 작으면 reject
+            if abs(avg_change) < 0.15:  # 평균 변화율이 너무 작으면 reject
                 return False
                 
             return True
@@ -363,6 +492,188 @@ class TradingBot:
         except Exception as e:
             self.execution_logger.error(f"Error updating PnL: {e}")
             self.profit_logger.error(f"Error updating PnL: {e}")
+    
+    def check_position_loss(self, symbol, position_info):
+        """대형 손실 방지 로직 1- 현재 포지션의 손실이 -50% 이상인지 체크"""
+        try:
+            if not position_info['entry_price']:
+                return False
+                
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            entry_price = float(position_info['entry_price'])
+            position_type = position_info['position_type']
+            
+            LOSS_THRESHOLD = 0.5
+            
+            if position_type == 'long':
+                loss_percent = (entry_price - current_price) / entry_price
+            else:  # short
+                loss_percent = (current_price - entry_price) / entry_price
+                
+            is_severe_loss = loss_percent > LOSS_THRESHOLD
+                
+            if is_severe_loss:
+                self.execution_logger.info(
+                    f"Severe Loss Detected for {symbol}:\n"
+                    f"Position Type: {position_type}\n"
+                    f"Entry Price: {entry_price}\n"
+                    f"Current Price: {current_price}\n"
+                    f"Loss Percent: {loss_percent * 100:.2f}%"
+                )
+            
+            return is_severe_loss
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error checking position loss: {e}")
+            return False
+    
+    def check_opposite_signal(self, df, symbol, current_position):
+        """대형 손실 방지 로직 2- 현재 포지션과 반대되는 유효한 크로스 시그널 체크"""
+        try:
+            # df None 체크 추가
+            if df is None:
+                self.signal_logger.error(f"DataFrame is None for {symbol}")
+                return False
+            current_idx = len(df) - 1
+            ma_color = df['mangles_jd_color'].iloc[current_idx]
+            
+            # 현재 롱 포지션이면 데드 크로스 체크
+            if current_position == 'long':
+                if ma_color == 'red':  # MA angles 조건 체크
+                    # 크로스 유효성 체크 (기존 check_cross_validity와 동일한 검증)
+                    if self.check_cross_validity(symbol, 'short'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: LONG\n"
+                            f"Signal Type: DEAD Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+                        
+            # 현재 숏 포지션이면 골든 크로스 체크
+            elif current_position == 'short':
+                if ma_color == 'green':  # MA angles 조건 체크
+                    if self.check_cross_validity(symbol, 'long'):
+                        self.signal_logger.info(
+                            f"Valid opposite signal found for {symbol}:\n"
+                            f"Current Position: SHORT\n"
+                            f"Signal Type: GOLDEN Cross\n"
+                            f"MA Color: {ma_color}"
+                        )
+                        return True
+            
+            return False
+            
+        except Exception as e:
+            self.signal_logger.error(f"Error checking opposite signal: {e}")
+            return False
+        
+    def close_and_convert_position(self, df, symbol, position_info):
+        """대형 손실 방지 로직 3- 포지션 청산 후 반대 포지션으로 전환"""
+        try:
+            if df is None:
+                self.execution_logger.error(f"DataFrame is None for {symbol}")
+                return False
+                
+            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+            current_position = position_info['position_type']
+            entry_price = float(position_info['entry_price'])
+            
+            # 현재 포지션 정보 로깅
+            self.execution_logger.info(
+                f"Converting Position Started for {symbol}:\n"
+                f"Current Position: {current_position}\n"
+                f"Entry Price: {entry_price}\n"
+                f"Current Price: {current_price}"
+            )
+            
+            # 1. 기존 SL/TP 주문 취소
+            if position_info['sl_order']:
+                try:
+                    self.exchange.cancel_order(position_info['sl_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling SL order: {e}")
+                    
+            if position_info['tp_order']:
+                try:
+                    self.exchange.cancel_order(position_info['tp_order'], symbol)
+                except Exception as e:
+                    self.execution_logger.error(f"Error canceling TP order: {e}")
+                    
+            # 2. 현재 포지션 청산 (시장가 기준 지정가)
+            positions = self.exchange.fetch_positions([symbol])
+            if positions and float(positions[0]['contracts']) != 0:
+                contract_amount = float(positions[0]['contracts'])
+                
+                close_order = self.exchange.create_order(
+                    symbol=symbol,
+                    type='limit',
+                    side='sell' if current_position == 'long' else 'buy',
+                    amount=contract_amount,
+                    price=current_price
+                )
+                
+                # 청산 확인 대기
+                max_wait = 10  # 최대 10초 대기
+                wait_start = time.time()
+                position_closed = False
+                
+                while time.time() - wait_start < max_wait:
+                    positions = self.exchange.fetch_positions([symbol])
+                    if not positions or float(positions[0]['contracts']) == 0:
+                        position_closed = True
+                        break
+                    time.sleep(1)
+                
+                if not position_closed:
+                    self.execution_logger.error(f"Position close timeout for {symbol}")
+                    return False
+                
+                # 청산 확인 로깅
+                loss_amount = MARGIN_AMOUNT * (
+                    (entry_price - current_price) / entry_price if current_position == 'long'
+                    else (current_price - entry_price) / entry_price
+                )
+                
+                self.execution_logger.info(
+                    f"Position Closed for Conversion:\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position Type: {current_position}\n"
+                    f"Close Price: {current_price}\n"
+                    f"Loss Amount: {loss_amount:.2f} USDT"
+                )
+                
+                # 3. 반대 포지션 진입
+                new_position_type = 'short' if current_position == 'long' else 'long'
+                
+                # cross_history에서 반대 크로스 정보 확인
+                crosses = self.cross_history[symbol]
+                
+                # 새로운 SL 계산
+                stop_loss = self.determine_stop_loss(df, crosses, new_position_type, current_price)
+                if stop_loss:
+                    # 새로운 TP 계산
+                    take_profit = self.calculate_take_profit(current_price, stop_loss, new_position_type)
+                    if take_profit:
+                        # 반대 포지션 진입
+                        success = self.execute_trade(symbol, new_position_type, current_price, stop_loss, take_profit)
+                        
+                        if success:
+                            self.execution_logger.info(
+                                f"Position Converted Successfully:\n"
+                                f"Symbol: {symbol}\n"
+                                f"New Position: {new_position_type}\n"
+                                f"Entry Price: {current_price}\n"
+                                f"Stop Loss: {stop_loss}\n"
+                                f"Take Profit: {take_profit}"
+                            )
+                        return success
+                        
+            return False
+            
+        except Exception as e:
+            self.execution_logger.error(f"Error in close_and_convert_position: {e}")
+            return False
     
     def calculate_jurik_ma(self, data, length=10, phase=50, power=1):
         """Jurik Moving Average 구현"""
@@ -482,7 +793,6 @@ class TradingBot:
             self.trading_logger.info(f"DataFrame columns: {df.columns.tolist()}")
             
             # 기본 지표 계산
-            df['sma200'] = ta.trend.sma_indicator(df['close'], window=200)
             df['ema12'] = ta.trend.ema_indicator(df['close'], window=12)
             df['ema26'] = ta.trend.ema_indicator(df['close'], window=26)
             
@@ -611,25 +921,24 @@ class TradingBot:
             current_idx = len(df) - 1
             current_time = df.index[current_idx]
             formatted_time = current_time.floor('5min')
-            
-            above_sma200 = df['close'].iloc[current_idx] > df['sma200'].iloc[current_idx]
             ma_color = df['mangles_jd_color'].iloc[current_idx]
-            
-            candle_start = formatted_time
-            candle_end = formatted_time + pd.Timedelta(minutes=5)
-            candle_mask = (df.index >= candle_start) & (df.index < candle_end)
-            candle_data = df[candle_mask]
-            
-            period_high = candle_data['high'].max()
-            period_low = candle_data['low'].min()
 
             self.signal_logger.info(f"\n=== Cross Check for {symbol} ===")
             
-            MIN_SLOPE = 0.04
+            MIN_SLOPE = 0.03
             THRESHOLD = 0.00005
             
-            # EMA 골든 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
-            cross_time = None  # 초기화 추가
+            # EMA 로깅
+            self.signal_logger.info(
+                f"\nEMA Cross Analysis at {current_time}:\n"
+                f"Last 3 candles EMA values:\n"
+                f"  T-2: EMA12={df['ema12'].iloc[current_idx-2]:.8f}, EMA26={df['ema26'].iloc[current_idx-2]:.8f}, Diff={df['ema12'].iloc[current_idx-2] - df['ema26'].iloc[current_idx-2]:.8f}\n"
+                f"  T-1: EMA12={df['ema12'].iloc[current_idx-1]:.8f}, EMA26={df['ema26'].iloc[current_idx-1]:.8f}, Diff={df['ema12'].iloc[current_idx-1] - df['ema26'].iloc[current_idx-1]:.8f}, Change={abs(df['ema12'].iloc[current_idx-1] - df['ema12'].iloc[current_idx-2]):.8f}\n"
+                f"   T0: EMA12={df['ema12'].iloc[current_idx]:.8f}, EMA26={df['ema26'].iloc[current_idx]:.8f}, Diff={df['ema12'].iloc[current_idx] - df['ema26'].iloc[current_idx]:.8f}, Change={abs(df['ema12'].iloc[current_idx] - df['ema12'].iloc[current_idx-1]):.8f}"
+            )
+            
+            # EMA 골든 크로스 체크
+            cross_time = None
             if ((df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1] and 
                     df['ema12'].iloc[current_idx] > df['ema26'].iloc[current_idx])):
                 cross_time = current_time
@@ -637,7 +946,15 @@ class TradingBot:
                     df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1]):
                 cross_time = df.index[current_idx-1]
             
-            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행     
+            if cross_time:
+                # 크로스 시점의 캔들 high/low 계산
+                candle_end = pd.to_datetime(cross_time).ceil('5min')
+                candle_start = candle_end - pd.Timedelta(minutes=5)
+                candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+                candle_data = df[candle_mask]
+                period_high = candle_data['high'].max()
+                period_low = candle_data['low'].min()
+                
                 # EMA 크로스 데이터 준비
                 pre_cross = {
                     'ema_distances': [],
@@ -646,23 +963,19 @@ class TradingBot:
                 
                 for i in range(current_idx - 3, current_idx + 1):
                     if i > 0:
-                        # EMA 간 거리
                         distance = abs(df['ema12'].iloc[i] - df['ema26'].iloc[i])
                         normalized_distance = distance / df['close'].iloc[i] * 100
                         pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
                         
-                        # EMA12 변화
                         ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
                         pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
-                # 크로스 분석용 (slope 조건 제외)
-                if above_sma200 and ma_color == 'green':
-                    self.analyze_cross_pattern(df, symbol, 'golden', current_time)
+                if ma_color == 'green':
+                    self.analyze_cross_pattern(df, symbol, 'golden', cross_time)
                 
-                # 크로스 강도 확인 및 트레이딩 로직
                 is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
                 
-                if above_sma200 and ma_color == 'green' and is_strong:
+                if ma_color == 'green' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         cross_time,
                         'golden',
@@ -674,14 +987,11 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
-                    # MACD 크로스 히스토리 확인
-                    if not self.cross_history[symbol]['macd']:      
-                        # 없다면 이전 25분간의 MACD 크로스 확인
-                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'golden', 'ema')
+                    if not self.cross_history[symbol]['macd']:
+                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, cross_time, 'golden', 'ema')
                         if macd_cross_time:
                             self.cross_history[symbol]['macd'] = [(
                                 macd_cross_time,
@@ -689,18 +999,16 @@ class TradingBot:
                                 macd_high,
                                 macd_low
                             )]
-                            return  # 유효한 크로스 쌍 발견 시 종료
-                        
+                            return
                 else:
                     self.signal_logger.info(
                         f"EMA Golden Cross ignored - conditions not met\n"
-                        f"Above SMA200: {above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
                     )
                         
-            # EMA 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가           
-            cross_time = None  # 초기화 추가
+            # EMA 데드 크로스 체크
+            cross_time = None
             if ((df['ema12'].iloc[current_idx-1] > df['ema26'].iloc[current_idx-1] and 
                     df['ema12'].iloc[current_idx] < df['ema26'].iloc[current_idx])):
                 cross_time = current_time
@@ -708,8 +1016,15 @@ class TradingBot:
                     df['ema12'].iloc[current_idx-1] < df['ema26'].iloc[current_idx-1]):
                 cross_time = df.index[current_idx-1]
             
-            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행     
-                # EMA 크로스 데이터 준비
+            if cross_time:
+                # 크로스 시점의 캔들 high/low 계산
+                candle_end = pd.to_datetime(cross_time).ceil('5min')
+                candle_start = candle_end - pd.Timedelta(minutes=5)
+                candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+                candle_data = df[candle_mask]
+                period_high = candle_data['high'].max()
+                period_low = candle_data['low'].min()
+                
                 pre_cross = {
                     'ema_distances': [],
                     'ema12_changes': []
@@ -717,23 +1032,19 @@ class TradingBot:
                 
                 for i in range(current_idx - 3, current_idx + 1):
                     if i > 0:
-                        # EMA 간 거리
                         distance = abs(df['ema12'].iloc[i] - df['ema26'].iloc[i])
                         normalized_distance = distance / df['close'].iloc[i] * 100
                         pre_cross['ema_distances'].append(f"{normalized_distance:.3f}")
                         
-                        # EMA12 변화
                         ema12_change = (df['ema12'].iloc[i] - df['ema12'].iloc[i-1]) / df['ema12'].iloc[i-1] * 100
                         pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                 
-                # 크로스 분석용 (slope 조건 제외)
-                if not above_sma200 and ma_color == 'red':
-                    self.analyze_cross_pattern(df, symbol, 'dead', current_time)
+                if ma_color == 'red':
+                    self.analyze_cross_pattern(df, symbol, 'dead', cross_time)
                 
-                # 크로스 강도 확인 및 트레이딩 로직
                 is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
                 
-                if not above_sma200 and ma_color == 'red' and is_strong:
+                if ma_color == 'red' and is_strong:
                     self.cross_history[symbol]['ema'] = [(
                         cross_time,
                         'dead',
@@ -745,14 +1056,11 @@ class TradingBot:
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
-                    # MACD 크로스 히스토리 확인
-                    if not self.cross_history[symbol]['macd']:      
-                        # 없다면 이전 25분간의 MACD 크로스 확인
-                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, current_time, 'dead', 'ema')
+                    if not self.cross_history[symbol]['macd']:
+                        macd_cross_time, macd_high, macd_low = self.check_historical_crosses(df, cross_time, 'dead', 'ema')
                         if macd_cross_time:
                             self.cross_history[symbol]['macd'] = [(
                                 macd_cross_time,
@@ -760,22 +1068,28 @@ class TradingBot:
                                 macd_high,
                                 macd_low
                             )]
-                            return  # 유효한 크로스 쌍 발견 시 종료
-                        
+                            return
                 else:
                     self.signal_logger.info(
                         f"EMA Dead Cross ignored - conditions not met\n"
-                        f"Below SMA200: {not above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Character: {'Strong' if is_strong else 'Weak'}"
-                    )
-                    
+                    )    
+                        
             else:
                 self.signal_logger.info("No new EMA cross")
-                        
-
-            # MACD 골든 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
-            cross_time = None  # 초기화 추가
+            
+            # MACD 로깅
+            self.signal_logger.info(
+                f"\nMACD Cross Analysis at {current_time}:\n"
+                f"Last 3 candles MACD values:\n"
+                f"  T-2: MACD={df['macd'].iloc[current_idx-2]:.8f}, Signal={df['macd_signal'].iloc[current_idx-2]:.8f}, Diff={df['macd'].iloc[current_idx-2] - df['macd_signal'].iloc[current_idx-2]:.8f}\n"
+                f"  T-1: MACD={df['macd'].iloc[current_idx-1]:.8f}, Signal={df['macd_signal'].iloc[current_idx-1]:.8f}, Diff={df['macd'].iloc[current_idx-1] - df['macd_signal'].iloc[current_idx-1]:.8f}, Change={abs(df['macd'].iloc[current_idx-1] - df['macd'].iloc[current_idx-2]):.8f}\n"
+                f"   T0: MACD={df['macd'].iloc[current_idx]:.8f}, Signal={df['macd_signal'].iloc[current_idx]:.8f}, Diff={df['macd'].iloc[current_idx] - df['macd_signal'].iloc[current_idx]:.8f}, Change={abs(df['macd'].iloc[current_idx] - df['macd'].iloc[current_idx-1]):.8f}"
+            )
+                                        
+            # MACD 골든 크로스 체크
+            cross_time = None
             if ((df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1] and 
                     df['macd'].iloc[current_idx] > df['macd_signal'].iloc[current_idx])):
                 cross_time = current_time
@@ -783,10 +1097,18 @@ class TradingBot:
                     df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1]):
                 cross_time = df.index[current_idx-1]
             
-            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행
+            if cross_time:
+                # 크로스 시점의 캔들 high/low 계산
+                candle_end = pd.to_datetime(cross_time).ceil('5min')
+                candle_start = candle_end - pd.Timedelta(minutes=5)
+                candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+                candle_data = df[candle_mask]
+                period_high = candle_data['high'].max()
+                period_low = candle_data['low'].min()
+                
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if above_sma200 and ma_color == 'green' and cross_slope >= MIN_SLOPE:
+                if ma_color == 'green' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         cross_time,
                         'golden',
@@ -798,14 +1120,11 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
                     
-                    # EMA 크로스 히스토리 확인
-                    if not self.cross_history[symbol]['ema']:  
-                        # 없다면 이전 25분간의 EMA 크로스 확인
-                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'golden', 'macd')
+                    if not self.cross_history[symbol]['ema']:    
+                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, cross_time, 'golden', 'macd')
                         if ema_cross_time:
                             self.cross_history[symbol]['ema'] = [(
                                 ema_cross_time,
@@ -813,18 +1132,16 @@ class TradingBot:
                                 ema_high,
                                 ema_low
                             )]
-                            return  # 유효한 크로스 쌍 발견 시 종료
-                        
+                            return
                 else:
                     self.signal_logger.info(
                         f"MACD Golden Cross ignored - conditions not met\n"
-                        f"Above SMA200: {above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Slope: {cross_slope}%"
                     )
-                        
-            # MACD 데드 크로스 체크 - t-2, t-1에서 발생한 크로스 해당 캔들에서 low/high/entry측정하도록 currenttime 추가
-            cross_time = None  # 초기화 추가            
+                    
+            # MACD 데드 크로스 체크
+            cross_time = None
             if ((df['macd'].iloc[current_idx-1] > df['macd_signal'].iloc[current_idx-1] and 
                     df['macd'].iloc[current_idx] < df['macd_signal'].iloc[current_idx])):
                 cross_time = current_time
@@ -832,10 +1149,18 @@ class TradingBot:
                     df['macd'].iloc[current_idx-1] < df['macd_signal'].iloc[current_idx-1]):
                 cross_time = df.index[current_idx-1]
             
-            if cross_time:  # 크로스가 감지된 경우에만 아래 로직 실행    
+            if cross_time:
+                # 크로스 시점의 캔들 high/low 계산
+                candle_end = pd.to_datetime(cross_time).ceil('5min')
+                candle_start = candle_end - pd.Timedelta(minutes=5)
+                candle_mask = (df.index >= candle_start) & (df.index < candle_end)
+                candle_data = df[candle_mask]
+                period_high = candle_data['high'].max()
+                period_low = candle_data['low'].min()
+                
                 cross_slope = self.calculate_macd_cross_angle(df, current_idx)
                 
-                if not above_sma200 and ma_color == 'red' and cross_slope >= MIN_SLOPE:
+                if ma_color == 'red' and cross_slope >= MIN_SLOPE:
                     self.cross_history[symbol]['macd'] = [(
                         cross_time,
                         'dead',
@@ -847,14 +1172,11 @@ class TradingBot:
                         f"Cross Slope: {cross_slope}%\n"
                         f"Candle High: {period_high}\n"
                         f"Candle Low: {period_low}\n"
-                        f"SMA200: {'Above' if above_sma200 else 'Below'}\n"
                         f"MA Color: {ma_color}"
                     )
-                
-                    # EMA 크로스 히스토리 확인
-                    if not self.cross_history[symbol]['ema']:    
-                        # 없다면 이전 25분간의 EMA 크로스 확인
-                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, current_time, 'dead', 'macd')
+                    
+                    if not self.cross_history[symbol]['ema']:
+                        ema_cross_time, ema_high, ema_low = self.check_historical_crosses(df, cross_time, 'dead', 'macd')
                         if ema_cross_time:
                             self.cross_history[symbol]['ema'] = [(
                                 ema_cross_time,
@@ -862,12 +1184,10 @@ class TradingBot:
                                 ema_high,
                                 ema_low
                             )]
-                            return  # 유효한 크로스 쌍 발견 시 종료
-                        
+                            return
                 else:
                     self.signal_logger.info(
                         f"MACD Dead Cross ignored - conditions not met\n"
-                        f"Below SMA200: {not above_sma200}\n"
                         f"MA Color: {ma_color}\n"
                         f"Cross Slope: {cross_slope}%"
                     )
@@ -902,35 +1222,52 @@ class TradingBot:
             window_start = current_time - pd.Timedelta(minutes=25)
             window_data = df[(df.index >= window_start) & (df.index <= current_time)]
             target_indicator = 'macd' if primary_indicator == 'ema' else 'ema'
-            MIN_SLOPE = 0.042  # MACD용 기존 MIN_SLOPE 유지
+            MIN_SLOPE = 0.03
 
             self.signal_logger.info(
                 f"\nChecking Historical {target_indicator.upper()} Crosses\n"
                 f"Time Range: {window_start} to {current_time}"
             )
 
-            for i in range(0, len(window_data)-5, 5):
-                check_idx = i + 5
+            # MACD historical 모든 시점 체크하도록 수정
+            for i in range(len(window_data)-1):
+                check_idx = i + 1
                 candle_start = window_data.index[check_idx] - pd.Timedelta(minutes=5)
                 candle_data = window_data[(window_data.index >= candle_start) & (window_data.index <= window_data.index[check_idx])]
                 period_high = candle_data['high'].max()
                 period_low = candle_data['low'].min()
 
-                if target_indicator == 'macd':  # MACD는 기존 로직 유지
-                    if ((window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
-                            window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
-                            cross_type == 'golden') or
+                if target_indicator == 'macd':
+                    cross_condition = (
+                        (window_data['macd'].iloc[check_idx-1] < window_data['macd_signal'].iloc[check_idx-1] and 
+                        window_data['macd'].iloc[check_idx] > window_data['macd_signal'].iloc[check_idx] and
+                        cross_type == 'golden') or
                         (window_data['macd'].iloc[check_idx-1] > window_data['macd_signal'].iloc[check_idx-1] and 
-                            window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
-                            cross_type == 'dead')):
-                        
-                        above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
+                        window_data['macd'].iloc[check_idx] < window_data['macd_signal'].iloc[check_idx] and
+                        cross_type == 'dead')
+                    )
+
+                    if cross_condition:
+                        # 크로스 발생 로깅
+                        self.signal_logger.info(
+                            f"Found {target_indicator} cross at {window_data.index[check_idx]}:\n"
+                            f"Previous MACD={window_data['macd'].iloc[check_idx-1]:.8f}, Signal={window_data['macd_signal'].iloc[check_idx-1]:.8f}\n"
+                            f"Current  MACD={window_data['macd'].iloc[check_idx]:.8f}, Signal={window_data['macd_signal'].iloc[check_idx]:.8f}"
+                        )
+
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
-                        
                         cross_slope = self.calculate_macd_cross_angle(window_data, check_idx)
-                        if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                                        (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
+                        
+                        if cross_slope >= MIN_SLOPE and ((cross_type == 'golden' and ma_color == 'green') or
+                                                        (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
+                        else:
+                            # historical cross not met 로깅추가
+                            self.signal_logger.info(
+                                f"Historical {target_indicator.upper()} {cross_type} Cross ignored - conditions not met\n"
+                                f"MA Color: {ma_color}\n"
+                                f"Cross Slope: {cross_slope}%"
+                            )
 
                 else:  # EMA는 새로운 로직 적용
                     if ((window_data['ema12'].iloc[check_idx-1] < window_data['ema26'].iloc[check_idx-1] and 
@@ -940,7 +1277,6 @@ class TradingBot:
                             window_data['ema12'].iloc[check_idx] < window_data['ema26'].iloc[check_idx] and
                             cross_type == 'dead')):
                         
-                        above_sma200 = window_data['close'].iloc[check_idx] > window_data['sma200'].iloc[check_idx]
                         ma_color = window_data['mangles_jd_color'].iloc[check_idx]
                         
                         # EMA 크로스 데이터 준비
@@ -959,9 +1295,16 @@ class TradingBot:
                                 pre_cross['ema12_changes'].append(f"{ema12_change:.3f}")
                         
                         is_strong = self.is_strong_cross(pre_cross['ema_distances'], pre_cross['ema12_changes'])
-                        if is_strong and ((cross_type == 'golden' and above_sma200 and ma_color == 'green') or
-                                    (cross_type == 'dead' and not above_sma200 and ma_color == 'red')):
+                        if is_strong and ((cross_type == 'golden' and ma_color == 'green') or
+                                    (cross_type == 'dead' and ma_color == 'red')):
                             return window_data.index[check_idx], period_high, period_low
+                        else:
+                            # historical cross not met 로깅추가
+                            self.signal_logger.info(
+                                f"Historical {target_indicator.upper()} {cross_type} Cross ignored - conditions not met\n"
+                                f"MA Color: {ma_color}\n"
+                                f"Cross Character: {'Strong' if is_strong else 'Weak'}"
+                            )
 
             return None, None, None
 
@@ -1097,95 +1440,102 @@ class TradingBot:
             self.signal_logger.error(f"Error in cross validity check: {e}")
             return False
 
-    def check_entry_conditions(self, df, symbol):
+    def check_entry_conditions(self, df, symbol):  # cross_type 파라미터 제거
         """진입 조건 확인"""
         # 1. 지표 계산 먼저
         df = self.calculate_indicators(df, symbol)
         if df is None:
             return None, None
         
-        # 2. 현재 가격 확인 및 포지션 타입 결정
+        # 2. 현재 가격 확인
         current_price = df['close'].iloc[-1]
-        above_sma200 = current_price > df['sma200'].iloc[-1]
-        position_type = 'long' if above_sma200 else 'short'
         
-        # 3. 최근 손절 이력 확인
-        last_sl_time = self.sl_history[symbol][position_type]
-        if last_sl_time:
-            time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
-            if time_since_sl < 30:  # 30분 이내
-                self.trading_logger.info(
-                    f"Skipping {position_type} trade for {symbol}: "
-                    f"Recent stop loss ({time_since_sl:.1f} mins ago)"
-                )
-                return None, None
-        
-        # 4. 크로스 데이터 저장
+        # 3. 크로스 데이터 저장 (여기서 크로스 타입이 결정됨)
         self.store_cross_data(df, symbol)
+        
+        # 4. mangles_jd 색상 확인
+        mangles_color = df['mangles_jd_color'].iloc[-1]
+        mangles_valid = (mangles_color == 'green') or (mangles_color == 'red')
         
         self.signal_logger.info(
             f"\n=== Position Analysis for {symbol} ===\n"
-            f"1. SMA 200 Position: {'Above - Long only' if above_sma200 else 'Below - Short only'}"
         )
         
-        # MA angles JD 색상 확인
-        mangles_color = df['mangles_jd_color'].iloc[-1]
-        mangles_valid = (above_sma200 and mangles_color == 'green') or (not above_sma200 and mangles_color == 'red')
         self.signal_logger.info(
             f"2. MA angles JD Color: {mangles_color.upper()} - {mangles_valid}"
         )
         
         if not mangles_valid:
             return None, None
+            
+        # 5. 크로스 기록을 통해 position_type 결정
+        if self.cross_history[symbol]['ema'] and self.cross_history[symbol]['macd']:
+            position_type = 'long' if self.cross_history[symbol]['ema'][0][1] == 'golden' else 'short'
+            
+            # 6. 손절 이력 확인
+            last_sl_time = self.sl_history[symbol][position_type]
+            if last_sl_time:
+                time_since_sl = (datetime.now() - last_sl_time).total_seconds() / 60
+                if time_since_sl < 30:  # 30분 이내
+                    self.trading_logger.info(
+                        f"Skipping {position_type} trade for {symbol}: "
+                        f"Recent stop loss ({time_since_sl:.1f} mins ago)"
+                    )
+                    return None, None
         
-        if self.check_cross_validity(symbol, position_type):
-            entry_message = (
-                f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
-                f"Symbol: {symbol}\n"
-                f"Position: {position_type.upper()}\n"
-                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"Price: {current_price}\n"
-                f"{'='*50}"
-            )
-            self.signal_logger.info(entry_message)
-            self.execution_logger.info(entry_message)
-            return position_type, self.cross_history[symbol]
+            if self.check_cross_validity(symbol, position_type):
+                entry_message = (
+                    f"\n{'='*20} ENTRY SIGNAL {'='*20}\n"
+                    f"Symbol: {symbol}\n"
+                    f"Position: {position_type.upper()}\n"
+                    f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"Price: {current_price}\n"
+                    f"{'='*50}"
+                )
+                self.signal_logger.info(entry_message)
+                self.execution_logger.info(entry_message)
+                return position_type, self.cross_history[symbol]
         
         return None, None
 
     def determine_stop_loss(self, df, crosses, position_type, entry_price):
-        """
-        먼저 발생한 크로스의 시점을 기준으로 이전 5분간의 high/low로 stop loss 설정
-        """
         try:
             if not crosses['ema'] or not crosses['macd']:
                 self.execution_logger.error("Missing cross data")
                 return None
-                    
-            # 두 크로스의 시간 비교
+                
             ema_time = pd.to_datetime(crosses['ema'][0][0])
             macd_time = pd.to_datetime(crosses['macd'][0][0])
             
-            # 먼저 발생한 크로스 찾기
-            first_cross = crosses['ema'][0] if ema_time <= macd_time else crosses['macd'][0]
-            first_cross_time = ema_time if ema_time <= macd_time else macd_time
-                
-            # 먼저 발생한 크로스 시점 기준 이전 5분 데이터 추출
-            sl_start = first_cross_time - pd.Timedelta(minutes=5)
-            sl_mask = (df.index >= sl_start) & (df.index <= first_cross_time)
-            sl_data = df[sl_mask]
+            # 동일 캔들 체크
+            if abs((ema_time - macd_time).total_seconds()) < 300:
+                # 마지막 크로스 시점의 캔들 high/low 사용
+                last_cross_time = max(ema_time, macd_time)
+                sl_end = last_cross_time.ceil('5min')
+                sl_start = sl_end - pd.Timedelta(minutes=5)
+            else:
+                # 먼저 발생한 크로스의 캔들 high/low 사용
+                first_cross_time = min(ema_time, macd_time)
+                sl_end = first_cross_time.ceil('5min')
+                sl_start = sl_end - pd.Timedelta(minutes=5)
             
-            # 해당 구간의 high/low 계산
+            self.execution_logger.info(
+                f"Stop Loss Range Calculation:\n"
+                f"EMA Cross Time: {ema_time}\n"
+                f"MACD Cross Time: {macd_time}\n"
+                f"SL Range: {sl_start} to {sl_end}"
+            )
+            
+            sl_mask = (df.index >= sl_start) & (df.index < sl_end)
+            sl_data = df[sl_mask]
             period_high = sl_data['high'].max()
             period_low = sl_data['low'].min()
                 
-            # position type에 따른 stop loss 설정
             stop_loss = period_low if position_type == 'long' else period_high
-                
-            # SL 거리 검증
+            
             sl_distance = abs(stop_loss - entry_price)
-            min_sl_distance = entry_price * 0.003  # 최소 0.3% 차이
-                
+            min_sl_distance = entry_price * 0.005
+            
             if sl_distance < min_sl_distance:
                 self.execution_logger.warning(
                     f"Stop loss too close to entry price:\n"
@@ -1194,17 +1544,16 @@ class TradingBot:
                     f"Distance: {sl_distance} (minimum required: {min_sl_distance})"
                 )
                 return None
-                
+                    
             self.execution_logger.info(
                 f"Stop Loss calculation for {position_type}:\n"
-                f"First cross time: {first_cross_time}\n"
-                f"Data range: {sl_start} to {first_cross_time}\n"
+                f"Data range: {sl_start} to {sl_end}\n"
                 f"Stop loss price: {stop_loss}\n"
                 f"Distance from entry: {sl_distance} ({(sl_distance/entry_price)*100:.3f}%)"
             )
-                    
-            return stop_loss
                         
+            return stop_loss
+                            
         except Exception as e:
             self.execution_logger.error(f"Stop loss calculation error: {e}")
             return None
@@ -1213,13 +1562,14 @@ class TradingBot:
         """목표가 계산"""
         try:
             stop_loss_distance = abs(entry_price - stop_loss)
-            take_profit = entry_price + (stop_loss_distance * 2.25) if position_type == 'long' else entry_price - (stop_loss_distance * 2.25)
+            take_profit = entry_price + (stop_loss_distance * TP_RATIO) if position_type == 'long' else entry_price - (stop_loss_distance * TP_RATIO)
             
             self.execution_logger.info(
                 f"Take Profit calculation:\n"
                 f"Entry: {entry_price}\n"
                 f"Stop Loss: {stop_loss}\n"
                 f"SL Distance: {stop_loss_distance}\n"
+                f"TP Ratio: {TP_RATIO}\n"
                 f"Take Profit: {take_profit}"
             )
             return take_profit
@@ -1229,90 +1579,93 @@ class TradingBot:
             return None
 
     def check_existing_position(self, symbol):
-        """현재 보유 중인 포지션과 주문 상태 확인"""
-        try:           
-            # 심볼별 현재 포지션 확인
-            positions = self.exchange.fetch_positions([symbol])
-            position_info = self.positions.get(symbol)
-            
-            # 포지션이 있는 경우
-            if positions and float(positions[0]['contracts']) != 0:
-                position_size = float(positions[0]['contracts'])
-                position_side = 'long' if position_size > 0 else 'short'
+        """현재 보유 중인 포지션과 주문 상태 확인 (타임스탬프 에러 대응)"""
+        max_retries = 2
+        
+        for retry in range(max_retries):
+            try:           
+                # 심볼별 현재 포지션 확인
+                positions = self.exchange.fetch_positions([symbol])
+                position_info = self.positions.get(symbol)
                 
-                # 디버그 레벨로 변경하여 일반 로그에는 표시되지 않도록
-                self.trading_logger.debug(
-                    f"Active position exists for {symbol}:\n"
-                    f"Side: {position_side}\n"
-                    f"Size: {abs(position_size)}\n"
-                    f"Entry Price: {positions[0]['entryPrice']}"
-                )
-                
-                # 크로스 히스토리 초기화 추가
-                if position_info and not position_info['entry_order']:
-                    self.cross_history[symbol] = {
-                        'ema': [],
-                        'macd': []
-                    }
-                
-                return True
-
-            # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
-            if position_info and position_info['entry_order']:
-                try:
-                    # 진입 주문 상태 확인
-                    entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+                # 포지션이 있는 경우
+                if positions and float(positions[0]['contracts']) != 0:
+                    position_size = float(positions[0]['contracts'])
+                    position_side = 'long' if position_size > 0 else 'short'
                     
-                    # 진입 주문이 체결(filled)되었는데 현재 포지션이 없다면 청산된 상태
-                    if entry_order['status'] == 'filled':
-                        self.trading_logger.debug(f"Position was closed for {symbol}, cleaning up remaining orders")
-                        
-                        # 남은 SL/TP 주문 취소
-                        if position_info['sl_order']:
-                            try:
-                                self.exchange.cancel_order(position_info['sl_order'], symbol)
-                                self.trading_logger.debug(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
-                            except Exception as e:
-                                self.trading_logger.error(f"Error cancelling SL order: {e}")
-                                
-                        if position_info['tp_order']:
-                            try:
-                                self.exchange.cancel_order(position_info['tp_order'], symbol)
-                                self.trading_logger.debug(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
-                            except Exception as e:
-                                self.trading_logger.error(f"Error cancelling TP order: {e}")
-                        
-                        # 포지션 정보 초기화
-                        self.positions[symbol] = {
-                            'entry_order': None,
-                            'sl_order': None,
-                            'tp_order': None,
-                            'trailing_sl_order': None,    # 추가
-                            'position_type': None,
-                            'trailing_stop_applied': False,
-                            'entry_price': None,
-                            'last_trailing_price': None   # 추가
-                        }
-                        
-                        # 크로스 히스토리 초기화
+                    self.trading_logger.debug(
+                        f"Active position exists for {symbol}:\n"
+                        f"Side: {position_side}\n"
+                        f"Size: {abs(position_size)}\n"
+                        f"Entry Price: {positions[0]['entryPrice']}"
+                    )
+                    
+                    if position_info and not position_info['entry_order']:
                         self.cross_history[symbol] = {
                             'ema': [],
                             'macd': []
                         }
-                        
-                except Exception as e:
-                    self.trading_logger.error(f"Error checking entry order status: {e}")
+                    
+                    return True
 
-            return False
+                # 포지션이 없고, 이전에 포지션 정보가 있었다면 청산된 것
+                if position_info and position_info['entry_order']:
+                    try:
+                        entry_order = self.exchange.fetch_order(position_info['entry_order'], symbol)
+                        
+                        if entry_order['status'] == 'filled':
+                            self.trading_logger.debug(f"Position was closed for {symbol}, cleaning up remaining orders")
+                            
+                            if position_info['sl_order']:
+                                try:
+                                    self.exchange.cancel_order(position_info['sl_order'], symbol)
+                                    self.trading_logger.debug(f"Cancelled SL order {position_info['sl_order']} for {symbol}")
+                                except Exception as e:
+                                    self.trading_logger.error(f"Error cancelling SL order: {e}")
+                                    
+                            if position_info['tp_order']:
+                                try:
+                                    self.exchange.cancel_order(position_info['tp_order'], symbol)
+                                    self.trading_logger.debug(f"Cancelled TP order {position_info['tp_order']} for {symbol}")
+                                except Exception as e:
+                                    self.trading_logger.error(f"Error cancelling TP order: {e}")
+                            
+                            # 포지션 정보 초기화
+                            self.positions[symbol] = {
+                                'entry_order': None,
+                                'sl_order': None,
+                                'tp_order': None,
+                                'trailing_sl_order': None,
+                                'position_type': None,
+                                'trailing_stop_applied': False,
+                                'entry_price': None,
+                                'last_trailing_price': None
+                            }
+                            
+                            # 크로스 히스토리 초기화
+                            self.cross_history[symbol] = {
+                                'ema': [],
+                                'macd': []
+                            }
+                            
+                    except Exception as e:
+                        self.trading_logger.error(f"Error checking entry order status: {e}")
+
+                return False
+                    
+            except Exception as e:
+                # 타임스탬프 에러면 재동기화 후 재시도
+                if self.handle_api_error(e, f"check_existing_position({symbol})"):
+                    if retry < max_retries - 1:
+                        self.trading_logger.info(f"Retrying after time resync... ({retry + 1}/{max_retries})")
+                        time.sleep(1)
+                        continue
                 
-        except Exception as e:
-            self.trading_logger.error(f"Error checking position for {symbol}: {e}")
-            return True  # 에러 시 안전하게 True 반환
+                self.trading_logger.error(f"Error checking position for {symbol}: {e}")
+                return True  # 에러 시 안전하게 True 반환
 
     def execute_trade(self, symbol, position_type, entry_price, stop_loss, take_profit):
-        """주문 실행"""
         try:
-            # 손절가 없거나 너무 가까우면 진입 불가
             if stop_loss is None:
                 self.execution_logger.error(f"Failed to enter position for {symbol}: Stop loss calculation failed")
                 return False
@@ -1333,11 +1686,11 @@ class TradingBot:
                 return False
 
             # cross_time 기준의 캔들 종가를 entry_price로 설정
-            candle_end = pd.to_datetime(cross_time).ceil('5min')
-            candle_start = candle_end - pd.Timedelta(minutes=5)
+            #candle_end = pd.to_datetime(cross_time).ceil('5min')
+            #candle_start = candle_end - pd.Timedelta(minutes=5)
             # 해당 캔들의 마지막 가격을 entry_price로
-            entry_idx = df.index.get_loc(candle_end - pd.Timedelta(minutes=1))
-            entry_price = df['close'].iloc[entry_idx]
+            #entry_idx = df.index.get_loc(candle_end - pd.Timedelta(minutes=1))
+            #entry_price = df['close'].iloc[entry_idx]
 
             # 레버리지를 고려한 실제 포지션 크기 계산
             total_position_size = MARGIN_AMOUNT * LEVERAGE
@@ -1389,6 +1742,7 @@ class TradingBot:
                     params={
                         'stopPrice': take_profit,
                         'type': 'future',
+                        
                         'reduceOnly': 'true'
                     }
                 )
@@ -1457,10 +1811,9 @@ class TradingBot:
             
             if signal == 'buy':
                 profit_percent = ((current_price - entry_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0%
-                    new_stop_loss = entry_price * 1.003  # 1.015 -> 1.007 -> 1.003 로 수정
+                if profit_percent >= TRAILING_STOP_TRIGGER:  # 기존 1.0 -> TRAILING_STOP_TRIGGER 상수 사용
+                    new_stop_loss = entry_price * (1 + TRAILING_STOP_DISTANCE / 100)  # 기존 0.003 -> TRAILING_STOP_DISTANCE 사용
                     
-                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
                         trailing_sl_order = self.exchange.create_order(
                             symbol,
@@ -1471,7 +1824,6 @@ class TradingBot:
                             {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
                         )
                         
-                        # trailing_sl_order 정보 추가
                         self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
                         self.positions[symbol]['trailing_stop_applied'] = True
                         
@@ -1481,10 +1833,10 @@ class TradingBot:
                             f"Time: {datetime.now()}\n"
                             f"Entry: {entry_price}\n"
                             f"Current Price: {current_price}\n"
-                            f"Original SL: Maintained\n"
                             f"Trailing SL: {new_stop_loss}\n"
                             f"Profit %: {profit_percent:.2f}%\n"
-                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                            f"Trigger: {TRAILING_STOP_TRIGGER}%\n"  # 트리거 값 표시
+                            f"Distance: {TRAILING_STOP_DISTANCE}%"   # 거리 값 표시
                         )
                         return True
                         
@@ -1494,10 +1846,9 @@ class TradingBot:
                         
             elif signal == 'sell':
                 profit_percent = ((entry_price - current_price) / entry_price) * 100
-                if profit_percent >= 1.0:  # 1.8% -> 1.0%
-                    new_stop_loss = entry_price * 0.997  # 0.985 -> 0.993 -> 0.997 로 수정
+                if profit_percent >= TRAILING_STOP_TRIGGER:  # 기존 1.0 -> TRAILING_STOP_TRIGGER 상수 사용
+                    new_stop_loss = entry_price * (1 - TRAILING_STOP_DISTANCE / 100)  # 기존 0.003 -> TRAILING_STOP_DISTANCE 사용
                     
-                    # 새로운 트레일링 스탑 주문 생성 (기존 SL은 유지)
                     try:
                         trailing_sl_order = self.exchange.create_order(
                             symbol,
@@ -1508,7 +1859,6 @@ class TradingBot:
                             {'stopPrice': new_stop_loss, 'type': 'future', 'reduceOnly': True}
                         )
                         
-                        # trailing_sl_order 정보 추가
                         self.positions[symbol]['trailing_sl_order'] = trailing_sl_order['id']
                         self.positions[symbol]['trailing_stop_applied'] = True
                         
@@ -1518,10 +1868,10 @@ class TradingBot:
                             f"Time: {datetime.now()}\n"
                             f"Entry: {entry_price}\n"
                             f"Current Price: {current_price}\n"
-                            f"Original SL: Maintained\n"
                             f"Trailing SL: {new_stop_loss}\n"
                             f"Profit %: {profit_percent:.2f}%\n"
-                            f"Trailing Order ID: {trailing_sl_order['id']}"
+                            f"Trigger: {TRAILING_STOP_TRIGGER}%\n"  # 트리거 값 표시
+                            f"Distance: {TRAILING_STOP_DISTANCE}%"   # 거리 값 표시
                         )
                         return True
                         
@@ -1568,6 +1918,33 @@ class TradingBot:
 
             # 포지션이 있었는데 없어진 경우 확인 (5분 시간 조건 추가)
             positions = self.exchange.fetch_positions([symbol])
+
+            # 활성 포지션 체크
+            if positions and float(positions[0]['contracts']) != 0:
+                # -50% 이상 손실 체크
+                if self.check_position_loss(symbol, position_info):
+                    df = self.get_historical_data(symbol)
+                    if df is not None:
+                        # 반대 시그널 체크
+                        if self.check_opposite_signal(df, symbol, position_info['position_type']):
+                            # 포지션 전환 실행
+                            self.close_and_convert_position(symbol, position_info, df)
+                            return
+
+                # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
+                if position_info['entry_price']:
+                    try:
+                        current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        self.update_trailing_stop(
+                            symbol,
+                            position_info['entry_price'],
+                            current_price,
+                            'buy' if position_info['position_type'] == 'long' else 'sell',
+                            float(positions[0]['contracts'])
+                        )
+                    except Exception as e:
+                        self.execution_logger.error(f"Error updating trailing stop: {e}")
+
             if position_info['position_type'] and (not positions or float(positions[0]['contracts']) == 0) and time_elapsed > 5:
                 self.execution_logger.info(f"Position closed or order timeout after {time_elapsed:.1f} minutes for {symbol}, cleaning up orders...")
                 
@@ -1675,26 +2052,13 @@ class TradingBot:
                 }
                 return
 
-            # 활성 포지션이 있는 경우 트레일링 스탑 업데이트 체크
-            if positions and float(positions[0]['contracts']) != 0 and position_info['entry_price']:
-                try:
-                    current_price = float(self.exchange.fetch_ticker(symbol)['last'])
-                    self.update_trailing_stop(
-                        symbol,
-                        position_info['entry_price'],
-                        current_price,
-                        'buy' if position_info['position_type'] == 'long' else 'sell',
-                        float(positions[0]['contracts'])
-                    )
-                except Exception as e:
-                    self.execution_logger.error(f"Error updating trailing stop: {e}")
-
         except Exception as e:
             self.execution_logger.error(f"Error in check_order_status: {e}")
 
     def run(self):
         last_time_sync = 0
-        sync_interval = 300  # 5분마다 시간 동기화
+        sync_interval = 60  # ✅ 5분(300) → 1분(60)으로 단축
+        sync_failure_count = 0
 
         self.trading_logger.info(f"Bot started running\n"
                             f"Leverage: {LEVERAGE}x\n"
@@ -1708,16 +2072,27 @@ class TradingBot:
                 
                 # 주기적 시간 동기화
                 if current_time - last_time_sync >= sync_interval:
-                    try:
-                        server_time = self.exchange.fetch_time()
-                        time_diff = server_time - int(current_time * 1000)
-                        if abs(time_diff) > 1000:
-                            self.exchange.options['timeDiff'] = time_diff
-                            self.trading_logger.info(f"Time synchronized. Offset: {time_diff}ms")
+                    if self.sync_time():
                         last_time_sync = current_time
-                    except Exception as e:
-                        self.trading_logger.error(f"Error syncing time: {e}")
+                        sync_failure_count = 0  # 성공 시 카운트 리셋
+                    else:
+                        sync_failure_count += 1
+                        self.trading_logger.warning(
+                            f"Time sync failed {sync_failure_count} times in a row"
+                        )
                         
+                        # ✅ 연속 3번 실패 시 더 적극적으로 재시도
+                        if sync_failure_count >= 3:
+                            self.trading_logger.error(
+                                "Multiple time sync failures detected. "
+                                "Attempting aggressive resync..."
+                            )
+                            for _ in range(5):
+                                if self.sync_time():
+                                    sync_failure_count = 0
+                                    break
+                                time.sleep(3)
+                                        
                 # 로거 날짜 체크 및 업데이트
                 self.check_and_update_loggers()
                 
@@ -1753,34 +2128,17 @@ class TradingBot:
                         position_type, crosses = self.check_entry_conditions(df, symbol)
                         
                         if position_type and crosses:
-                            # 현재 5분봉 시작 시점
-                            candle_start = current_time
-                            
-                            # 해당 5분봉의 종가를 진입가로 사용
-                            entry_idx = df.index.get_loc(candle_start)
-                            entry_price = df['close'].iloc[entry_idx]
-                            
-                            self.execution_logger.info(
-                                f"\nCalculating orders for {symbol}:\n"
-                                f"Candle time: {candle_start}\n"
-                                f"Entry price (close): {entry_price}"
-                            )
-                            
-                            stop_loss = self.determine_stop_loss(df, crosses, position_type, entry_price)
-                            if not stop_loss:
-                                continue
-
-                            take_profit = self.calculate_take_profit(entry_price, stop_loss, position_type)
-                            if not take_profit:
-                                continue
-
-                            success = self.execute_trade(
-                                symbol,
-                                position_type,
-                                entry_price,
-                                stop_loss,
-                                take_profit
-                            )
+                            # 실시간 시장 가격으로 진입가 설정 
+                            current_price = float(self.exchange.fetch_ticker(symbol)['last'])
+                        
+                            # 크로스 기준으로 손절가 계산
+                            stop_loss = self.determine_stop_loss(df, crosses, position_type, current_price)
+                            if stop_loss:
+                                # 손절가 기준으로 목표가 계산
+                                take_profit = self.calculate_take_profit(current_price, stop_loss, position_type)
+                                if take_profit:
+                                    # 실시간 가격 기준으로 지정가 주문 실행
+                                    success = self.execute_trade(symbol, position_type, current_price, stop_loss, take_profit)
 
                         # 체크 시간 업데이트
                         self.last_signal_check[symbol] = current_time
