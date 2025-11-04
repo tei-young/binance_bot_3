@@ -45,7 +45,8 @@ class TradingBot:
             'enableRateLimit': True,
             'options': {
                 'defaultType': 'future',
-                'adjustForTimeDifference': True,  # ✅ ccxt 자동 시간 동기화 사용
+                'adjustForTimeDifference': False,  # ✅ 수동 설정 사용
+                'timeDifference': -5000,  # ✅ 강제로 5초 늦춤 (안전 마진 포함)
                 'recvWindow': 60000  # ✅ 수신 윈도우 증가 (기본 5초 -> 60초)
             }
         })
