@@ -38,13 +38,14 @@ class TradingBot:
     def __init__(self, api_key, api_secret):
         self.setup_logging()
         
-        self.exchange = ccxt.binance({            
+        self.exchange = ccxt.binance({
             'apiKey': api_key,
             'secret': api_secret,
             'enableRateLimit': True,
             'options': {
                 'defaultType': 'future',
-                'adjustForTimeDifference': True
+                'adjustForTimeDifference': False,  # ✅ 수동 시간 동기화 사용
+                'recvWindow': 10000  # ✅ 수신 윈도우 증가 (기본 5000ms -> 10000ms)
             }
         })
         
@@ -135,7 +136,8 @@ class TradingBot:
                 safety_margin = 3000  # 3초 안전 마진
                 safe_diff = time_diff - safety_margin
 
-                self.exchange.options['timeDiff'] = safe_diff
+                # ✅ 중요: ccxt는 'timeDifference' 키를 사용합니다 ('timeDiff' 아님)
+                self.exchange.options['timeDifference'] = safe_diff
 
                 self.trading_logger.info(
                     f"Time synchronized successfully (attempt {attempt + 1}/{max_retries}). "
